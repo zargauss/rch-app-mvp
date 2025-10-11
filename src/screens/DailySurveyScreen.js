@@ -116,24 +116,54 @@ export default function DailySurveyScreen() {
 
       <AppCard style={styles.block}>
       <AppText style={styles.question}>Douleurs abdominales</AppText>
-      <RadioButton.Group onValueChange={(value) => setAbdominalPain(parseInt(value))} value={abdominalPain.toString()}>
-        <View style={styles.radioRow}><RadioButton value="0" /><AppText>Aucune</AppText></View>
-        <View style={styles.radioRow}><RadioButton value="1" /><AppText>Légères</AppText></View>
-        <View style={styles.radioRow}><RadioButton value="2" /><AppText>Moyennes</AppText></View>
-        <View style={styles.radioRow}><RadioButton value="3" /><AppText>Intenses</AppText></View>
-      </RadioButton.Group>
+      <View style={styles.horizontalButtons}>
+        {[
+          { value: 0, label: 'Aucune' },
+          { value: 1, label: 'Légères' },
+          { value: 2, label: 'Moyennes' },
+          { value: 3, label: 'Intenses' }
+        ].map((option) => (
+          <View key={option.value} style={styles.buttonContainer}>
+            <AppText 
+              style={[
+                styles.buttonText, 
+                abdominalPain === option.value && styles.selectedButtonText
+              ]}
+              onPress={() => setAbdominalPain(option.value)}
+            >
+              {option.label}
+            </AppText>
+            {abdominalPain === option.value && <View style={styles.selectedIndicator} />}
+          </View>
+        ))}
+      </View>
       </AppCard>
 
       <AppCard style={styles.block}>
       <AppText style={styles.question}>État général</AppText>
-      <RadioButton.Group onValueChange={(value) => setGeneralState(parseInt(value))} value={generalState.toString()}>
-        <View style={styles.radioRow}><RadioButton value="0" /><AppText>Parfait</AppText></View>
-        <View style={styles.radioRow}><RadioButton value="1" /><AppText>Très bon</AppText></View>
-        <View style={styles.radioRow}><RadioButton value="2" /><AppText>Bon</AppText></View>
-        <View style={styles.radioRow}><RadioButton value="3" /><AppText>Moyen</AppText></View>
-        <View style={styles.radioRow}><RadioButton value="4" /><AppText>Mauvais</AppText></View>
-        <View style={styles.radioRow}><RadioButton value="5" /><AppText>Très mauvais</AppText></View>
-      </RadioButton.Group>
+      <View style={styles.horizontalButtons}>
+        {[
+          { value: 0, label: 'Parfait' },
+          { value: 1, label: 'Très bon' },
+          { value: 2, label: 'Bon' },
+          { value: 3, label: 'Moyen' },
+          { value: 4, label: 'Mauvais' },
+          { value: 5, label: 'Très mauvais' }
+        ].map((option) => (
+          <View key={option.value} style={styles.buttonContainer}>
+            <AppText 
+              style={[
+                styles.buttonText, 
+                generalState === option.value && styles.selectedButtonText
+              ]}
+              onPress={() => setGeneralState(option.value)}
+            >
+              {option.label}
+            </AppText>
+            {generalState === option.value && <View style={styles.selectedIndicator} />}
+          </View>
+        ))}
+      </View>
       </AppCard>
 
       <AppCard style={styles.block}>
@@ -144,7 +174,13 @@ export default function DailySurveyScreen() {
       </View>
       </AppCard>
 
-      <PrimaryButton onPress={handleSave} disabled={!hasChanges()} style={styles.save}>
+      <PrimaryButton 
+        mode="contained" 
+        onPress={handleSave} 
+        disabled={!hasChanges()} 
+        style={styles.save}
+        buttonColor="#4A90E2"
+      >
         Enregistrer mon bilan
       </PrimaryButton>
       {alreadySubmitted ? <Text style={styles.info}>Bilan déjà enregistré aujourd'hui (modifications possibles).</Text> : null}
@@ -174,9 +210,50 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 8
   },
+  horizontalButtons: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 8
+  },
+  buttonContainer: {
+    position: 'relative',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    backgroundColor: '#F1F5F9',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    minWidth: 60,
+    alignItems: 'center'
+  },
+  buttonText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#718096',
+    textAlign: 'center'
+  },
+  selectedButtonText: {
+    color: '#4A90E2',
+    fontWeight: '600'
+  },
+  selectedIndicator: {
+    position: 'absolute',
+    bottom: -2,
+    left: '50%',
+    marginLeft: -4,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#4A90E2'
+  },
   save: {
-    marginTop: 24,
-    alignSelf: 'flex-start'
+    marginTop: 32,
+    marginBottom: 16,
+    alignSelf: 'stretch',
+    paddingVertical: 12,
+    borderRadius: 16,
+    elevation: 4
   },
   info: {
     marginTop: 8
