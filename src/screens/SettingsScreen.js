@@ -64,6 +64,21 @@ export default function SettingsScreen() {
     );
   };
 
+  const handleManualClear = () => {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      try {
+        window.localStorage.clear();
+        console.log('localStorage effacé manuellement');
+        Alert.alert('Succès', 'localStorage effacé manuellement via window.localStorage.clear()');
+      } catch (error) {
+        console.error('Erreur localStorage:', error);
+        Alert.alert('Erreur', `Erreur localStorage: ${error.message}`);
+      }
+    } else {
+      Alert.alert('Info', 'localStorage non disponible (probablement sur mobile natif)');
+    }
+  };
+
   return (
     <ScrollView style={[styles.container, { backgroundColor: theme.colors.background }]}>
       {/* En-tête */}
@@ -115,6 +130,16 @@ export default function SettingsScreen() {
           style={styles.wipeButton}
         >
           {isWiping ? 'Suppression...' : 'Effacer toutes les données'}
+        </PrimaryButton>
+        
+        {/* Bouton de debug temporaire */}
+        <PrimaryButton 
+          mode="outlined" 
+          onPress={handleManualClear}
+          buttonColor="#4A90E2"
+          style={styles.debugButton}
+        >
+          🧹 Effacer localStorage (Debug)
         </PrimaryButton>
       </AppCard>
     </ScrollView>
@@ -230,6 +255,11 @@ const styles = StyleSheet.create({
     fontWeight: '400',
   },
   wipeButton: {
+    borderRadius: 16,
+    paddingVertical: 4,
+    marginBottom: 16,
+  },
+  debugButton: {
     borderRadius: 16,
     paddingVertical: 4,
   },
