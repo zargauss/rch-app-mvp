@@ -89,40 +89,36 @@ export default function ExportScreen() {
   };
 
   const getFilteredData = () => {
-    if (scores.length === 0) return { scores: [], stools: [], surveys: {} };
-
     let filteredScores = [...scores];
+    let filteredStools = [...stools];
+    let filteredSurveys = { ...surveys };
     
-    if (selectedPeriod !== 'complet') {
+    if (selectedPeriod !== 'complet' && scores.length > 0) {
       const days = parseInt(selectedPeriod);
       const endDate = new Date();
       const startDate = new Date(endDate.getTime() - (days - 1) * 24 * 60 * 60 * 1000);
       
+      // Filtrer les scores
       filteredScores = scores.filter(score => {
         const scoreDate = new Date(score.date);
         return scoreDate >= startDate && scoreDate <= endDate;
       });
-    }
 
-    // Filtrer les selles et bilans pour la même période
-    const filteredStools = stools.filter(stool => {
-      const stoolDate = new Date(stool.timestamp);
-      return filteredScores.some(score => {
-        const scoreDate = new Date(score.date);
-        return stoolDate.toDateString() === scoreDate.toDateString();
+      // Filtrer les selles pour la période (pas seulement les jours avec scores)
+      filteredStools = stools.filter(stool => {
+        const stoolDate = new Date(stool.timestamp);
+        return stoolDate >= startDate && stoolDate <= endDate;
       });
-    });
 
-    const filteredSurveys = {};
-    Object.keys(surveys).forEach(key => {
-      const surveyDate = new Date(key.split('_')[0]);
-      if (filteredScores.some(score => {
-        const scoreDate = new Date(score.date);
-        return surveyDate.toDateString() === scoreDate.toDateString();
-      })) {
-        filteredSurveys[key] = surveys[key];
-      }
-    });
+      // Filtrer les surveys pour la période
+      filteredSurveys = {};
+      Object.keys(surveys).forEach(key => {
+        const surveyDate = new Date(key);
+        if (surveyDate >= startDate && surveyDate <= endDate) {
+          filteredSurveys[key] = surveys[key];
+        }
+      });
+    }
 
     return { scores: filteredScores, stools: filteredStools, surveys: filteredSurveys };
   };
@@ -200,11 +196,6 @@ export default function ExportScreen() {
       // Récupérer les données du bilan quotidien
       const surveyKey = getSurveyDayKey(new Date(score.date), 7);
       const survey = filteredSurveys[surveyKey];
-      
-      // Debug: afficher les clés disponibles
-      console.log('Export - Date:', score.date, 'SurveyKey:', surveyKey);
-      console.log('Export - Available survey keys:', Object.keys(filteredSurveys));
-      console.log('Export - Found survey:', survey);
       
       const painLevel = survey?.abdominalPain || 'N/A';
       const generalState = survey?.generalState || 'N/A';

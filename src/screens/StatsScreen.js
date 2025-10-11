@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, StyleSheet, ScrollView, Platform } from 'react-native';
 import storage from '../utils/storage';
 import AppText from '../components/ui/AppText';
@@ -44,7 +44,7 @@ export default function StatsScreen() {
     }
   };
 
-  const getChartData = () => {
+  const chartData = useMemo(() => {
     const days = parseInt(period);
     const today = new Date();
     const startDate = new Date(today.getTime() - (days - 1) * 24 * 60 * 60 * 1000);
@@ -56,12 +56,12 @@ export default function StatsScreen() {
       dateRange.push(dateStr);
     }
 
-    const chartData = dateRange.map(dateStr => {
+    const chartDataArray = dateRange.map(dateStr => {
       const scoreEntry = scores.find(s => s.date === dateStr);
       return scoreEntry ? scoreEntry.score : null;
     });
 
-    const validScores = chartData.filter(score => score !== null);
+    const validScores = chartDataArray.filter(score => score !== null);
     const average = validScores.length > 0 ? validScores.reduce((a, b) => a + b, 0) / validScores.length : 'N/A';
     const min = validScores.length > 0 ? Math.min(...validScores) : 'N/A';
     const max = validScores.length > 0 ? Math.max(...validScores) : 'N/A';
@@ -76,11 +76,9 @@ export default function StatsScreen() {
       max,
       validDays: validScores.length,
       totalDays: days,
-      rawData: chartData
+      rawData: chartDataArray
     };
-  };
-
-  const chartData = getChartData();
+  }, [scores, period]);
 
   const getTrendAnalysis = () => {
     const validScores = chartData.rawData.filter(score => score !== null);
