@@ -239,17 +239,15 @@ export default function HistoryScreen({ navigation }) {
                 if (score >= 7) scoreColor = '#EF4444';
                 else if (score >= 4) scoreColor = '#F59E0B';
                 
-                cellStyle.push(styles.dayCellWithData);
+                cellStyle.push(styles.dayCellWithScore, { backgroundColor: scoreColor });
                 cellContent = (
                   <View style={styles.dayCellContent}>
-                    <AppText variant="bodyLarge" style={[styles.dayNumber, { color: scoreColor }]}>
+                    <AppText variant="labelSmall" style={styles.dayNumberInScore}>
                       {day}
                     </AppText>
-                    <View style={[styles.scoreBadge, { backgroundColor: scoreColor }]}>
-                      <AppText variant="labelSmall" style={styles.scoreBadgeText}>
-                        {score}
-                      </AppText>
-                    </View>
+                    <AppText variant="headlineLarge" style={styles.scoreInCell}>
+                      {score}
+                    </AppText>
                   </View>
                 );
               }
@@ -260,14 +258,14 @@ export default function HistoryScreen({ navigation }) {
               
               if (dayEntries.length > 0) {
                 hasData = true;
-                cellStyle.push(styles.dayCellWithData);
+                cellStyle.push(styles.dayCellWithStools);
                 cellContent = (
                   <View style={styles.dayCellContent}>
-                    <AppText variant="bodyLarge" style={styles.dayNumber}>
+                    <AppText variant="labelSmall" style={styles.dayNumberSmall}>
                       {day}
                     </AppText>
-                    <AppText variant="labelSmall" style={styles.stoolCount}>
-                      {dayEntries.length} selle{dayEntries.length > 1 ? 's' : ''}
+                    <AppText variant="displayMedium" style={styles.stoolCountLarge}>
+                      {dayEntries.length}
                     </AppText>
                   </View>
                 );
@@ -381,22 +379,24 @@ export default function HistoryScreen({ navigation }) {
           {calendarMode === 'score' ? (
             <>
               <View style={styles.legendItem}>
-                <View style={[styles.legendDot, { backgroundColor: '#10B981' }]} />
+                <View style={[styles.legendSquare, { backgroundColor: '#10B981' }]} />
                 <AppText variant="labelSmall" style={styles.legendText}>Excellent (0-3)</AppText>
               </View>
               <View style={styles.legendItem}>
-                <View style={[styles.legendDot, { backgroundColor: '#F59E0B' }]} />
+                <View style={[styles.legendSquare, { backgroundColor: '#F59E0B' }]} />
                 <AppText variant="labelSmall" style={styles.legendText}>Acceptable (4-6)</AppText>
               </View>
               <View style={styles.legendItem}>
-                <View style={[styles.legendDot, { backgroundColor: '#EF4444' }]} />
+                <View style={[styles.legendSquare, { backgroundColor: '#EF4444' }]} />
                 <AppText variant="labelSmall" style={styles.legendText}>Préoccupant (7+)</AppText>
               </View>
             </>
           ) : (
-            <AppText variant="labelSmall" style={styles.legendText}>
-              Le nombre indique les selles enregistrées ce jour
-            </AppText>
+            <View style={styles.legendFullWidth}>
+              <AppText variant="labelSmall" style={styles.legendTextCentered}>
+                💡 Le chiffre indique le nombre de selles enregistrées ce jour-là
+              </AppText>
+            </View>
           )}
         </View>
       </AppCard>
@@ -591,50 +591,64 @@ const styles = StyleSheet.create({
   dayCell: {
     width: '14.28%',
     aspectRatio: 1,
-    padding: 4,
+    padding: 2,
     justifyContent: 'center',
     alignItems: 'center',
   },
   dayCellEmpty: {
-    opacity: 0.4,
+    opacity: 0.3,
   },
-  dayCellWithData: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
+  dayCellWithScore: {
+    borderRadius: 10,
+    margin: 1,
+  },
+  dayCellWithStools: {
+    backgroundColor: '#F1F5F9',
+    borderRadius: 10,
+    margin: 1,
     borderWidth: 2,
-    borderColor: '#E2E8F0',
+    borderColor: '#4A90E2',
   },
   dayCellContent: {
     alignItems: 'center',
     justifyContent: 'center',
+    width: '100%',
+    height: '100%',
   },
-  dayNumber: {
-    color: '#2D3748',
+  dayNumberInScore: {
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontWeight: '600',
+    fontSize: 9,
+    position: 'absolute',
+    top: 2,
+    left: 4,
+  },
+  scoreInCell: {
+    color: '#FFFFFF',
     fontWeight: '700',
-    marginBottom: 2,
+    fontSize: 22,
+  },
+  dayNumberSmall: {
+    color: '#64748B',
+    fontWeight: '600',
+    fontSize: 9,
+    position: 'absolute',
+    top: 2,
+    left: 4,
+  },
+  stoolCountLarge: {
+    color: '#4A90E2',
+    fontWeight: '700',
+    fontSize: 26,
   },
   dayNumberEmpty: {
     color: '#CBD5E1',
-  },
-  scoreBadge: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
-    minWidth: 20,
-  },
-  scoreBadgeText: {
-    color: '#FFFFFF',
-    fontWeight: '700',
-    fontSize: 10,
-  },
-  stoolCount: {
-    color: '#64748B',
-    fontSize: 10,
+    fontSize: 14,
   },
   legend: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 16,
+    gap: 12,
     paddingTop: 16,
     borderTopWidth: 1,
     borderTopColor: '#E2E8F0',
@@ -642,15 +656,29 @@ const styles = StyleSheet.create({
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
   },
-  legendDot: {
-    width: 12,
-    height: 12,
+  legendSquare: {
+    width: 20,
+    height: 20,
     borderRadius: 6,
   },
   legendText: {
     color: '#64748B',
+    fontWeight: '500',
+  },
+  legendFullWidth: {
+    flex: 1,
+    backgroundColor: '#FEF3C7',
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#F59E0B',
+  },
+  legendTextCentered: {
+    color: '#92400E',
+    textAlign: 'center',
+    fontWeight: '500',
   },
   modalContainer: {
     padding: 20,
