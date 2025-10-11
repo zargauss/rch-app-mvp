@@ -109,9 +109,6 @@ export default function StatsScreen() {
 
       {/* Sélecteur de période */}
       <View style={styles.periodSection}>
-        <AppText variant="headlineLarge" style={styles.sectionTitle}>
-          Période d'analyse
-        </AppText>
         <SegmentedControl
           options={[
             { value: '7', label: '7 jours' },

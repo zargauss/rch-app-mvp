@@ -279,9 +279,6 @@ export default function HistoryScreen({ navigation }) {
                 cellStyle.push(styles.dayCellWithScore, { backgroundColor: scoreColor });
                 cellContent = (
                   <View style={styles.dayCellContent}>
-                    <AppText variant="labelSmall" style={styles.dayNumberInScore}>
-                      {day}
-                    </AppText>
                     <AppText variant="headlineLarge" style={styles.scoreInCell}>
                       {score}
                     </AppText>
@@ -298,9 +295,6 @@ export default function HistoryScreen({ navigation }) {
                 cellStyle.push(styles.dayCellWithStools);
                 cellContent = (
                   <View style={styles.dayCellContent}>
-                    <AppText variant="labelSmall" style={styles.dayNumberSmall}>
-                      {day}
-                    </AppText>
                     <AppText variant="displayMedium" style={styles.stoolCountLarge}>
                       {dayEntries.length}
                     </AppText>
@@ -343,9 +337,6 @@ export default function HistoryScreen({ navigation }) {
 
       {/* Liste des selles compacte */}
       <AppCard style={styles.stoolsCard}>
-        <AppText variant="headlineLarge" style={styles.sectionTitle}>
-          Dernières selles
-        </AppText>
         
         {stools.length === 0 ? (
           <View style={styles.emptyState}>
@@ -396,9 +387,6 @@ export default function HistoryScreen({ navigation }) {
       {/* Calendrier moderne */}
       <AppCard style={styles.calendarCard}>
         <View style={styles.calendarHeaderSection}>
-          <AppText variant="headlineLarge" style={styles.sectionTitle}>
-            Calendrier du mois
-          </AppText>
           <SegmentedControl
             options={[
               { value: 'score', label: 'Score' },
@@ -669,7 +657,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   dayCellEmpty: {
-    opacity: 0.3,
+    opacity: 0.5,
   },
   dayCellWithScore: {
     borderRadius: 10,
