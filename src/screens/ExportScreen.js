@@ -43,16 +43,20 @@ export default function ExportScreen() {
     const histJson = storage.getString('scoresHistory');
     const history = histJson ? JSON.parse(histJson) : [];
     setScores(history);
+    console.log('📦 Export - Scores loaded:', history.length, 'scores');
 
     // Charger les selles
     const stoolsJson = storage.getString('dailySells');
     const stoolsData = stoolsJson ? JSON.parse(stoolsJson) : [];
     setStools(stoolsData);
+    console.log('📦 Export - Stools loaded:', stoolsData.length, 'stools');
 
     // Charger les bilans
     const surveysJson = storage.getString('dailySurvey');
     const surveysData = surveysJson ? JSON.parse(surveysJson) : {};
     setSurveys(surveysData);
+    console.log('📦 Export - Surveys loaded:', Object.keys(surveysData));
+    console.log('📦 Export - Survey details:', surveysData);
   };
 
   const formatDate = (dateStr) => {
@@ -219,8 +223,8 @@ export default function ExportScreen() {
         'tres_mauvais': 'Très mauvais'
       };
       
-      const painLevel = survey?.abdominalPain ? (painMap[survey.abdominalPain] || survey.abdominalPain) : 'N/A';
-      const generalState = survey?.generalState ? (generalMap[survey.generalState] || survey.generalState) : 'N/A';
+      const painLevel = survey?.abdominalPain ? (painMap[survey.abdominalPain] || survey.abdominalPain) : '—';
+      const generalState = survey?.generalState ? (generalMap[survey.generalState] || survey.generalState) : '—';
       
       return `
         <tr>
