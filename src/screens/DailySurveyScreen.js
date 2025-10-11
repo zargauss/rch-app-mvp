@@ -11,7 +11,7 @@ import { useNavigation } from '@react-navigation/native';
 import calculateLichtigerScore from '../utils/scoreCalculator';
 
 function getTodayKey() {
-  return getSurveyDayKey(new Date(), 7);
+  return getSurveyDayKey(new Date(), 0);
 }
 
 export default function DailySurveyScreen() {

@@ -105,7 +105,7 @@ export default function HomeScreen() {
   useFocusEffect(
     React.useCallback(() => {
       setDailyCount(computeTodayCount());
-      const key = getSurveyDayKey(new Date(), 7);
+      const key = getSurveyDayKey(new Date(), 0);
       const json = storage.getString('dailySurvey');
       if (json) {
         const map = JSON.parse(json);
@@ -161,13 +161,30 @@ export default function HomeScreen() {
     const now = new Date();
     setDateInput(now.toLocaleDateString('fr-FR'));
     setTimeInput(now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }));
-    setBristol(4);
-    setHasBlood(false);
   };
   const showModal = () => {
     const now = new Date();
     setDateInput(now.toLocaleDateString('fr-FR'));
     setTimeInput(now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }));
+    
+    // Récupérer la dernière selle pour pré-remplir les valeurs
+    const stoolsJson = storage.getString('dailySells');
+    const stools = stoolsJson ? JSON.parse(stoolsJson) : [];
+    
+    if (stools.length > 0) {
+      // Trier par timestamp décroissant pour avoir la plus récente
+      const sortedStools = stools.sort((a, b) => b.timestamp - a.timestamp);
+      const lastStool = sortedStools[0];
+      
+      // Utiliser les valeurs de la dernière selle
+      setBristol(lastStool.bristolScale);
+      setHasBlood(lastStool.hasBlood);
+    } else {
+      // Valeurs par défaut si aucune selle
+      setBristol(4);
+      setHasBlood(false);
+    }
+    
     setVisible(true);
   };
 

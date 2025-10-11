@@ -1,4 +1,4 @@
-export function getSurveyDayKey(date = new Date(), resetHour = 7) {
+export function getSurveyDayKey(date = new Date(), resetHour = 0) {
   const d = new Date(date);
   const boundary = new Date(d.getFullYear(), d.getMonth(), d.getDate(), resetHour, 0, 0, 0);
   // If before reset hour, use previous day as the survey day
