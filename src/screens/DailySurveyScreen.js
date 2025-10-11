@@ -8,6 +8,7 @@ import Slider from '@react-native-community/slider';
 import storage from '../utils/storage';
 import { getSurveyDayKey } from '../utils/dayKey';
 import { useNavigation } from '@react-navigation/native';
+import calculateLichtigerScore from '../utils/scoreCalculator';
 
 function getTodayKey() {
   return getSurveyDayKey(new Date(), 7);
@@ -56,6 +57,21 @@ export default function DailySurveyScreen() {
       antidiarrheal
     };
     storage.set('dailySurvey', JSON.stringify(map));
+    
+    // Recalculer et sauvegarder le score d'aujourd'hui
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    const fullToday = calculateLichtigerScore(todayStr, storage);
+    if (fullToday != null) {
+      const histJson = storage.getString('scoresHistory');
+      const history = histJson ? JSON.parse(histJson) : [];
+      const existingToday = history.find((h) => h.date === todayStr);
+      if (!existingToday) {
+        const newHistory = [{ date: todayStr, score: fullToday }, ...history];
+        storage.set('scoresHistory', JSON.stringify(newHistory));
+      }
+    }
+    
     setDirty(false);
     navigation.goBack();
   };

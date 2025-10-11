@@ -135,6 +135,14 @@ export default function HomeScreen() {
         setTodayProvisionalScore(computeStoolSubscoresForDate(tDateStr));
       } else {
         setTodayProvisionalScore(fullToday);
+        // Si on a un score complet pour aujourd'hui, le sauvegarder dans l'historique
+        const histJson = storage.getString('scoresHistory');
+        const history = histJson ? JSON.parse(histJson) : [];
+        const existingToday = history.find((h) => h.date === tDateStr);
+        if (!existingToday) {
+          const newHistory = [{ date: tDateStr, score: fullToday }, ...history];
+          storage.set('scoresHistory', JSON.stringify(newHistory));
+        }
       }
     }, [])
   );
@@ -264,6 +272,14 @@ export default function HomeScreen() {
       setTodayProvisionalScore(computeStoolSubscoresForDate(tDateStr));
     } else {
       setTodayProvisionalScore(fullToday);
+      // Sauvegarder le score complet dans l'historique
+      const histJson = storage.getString('scoresHistory');
+      const history = histJson ? JSON.parse(histJson) : [];
+      const existingToday = history.find((h) => h.date === tDateStr);
+      if (!existingToday) {
+        const newHistory = [{ date: tDateStr, score: fullToday }, ...history];
+        storage.set('scoresHistory', JSON.stringify(newHistory));
+      }
     }
     hideModal();
   };
