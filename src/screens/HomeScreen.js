@@ -312,7 +312,11 @@ export default function HomeScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.scrollView} 
+        contentContainerStyle={styles.scrollViewContent}
+        showsVerticalScrollIndicator={false}
+      >
         {/* En-tête avec message d'accueil */}
         <View style={styles.header}>
           <View style={styles.headerTop}>
@@ -487,11 +491,19 @@ export default function HomeScreen() {
             </View>
 
               <View style={styles.modalActions}>
-                <SecondaryButton onPress={hideModal} style={styles.cancelButton}>
+                <SecondaryButton 
+                  onPress={hideModal} 
+                  style={styles.cancelButton}
+                  labelStyle={styles.buttonLabel}
+                >
                   Annuler
                 </SecondaryButton>
-                <PrimaryButton onPress={handleSave} style={styles.saveButton}>
-                  Enregistrer
+                <PrimaryButton 
+                  onPress={handleSave} 
+                  style={styles.saveButton}
+                  labelStyle={styles.buttonLabel}
+                >
+                  OK
                 </PrimaryButton>
               </View>
             </ScrollView>
@@ -509,6 +521,9 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
     paddingHorizontal: 20,
+  },
+  scrollViewContent: {
+    paddingBottom: 80, // Espace pour la barre de navigation
   },
   header: {
     paddingTop: 20,
@@ -743,20 +758,24 @@ const styles = StyleSheet.create({
   modalActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: 16,
+    gap: 12,
     marginTop: 24,
-    marginBottom: 8,
+    marginBottom: 16,
+    paddingHorizontal: 4,
   },
   cancelButton: {
     flex: 1,
     borderRadius: 16,
-    paddingVertical: 12,
-    minHeight: 56,
+    height: 52,
   },
   saveButton: {
     flex: 1,
     borderRadius: 16,
-    paddingVertical: 12,
-    minHeight: 56,
+    height: 52,
+  },
+  buttonLabel: {
+    fontSize: 15,
+    fontWeight: '600',
+    letterSpacing: 0,
   },
 });
