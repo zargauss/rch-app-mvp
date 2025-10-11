@@ -206,6 +206,14 @@ export default function HistoryScreen({ navigation }) {
     for (let day = 1; day <= daysInMonth; day++) {
       days.push(day);
     }
+    
+    // Compléter avec des cellules vides pour avoir des semaines complètes (7 jours)
+    const remainingCells = days.length % 7;
+    if (remainingCells > 0) {
+      for (let i = 0; i < (7 - remainingCells); i++) {
+        days.push(null);
+      }
+    }
 
     const monthNames = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
     const dayNames = ['L', 'M', 'M', 'J', 'V', 'S', 'D']; // Lundi à Dimanche
