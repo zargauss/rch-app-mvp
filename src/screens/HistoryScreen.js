@@ -325,15 +325,6 @@ export default function HistoryScreen({ navigation }) {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
-      {/* En-tête */}
-      <View style={styles.header}>
-        <AppText variant="displayMedium" style={styles.title}>
-          📅 Historique
-        </AppText>
-        <AppText variant="bodyMedium" style={styles.subtitle}>
-          Vos selles et calendrier
-        </AppText>
-      </View>
 
       {/* Liste des selles compacte */}
       <AppCard style={styles.stoolsCard}>
@@ -657,7 +648,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   dayCellEmpty: {
-    opacity: 0.5,
+    opacity: 0.7,
   },
   dayCellWithScore: {
     borderRadius: 10,
@@ -701,8 +692,9 @@ const styles = StyleSheet.create({
     fontSize: 26,
   },
   dayNumberEmpty: {
-    color: '#CBD5E1',
+    color: '#64748B',
     fontSize: 14,
+    fontWeight: '500',
   },
   legend: {
     flexDirection: 'row',
