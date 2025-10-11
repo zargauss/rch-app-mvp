@@ -1,18 +1,22 @@
 ﻿import React, { useMemo, useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import { Text, Button, Portal, Modal, Card, Switch, TextInput } from 'react-native-paper';
 import AppCard from '../components/ui/AppCard';
 import AppText from '../components/ui/AppText';
 import PrimaryButton from '../components/ui/PrimaryButton';
 import SecondaryButton from '../components/ui/SecondaryButton';
+import StatCard from '../components/ui/StatCard';
+import FloatingActionButton from '../components/ui/FloatingActionButton';
 import Slider from '@react-native-community/slider';
 import storage from '../utils/storage';
 import calculateLichtigerScore from '../utils/scoreCalculator';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { getSurveyDayKey } from '../utils/dayKey';
+import { useTheme } from 'react-native-paper';
 
 export default function HomeScreen() {
   const navigation = useNavigation();
+  const theme = useTheme();
   const [visible, setVisible] = useState(false);
   const [bristol, setBristol] = useState(4);
   const [hasBlood, setHasBlood] = useState(false);
@@ -297,37 +301,104 @@ export default function HomeScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.actionsRow}>
-        <PrimaryButton icon="plus" onPress={showModal} style={styles.actionButton}>
-          Enregistrer une selle
-        </PrimaryButton>
-        <SecondaryButton icon="check" onPress={navigateToSurvey} style={styles.actionButton}>
-          {surveyCompleted ? 'Modifier le bilan' : 'Compléter mon bilan du jour'}
-        </SecondaryButton>
-      </View>
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        {/* En-tête avec message d'accueil */}
+        <View style={styles.header}>
+          <AppText variant="displayLarge" style={styles.greeting}>
+            Bonjour 👋
+          </AppText>
+          <AppText variant="bodyLarge" style={styles.subGreeting}>
+            Comment vous sentez-vous aujourd'hui ?
+          </AppText>
+        </View>
 
-      <AppCard style={styles.card}>
-        <AppText variant="caption">Score de la veille</AppText>
-        <AppText variant="headline">{yesterdayScore == null ? 'N/A' : yesterdayScore}</AppText>
-      </AppCard>
+        {/* Cartes de résumé */}
+        <View style={styles.statsContainer}>
+          <StatCard
+            title="Score d'hier"
+            value={yesterdayScore !== null ? yesterdayScore : 'N/A'}
+            subtitle="Score de Lichtiger"
+            icon="📊"
+            color={yesterdayScore !== null ? (yesterdayScore < 5 ? 'success' : yesterdayScore <= 10 ? 'warning' : 'error') : 'info'}
+            trend={yesterdayScore !== null ? 'stable' : null}
+            trendValue={yesterdayScore !== null ? 'Stable' : null}
+          />
+          
+          <StatCard
+            title="Selles aujourd'hui"
+            value={dailyCount.toString()}
+            subtitle="Enregistrements"
+            icon="💩"
+            color="primary"
+          />
+          
+          <StatCard
+            title="Score du jour"
+            value={todayProvisionalScore !== null ? todayProvisionalScore : 'N/A'}
+            subtitle="Provisoire"
+            icon="📈"
+            color={todayProvisionalScore !== null ? (todayProvisionalScore < 5 ? 'success' : todayProvisionalScore <= 10 ? 'warning' : 'error') : 'info'}
+          />
+        </View>
 
-      <AppCard style={styles.card}>
-        <AppText variant="caption">Compteur de selles du jour</AppText>
-        <AppText variant="headline">{dailyCount}</AppText>
-      </AppCard>
+        {/* Actions principales */}
+        <View style={styles.actionsContainer}>
+          <AppCard style={styles.actionCard}>
+            <AppText variant="headlineLarge" style={styles.actionTitle}>
+              Actions du jour
+            </AppText>
+            
+            <View style={styles.actionButtons}>
+              <PrimaryButton
+                mode="contained"
+                onPress={showModal}
+                style={styles.primaryAction}
+                icon="plus"
+              >
+                Enregistrer une selle
+              </PrimaryButton>
+              
+              <SecondaryButton
+                mode="outlined"
+                onPress={navigateToSurvey}
+                style={styles.secondaryAction}
+                icon={surveyCompleted ? "check" : "clipboard-text"}
+                disabled={false}
+              >
+                {surveyCompleted ? "Modifier le bilan" : "Compléter le bilan"}
+              </SecondaryButton>
+            </View>
+          </AppCard>
+        </View>
 
-      <AppCard style={styles.card}>
-        <AppText variant="caption">Score du jour (provisoire)</AppText>
-        <AppText variant="headline">{todayProvisionalScore == null ? 'N/A' : todayProvisionalScore}</AppText>
-      </AppCard>
+        {/* Message d'encouragement */}
+        {dailyCount > 0 && (
+          <AppCard style={styles.encouragementCard}>
+            <View style={styles.encouragementContent}>
+              <AppText style={styles.encouragementIcon}>💪</AppText>
+              <AppText variant="bodyLarge" style={styles.encouragementText}>
+                Excellent ! Vous suivez bien votre santé. Continuez comme ça !
+              </AppText>
+            </View>
+          </AppCard>
+        )}
+      </ScrollView>
 
-      
+      {/* Bouton d'action flottant */}
+      <FloatingActionButton
+        onPress={showModal}
+        icon="+"
+        label="Ajouter"
+      />
 
+      {/* Modal d'enregistrement de selle */}
       <Portal>
         <Modal visible={visible} onDismiss={hideModal} contentContainerStyle={containerStyle}>
-          <AppCard>
-            <AppText variant="title">Nouvelle selle</AppText>
+          <AppCard style={styles.modalCard}>
+            <AppText variant="headlineLarge" style={styles.modalTitle}>
+              Nouvelle selle
+            </AppText>
             
             <View style={styles.dateTimeSection}>
               <AppText style={styles.fieldLabel}>Date et heure</AppText>
@@ -355,12 +426,12 @@ export default function HomeScreen() {
                   error={timeInput.length > 0 && !validateTime(timeInput)}
                 />
               </View>
-              <AppText variant="caption" style={styles.dateTimeHint}>
+              <AppText variant="labelSmall" style={styles.dateTimeHint}>
                 Format: Date DD/MM/YYYY, Heure HH:MM (24h)
               </AppText>
             </View>
 
-            <View>
+            <View style={styles.bristolSection}>
               <AppText style={styles.fieldLabel}>Consistance (Bristol)</AppText>
               <Slider
                 minimumValue={1}
@@ -368,16 +439,34 @@ export default function HomeScreen() {
                 step={1}
                 value={bristol}
                 onValueChange={setBristol}
+                style={styles.slider}
+                minimumTrackTintColor={theme.colors.primary}
+                maximumTrackTintColor={theme.colors.outline}
+                thumbStyle={{ backgroundColor: theme.colors.primary }}
               />
-              <AppText style={styles.bristolHint}>Sélection: {bristol} — {bristolDescriptions[bristol]}</AppText>
-              <View style={styles.row}>
-                <AppText>Présence de sang</AppText>
-                <Switch value={hasBlood} onValueChange={setHasBlood} style={styles.switch} />
+              <AppText variant="labelMedium" style={styles.bristolHint}>
+                Sélection: {bristol} — {bristolDescriptions[bristol]}
+              </AppText>
+            </View>
+
+            <View style={styles.bloodSection}>
+              <View style={styles.switchRow}>
+                <AppText variant="bodyLarge">Présence de sang</AppText>
+                <Switch 
+                  value={hasBlood} 
+                  onValueChange={setHasBlood}
+                  color={theme.colors.error}
+                />
               </View>
             </View>
+
             <View style={styles.modalActions}>
-              <Button onPress={hideModal} mode="text">Annuler</Button>
-              <PrimaryButton onPress={handleSave}>Enregistrer</PrimaryButton>
+              <SecondaryButton onPress={hideModal} style={styles.cancelButton}>
+                Annuler
+              </SecondaryButton>
+              <PrimaryButton onPress={handleSave} style={styles.saveButton}>
+                Enregistrer
+              </PrimaryButton>
             </View>
           </AppCard>
         </Modal>
@@ -389,62 +478,123 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16
   },
-  actionsRow: {
-    flexDirection: 'row',
+  scrollView: {
+    flex: 1,
+    paddingHorizontal: 20,
+  },
+  header: {
+    paddingTop: 20,
+    paddingBottom: 24,
+  },
+  greeting: {
+    color: '#1E293B',
+    marginBottom: 8,
+  },
+  subGreeting: {
+    color: '#64748B',
+  },
+  statsContainer: {
+    marginBottom: 24,
+  },
+  actionsContainer: {
+    marginBottom: 24,
+  },
+  actionCard: {
+    padding: 20,
+  },
+  actionTitle: {
+    color: '#1E293B',
+    marginBottom: 16,
+  },
+  actionButtons: {
     gap: 12,
-    marginBottom: 16
   },
-  actionButton: {
-    flex: 1
+  primaryAction: {
+    marginBottom: 8,
   },
-  addButton: {
-    marginTop: 16,
-    alignSelf: 'flex-start'
+  secondaryAction: {
+    marginBottom: 8,
   },
-  fieldLabel: {
-    marginBottom: 8
+  encouragementCard: {
+    backgroundColor: '#D1FAE5',
+    borderLeftWidth: 4,
+    borderLeftColor: '#10B981',
   },
-  row: {
-    marginTop: 12,
+  encouragementContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between'
+    padding: 16,
   },
-  bristolHint: {
-    marginTop: 6,
-    color: '#475569'
+  encouragementIcon: {
+    fontSize: 24,
+    marginRight: 12,
   },
-  switch: {
-    marginLeft: 12
+  encouragementText: {
+    flex: 1,
+    color: '#065F46',
   },
-  card: {
-    marginTop: 16
+  modalCard: {
+    padding: 24,
+    margin: 20,
+    maxHeight: '80%',
   },
-  modalActions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: 8,
-    marginTop: 16
+  modalTitle: {
+    color: '#1E293B',
+    marginBottom: 24,
+    textAlign: 'center',
   },
   dateTimeSection: {
-    marginBottom: 16
+    marginBottom: 24,
+  },
+  fieldLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 12,
   },
   dateTimeRow: {
     flexDirection: 'row',
-    gap: 8,
-    marginTop: 8
-  },
-  dateTimeButton: {
-    flex: 1
+    gap: 12,
   },
   dateTimeInput: {
-    flex: 1
+    flex: 1,
   },
   dateTimeHint: {
-    marginTop: 8,
     color: '#6B7280',
-    textAlign: 'center'
-  }
+    marginTop: 8,
+    fontStyle: 'italic',
+  },
+  bristolSection: {
+    marginBottom: 24,
+  },
+  slider: {
+    height: 40,
+    marginVertical: 12,
+  },
+  bristolHint: {
+    color: '#6B7280',
+    textAlign: 'center',
+    marginTop: 8,
+  },
+  bloodSection: {
+    marginBottom: 24,
+  },
+  switchRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  cancelButton: {
+    flex: 1,
+  },
+  saveButton: {
+    flex: 1,
+  },
 });

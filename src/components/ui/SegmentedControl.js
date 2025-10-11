@@ -1,0 +1,80 @@
+import React from 'react';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { useTheme } from 'react-native-paper';
+import AppText from './AppText';
+
+export default function SegmentedControl({ 
+  options, 
+  selectedValue, 
+  onValueChange, 
+  style 
+}) {
+  const theme = useTheme();
+
+  return (
+    <View style={[styles.container, style]}>
+      {options.map((option, index) => (
+        <TouchableOpacity
+          key={option.value}
+          style={[
+            styles.segment,
+            index === 0 && styles.firstSegment,
+            index === options.length - 1 && styles.lastSegment,
+            selectedValue === option.value && styles.selectedSegment,
+          ]}
+          onPress={() => onValueChange(option.value)}
+        >
+          <AppText
+            variant="labelMedium"
+            style={[
+              styles.segmentText,
+              selectedValue === option.value && styles.selectedText,
+            ]}
+          >
+            {option.label}
+          </AppText>
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    backgroundColor: '#F1F5F9',
+    borderRadius: 12,
+    padding: 4,
+  },
+  segment: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  firstSegment: {
+    borderTopLeftRadius: 8,
+    borderBottomLeftRadius: 8,
+  },
+  lastSegment: {
+    borderTopRightRadius: 8,
+    borderBottomRightRadius: 8,
+  },
+  selectedSegment: {
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  segmentText: {
+    color: '#64748B',
+    fontWeight: '500',
+  },
+  selectedText: {
+    color: '#2563EB',
+    fontWeight: '600',
+  },
+});
