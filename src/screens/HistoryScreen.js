@@ -1,15 +1,16 @@
 ﻿import React, { useEffect, useMemo, useState } from 'react';
-import { View, StyleSheet, FlatList, Alert, Platform } from 'react-native';
-import { Text, List, SegmentedButtons, Divider, IconButton, Portal, Modal, Button, Switch, TextInput } from 'react-native-paper';
-import CalendarMonth from '../components/CalendarMonth';
+import { View, StyleSheet, FlatList, Alert, Platform, TouchableOpacity, ScrollView } from 'react-native';
+import { IconButton, Portal, Modal, Switch } from 'react-native-paper';
 import storage from '../utils/storage';
 import calculateLichtigerScore from '../utils/scoreCalculator';
 import { useFocusEffect } from '@react-navigation/native';
 import AppText from '../components/ui/AppText';
-import { useTheme } from 'react-native-paper';
-import Slider from '@react-native-community/slider';
 import AppCard from '../components/ui/AppCard';
 import PrimaryButton from '../components/ui/PrimaryButton';
+import SecondaryButton from '../components/ui/SecondaryButton';
+import SegmentedControl from '../components/ui/SegmentedControl';
+import { useTheme } from 'react-native-paper';
+import Slider from '@react-native-community/slider';
 
 export default function HistoryScreen({ navigation }) {
   const [scores, setScores] = useState([]);
@@ -24,60 +25,53 @@ export default function HistoryScreen({ navigation }) {
   const [editTimeInput, setEditTimeInput] = useState('');
 
   useEffect(() => {
-    const histJson = storage.getString('scoresHistory');
-    const history = histJson ? JSON.parse(histJson) : [];
-    setScores(history);
+    loadData();
   }, []);
 
   useFocusEffect(
     React.useCallback(() => {
-      const stoolsJson = storage.getString('dailySells');
-      const entries = stoolsJson ? JSON.parse(stoolsJson) : [];
-      setStools(entries);
-      const histJson = storage.getString('scoresHistory');
-      const history = histJson ? JSON.parse(histJson) : [];
-      setScores(history);
+      loadData();
     }, [])
   );
 
+  const loadData = () => {
+    const stoolsJson = storage.getString('dailySells');
+    const entries = stoolsJson ? JSON.parse(stoolsJson) : [];
+    setStools(entries.sort((a, b) => b.timestamp - a.timestamp)); // Plus récent en premier
+    
+    const histJson = storage.getString('scoresHistory');
+    const history = histJson ? JSON.parse(histJson) : [];
+    setScores(history);
+  };
+
   const bristolDescriptions = useMemo(() => ({
-    1: 'Type 1 — Noix dures séparées (constipation sévère)',
-    2: 'Type 2 — Saucisse grumeleuse (constipation)',
-    3: 'Type 3 — Saucisse fissurée (normal)',
-    4: 'Type 4 — Saucisse lisse et molle (normal)',
-    5: 'Type 5 — Morceaux mous (tendance diarrhéique)',
-    6: 'Type 6 — Morceaux floconneux (diarrhée)',
-    7: 'Type 7 — Aqueux, sans morceaux (diarrhée sévère)'
+    1: 'Type 1 — Noix dures séparées',
+    2: 'Type 2 — Saucisse grumeleuse',
+    3: 'Type 3 — Saucisse fissurée',
+    4: 'Type 4 — Saucisse lisse',
+    5: 'Type 5 — Morceaux mous',
+    6: 'Type 6 — Morceaux floconneux',
+    7: 'Type 7 — Aqueux, sans morceaux'
   }), []);
 
-  const handleDeleteStool = (stoolId) => {
-    // Fonction compatible web et mobile
-    const confirmDelete = () => {
-      if (Platform.OS === 'web') {
-        return window.confirm('Êtes-vous sûr de vouloir supprimer cette entrée ?');
-      }
-      return true; // Sur mobile, on passe par Alert.alert
-    };
+  const bloodIcon = useMemo(() => '🩸', []);
 
+  const handleDeleteStool = (stoolId) => {
     const executeDelete = () => {
       const stoolsJson = storage.getString('dailySells');
       const allStools = stoolsJson ? JSON.parse(stoolsJson) : [];
       const updated = allStools.filter(s => s.id !== stoolId);
       storage.set('dailySells', JSON.stringify(updated));
       
-      // Mettre à jour l'état local immédiatement
       setStools(updated);
       
-      // Recalculer les scores pour les jours affectés
       const deletedStool = allStools.find(s => s.id === stoolId);
       if (deletedStool) {
         const date = new Date(deletedStool.timestamp);
         const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
         
-        // Recalculer le score pour ce jour
         const newScore = calculateLichtigerScore(dateStr, storage);
         
-        // Mettre à jour l'historique des scores
         const histJson = storage.getString('scoresHistory');
         const history = histJson ? JSON.parse(histJson) : [];
         const existingIndex = history.findIndex((h) => h.date === dateStr);
@@ -86,140 +80,53 @@ export default function HistoryScreen({ navigation }) {
           history[existingIndex].score = newScore;
           storage.set('scoresHistory', JSON.stringify(history));
         } else if (newScore === null && existingIndex >= 0) {
-          // Si plus de score, supprimer l'entrée
           history.splice(existingIndex, 1);
           storage.set('scoresHistory', JSON.stringify(history));
         }
         
-        // Recharger les scores
         setScores([...history]);
       }
     };
 
-    // Sur web, utiliser window.confirm directement
     if (Platform.OS === 'web') {
       if (window.confirm('Êtes-vous sûr de vouloir supprimer cette entrée ?')) {
         executeDelete();
       }
     } else {
-      // Sur mobile, utiliser Alert.alert
       Alert.alert(
         'Supprimer la selle',
         'Êtes-vous sûr de vouloir supprimer cette entrée ?',
         [
           { text: 'Annuler', style: 'cancel' },
-          { 
-            text: 'Supprimer', 
-            style: 'destructive',
-            onPress: executeDelete
-          }
+          { text: 'Supprimer', style: 'destructive', onPress: executeDelete }
         ]
       );
     }
   };
 
-  const bloodIcon = useMemo(() => '🩸', []);
-
   const handleEditStool = (stool) => {
     setEditingStool(stool);
-    const date = new Date(stool.timestamp);
-    setEditDateInput(date.toLocaleDateString('fr-FR'));
-    setEditTimeInput(date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }));
     setEditBristol(stool.bristolScale);
     setEditHasBlood(stool.hasBlood);
+    
+    const date = new Date(stool.timestamp);
+    const dateStr = date.toLocaleDateString('fr-FR');
+    const timeStr = date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    
+    setEditDateInput(dateStr);
+    setEditTimeInput(timeStr);
     setEditModalVisible(true);
   };
 
   const hideEditModal = () => {
     setEditModalVisible(false);
     setEditingStool(null);
-    setEditDateInput('');
-    setEditTimeInput('');
-    setEditBristol(4);
-    setEditHasBlood(false);
-  };
-
-  const formatDateInput = (text) => {
-    // Supprimer tout sauf les chiffres
-    const numbers = text.replace(/\D/g, '');
-    
-    // Limiter à 8 chiffres (DDMMYYYY)
-    const limited = numbers.slice(0, 8);
-    
-    // Formater avec les /
-    if (limited.length <= 2) {
-      return limited;
-    } else if (limited.length <= 4) {
-      return `${limited.slice(0, 2)}/${limited.slice(2)}`;
-    } else {
-      return `${limited.slice(0, 2)}/${limited.slice(2, 4)}/${limited.slice(4)}`;
-    }
-  };
-
-  const formatTimeInput = (text) => {
-    // Supprimer tout sauf les chiffres
-    const numbers = text.replace(/\D/g, '');
-    
-    // Limiter à 4 chiffres (HHMM)
-    const limited = numbers.slice(0, 4);
-    
-    // Formater avec le :
-    if (limited.length <= 2) {
-      return limited;
-    } else {
-      return `${limited.slice(0, 2)}:${limited.slice(2)}`;
-    }
-  };
-
-  const validateDate = (dateStr) => {
-    const parts = dateStr.split('/');
-    if (parts.length !== 3) return false;
-    
-    const day = parseInt(parts[0]);
-    const month = parseInt(parts[1]);
-    const year = parseInt(parts[2]);
-    
-    // Validation basique
-    if (day < 1 || day > 31) return false;
-    if (month < 1 || month > 12) return false;
-    if (year < 1900 || year > 2100) return false;
-    
-    // Validation avec Date
-    const date = new Date(year, month - 1, day);
-    return date.getDate() === day && date.getMonth() === month - 1 && date.getFullYear() === year;
-  };
-
-  const validateTime = (timeStr) => {
-    const parts = timeStr.split(':');
-    if (parts.length !== 2) return false;
-    
-    const hour = parseInt(parts[0]);
-    const minute = parseInt(parts[1]);
-    
-    return hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59;
   };
 
   const parseDateTime = (dateStr, timeStr) => {
-    try {
-      if (!validateDate(dateStr) || !validateTime(timeStr)) {
-        return new Date(); // Retourner la date actuelle si invalide
-      }
-
-      const [day, month, year] = dateStr.split('/');
-      const [hour, minute] = timeStr.split(':');
-      
-      const date = new Date(
-        parseInt(year),
-        parseInt(month) - 1, // Les mois commencent à 0
-        parseInt(day),
-        parseInt(hour),
-        parseInt(minute)
-      );
-      
-      return date;
-    } catch (error) {
-      return new Date(); // Retourner la date actuelle en cas d'erreur
-    }
+    const [day, month, year] = dateStr.split('/').map(Number);
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    return new Date(year, month - 1, day, hours, minutes);
   };
 
   const handleSaveEdit = () => {
@@ -238,206 +145,583 @@ export default function HistoryScreen({ navigation }) {
     const stools = stoolsJson ? JSON.parse(stoolsJson) : [];
     const updated = stools.map(s => s.id === editingStool.id ? updatedStool : s);
     storage.set('dailySells', JSON.stringify(updated));
-    setStools(updated);
+    setStools(updated.sort((a, b) => b.timestamp - a.timestamp));
     hideEditModal();
   };
 
-  return (
-    <View style={styles.container}>
-      <AppText variant="title" style={styles.title}>Historique des selles</AppText>
-      <FlatList
-        data={stools}
-        keyExtractor={(item) => item.id}
-        ItemSeparatorComponent={() => <Divider style={{ marginVertical: theme.spacing(0.5) }} />}
-        renderItem={({ item }) => {
-          const date = new Date(item.timestamp);
-          const d = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')} ${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`;
-          const title = `Bristol ${item.bristolScale}${item.hasBlood ? ' ' + bloodIcon : ''}`;
-          return (
-            <List.Item
-              title={<AppText variant="body">{title}</AppText>}
-              description={<AppText variant="caption">{d}</AppText>}
-              right={() => (
-                <View style={styles.actionButtons}>
-                  <IconButton
-                    icon="pencil"
-                    size={20}
-                    onPress={() => handleEditStool(item)}
-                  />
-                  <IconButton
-                    icon="delete"
-                    size={20}
-                    iconColor="#B00020"
-                    onPress={() => handleDeleteStool(item.id)}
-                  />
-                </View>
-              )}
-            />
-          );
-        }}
-      />
+  // Formatage de la date compacte
+  const formatCompactDate = (timestamp) => {
+    const date = new Date(timestamp);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
 
-      <AppText variant="title" style={styles.subtitle}>Calendrier (mois)</AppText>
-      <SegmentedButtons
-        value={calendarMode}
-        onValueChange={setCalendarMode}
-        buttons={[
-          { value: 'score', label: 'Score/jour' },
-          { value: 'bristol', label: 'Selles par Bristol' }
-        ]}
-        style={styles.toggle}
-      />
-      <CalendarMonth
-        renderDay={({ year, month, day }) => {
-          const dateStr = `${year}-${String(month + 1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-          if (calendarMode === 'score') {
-            const score = calculateLichtigerScore(dateStr, storage);
-            return (
-              <View>
-                <Text style={score == null ? styles.muted : undefined}>{day}</Text>
-                {score != null ? <Text>{`Score: ${score}`}</Text> : null}
-              </View>
-            );
-          }
-          const dayStart = new Date(dateStr + 'T00:00:00').getTime();
-          const dayEnd = dayStart + 24*60*60*1000;
-          const dayEntries = stools.filter(s => s.timestamp >= dayStart && s.timestamp < dayEnd);
-          const count = dayEntries.length;
-          return (
-            <View>
-              <Text style={count === 0 ? styles.muted : undefined}>{day}</Text>
-              {count > 0 ? <Text>{count}</Text> : null}
-            </View>
-          );
-        }}
-      />
+    const isToday = date.toDateString() === today.toDateString();
+    const isYesterday = date.toDateString() === yesterday.toDateString();
 
-      <Portal>
-        <Modal visible={editModalVisible} onDismiss={hideEditModal} contentContainerStyle={styles.modalContainer}>
-          <AppCard>
-            <AppText variant="title">Modifier la selle</AppText>
-            
-            <View style={styles.dateTimeSection}>
-              <AppText style={styles.fieldLabel}>Date et heure</AppText>
-              <View style={styles.dateTimeRow}>
-                <TextInput
-                  mode="outlined"
-                  label="Date (DD/MM/YYYY)"
-                  value={editDateInput}
-                  onChangeText={(text) => setEditDateInput(formatDateInput(text))}
-                  style={styles.dateTimeInput}
-                  placeholder="11/01/2025"
-                  keyboardType="numeric"
-                  maxLength={10}
-                  error={editDateInput.length > 0 && !validateDate(editDateInput)}
-                />
-                <TextInput
-                  mode="outlined"
-                  label="Heure (HH:MM)"
-                  value={editTimeInput}
-                  onChangeText={(text) => setEditTimeInput(formatTimeInput(text))}
-                  style={styles.dateTimeInput}
-                  placeholder="14:30"
-                  keyboardType="numeric"
-                  maxLength={5}
-                  error={editTimeInput.length > 0 && !validateTime(editTimeInput)}
-                />
-              </View>
-              <AppText variant="caption" style={styles.dateTimeHint}>
-                Format: Date DD/MM/YYYY, Heure HH:MM (24h)
+    const time = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+    
+    if (isToday) return `Aujourd'hui ${time}`;
+    if (isYesterday) return `Hier ${time}`;
+    
+    return `${date.getDate()}/${date.getMonth() + 1} ${time}`;
+  };
+
+  // Couleur selon le score Bristol
+  const getBristolColor = (bristol) => {
+    if (bristol <= 2) return '#6366F1'; // Bleu (constipation)
+    if (bristol <= 4) return '#10B981'; // Vert (normal)
+    if (bristol <= 5) return '#F59E0B'; // Orange (tendance)
+    return '#EF4444'; // Rouge (diarrhée)
+  };
+
+  // Rendu calendrier moderne
+  const renderModernCalendar = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startingDayOfWeek = firstDay.getDay();
+    
+    const days = [];
+    
+    // Jours vides avant le premier jour du mois
+    for (let i = 0; i < startingDayOfWeek; i++) {
+      days.push(null);
+    }
+    
+    // Jours du mois
+    for (let day = 1; day <= daysInMonth; day++) {
+      days.push(day);
+    }
+
+    const monthNames = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+    const dayNames = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
+
+    return (
+      <View style={styles.calendarContainer}>
+        <AppText variant="headlineLarge" style={styles.calendarMonth}>
+          {monthNames[month]} {year}
+        </AppText>
+
+        {/* En-têtes des jours */}
+        <View style={styles.calendarHeader}>
+          {dayNames.map((name, index) => (
+            <View key={index} style={styles.dayNameCell}>
+              <AppText variant="labelSmall" style={styles.dayName}>
+                {name}
               </AppText>
             </View>
+          ))}
+        </View>
 
-            <View>
-              <AppText style={styles.fieldLabel}>Consistance (Bristol)</AppText>
-              <Slider
-                minimumValue={1}
-                maximumValue={7}
-                step={1}
-                value={editBristol}
-                onValueChange={setEditBristol}
-              />
-              <AppText style={styles.bristolHint}>Sélection: {editBristol} — {bristolDescriptions[editBristol]}</AppText>
-              <View style={styles.row}>
-                <AppText>Présence de sang</AppText>
-                <Switch value={editHasBlood} onValueChange={setEditHasBlood} style={styles.switch} />
+        {/* Grille du calendrier */}
+        <View style={styles.calendarGrid}>
+          {days.map((day, index) => {
+            if (day === null) {
+              return <View key={`empty-${index}`} style={styles.dayCell} />;
+            }
+
+            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            
+            let cellContent = null;
+            let cellStyle = [styles.dayCell];
+            let hasData = false;
+
+            if (calendarMode === 'score') {
+              const score = calculateLichtigerScore(dateStr, storage);
+              if (score !== null) {
+                hasData = true;
+                let scoreColor = '#10B981';
+                if (score >= 7) scoreColor = '#EF4444';
+                else if (score >= 4) scoreColor = '#F59E0B';
+                
+                cellStyle.push(styles.dayCellWithData);
+                cellContent = (
+                  <View style={styles.dayCellContent}>
+                    <AppText variant="bodyLarge" style={[styles.dayNumber, { color: scoreColor }]}>
+                      {day}
+                    </AppText>
+                    <View style={[styles.scoreBadge, { backgroundColor: scoreColor }]}>
+                      <AppText variant="labelSmall" style={styles.scoreBadgeText}>
+                        {score}
+                      </AppText>
+                    </View>
+                  </View>
+                );
+              }
+            } else {
+              const dayStart = new Date(dateStr + 'T00:00:00').getTime();
+              const dayEnd = dayStart + 24 * 60 * 60 * 1000;
+              const dayEntries = stools.filter(s => s.timestamp >= dayStart && s.timestamp < dayEnd);
+              
+              if (dayEntries.length > 0) {
+                hasData = true;
+                cellStyle.push(styles.dayCellWithData);
+                cellContent = (
+                  <View style={styles.dayCellContent}>
+                    <AppText variant="bodyLarge" style={styles.dayNumber}>
+                      {day}
+                    </AppText>
+                    <AppText variant="labelSmall" style={styles.stoolCount}>
+                      {dayEntries.length} selle{dayEntries.length > 1 ? 's' : ''}
+                    </AppText>
+                  </View>
+                );
+              }
+            }
+
+            if (!hasData) {
+              cellStyle.push(styles.dayCellEmpty);
+              cellContent = (
+                <AppText variant="bodyMedium" style={styles.dayNumberEmpty}>
+                  {day}
+                </AppText>
+              );
+            }
+
+            return (
+              <View key={index} style={cellStyle}>
+                {cellContent}
+              </View>
+            );
+          })}
+        </View>
+      </View>
+    );
+  };
+
+  return (
+    <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
+      {/* En-tête */}
+      <View style={styles.header}>
+        <AppText variant="displayMedium" style={styles.title}>
+          📅 Historique
+        </AppText>
+        <AppText variant="bodyMedium" style={styles.subtitle}>
+          Vos selles et calendrier
+        </AppText>
+      </View>
+
+      {/* Liste des selles compacte */}
+      <AppCard style={styles.stoolsCard}>
+        <AppText variant="headlineLarge" style={styles.sectionTitle}>
+          Dernières selles
+        </AppText>
+        
+        {stools.length === 0 ? (
+          <View style={styles.emptyState}>
+            <AppText variant="bodyMedium" style={styles.emptyText}>
+              Aucune selle enregistrée
+            </AppText>
+          </View>
+        ) : (
+          <FlatList
+            data={stools.slice(0, 10)} // Limiter à 10 dernières
+            keyExtractor={(item) => item.id}
+            scrollEnabled={false}
+            renderItem={({ item }) => (
+              <View style={styles.stoolItem}>
+                <View style={styles.stoolMain}>
+                  <View style={[styles.bristolBadge, { backgroundColor: getBristolColor(item.bristolScale) }]}>
+                    <AppText variant="bodyLarge" style={styles.bristolNumber}>
+                      {item.bristolScale}
+                    </AppText>
+                  </View>
+                  <View style={styles.stoolInfo}>
+                    <AppText variant="bodyMedium" style={styles.stoolDate}>
+                      {formatCompactDate(item.timestamp)}
+                      {item.hasBlood && <AppText> {bloodIcon}</AppText>}
+                    </AppText>
+                  </View>
+                  <View style={styles.stoolActions}>
+                    <TouchableOpacity 
+                      onPress={() => handleEditStool(item)}
+                      style={styles.actionButton}
+                    >
+                      <AppText style={styles.actionIcon}>✏️</AppText>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      onPress={() => handleDeleteStool(item.id)}
+                      style={styles.actionButton}
+                    >
+                      <AppText style={styles.actionIcon}>🗑️</AppText>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            )}
+          />
+        )}
+      </AppCard>
+
+      {/* Calendrier moderne */}
+      <AppCard style={styles.calendarCard}>
+        <View style={styles.calendarHeaderSection}>
+          <AppText variant="headlineLarge" style={styles.sectionTitle}>
+            Calendrier du mois
+          </AppText>
+          <SegmentedControl
+            options={[
+              { value: 'score', label: 'Score' },
+              { value: 'bristol', label: 'Selles' }
+            ]}
+            selectedValue={calendarMode}
+            onValueChange={setCalendarMode}
+          />
+        </View>
+        
+        {renderModernCalendar()}
+
+        {/* Légende */}
+        <View style={styles.legend}>
+          {calendarMode === 'score' ? (
+            <>
+              <View style={styles.legendItem}>
+                <View style={[styles.legendDot, { backgroundColor: '#10B981' }]} />
+                <AppText variant="labelSmall" style={styles.legendText}>Excellent (0-3)</AppText>
+              </View>
+              <View style={styles.legendItem}>
+                <View style={[styles.legendDot, { backgroundColor: '#F59E0B' }]} />
+                <AppText variant="labelSmall" style={styles.legendText}>Acceptable (4-6)</AppText>
+              </View>
+              <View style={styles.legendItem}>
+                <View style={[styles.legendDot, { backgroundColor: '#EF4444' }]} />
+                <AppText variant="labelSmall" style={styles.legendText}>Préoccupant (7+)</AppText>
+              </View>
+            </>
+          ) : (
+            <AppText variant="labelSmall" style={styles.legendText}>
+              Le nombre indique les selles enregistrées ce jour
+            </AppText>
+          )}
+        </View>
+      </AppCard>
+
+      {/* Modal d'édition */}
+      <Portal>
+        <Modal visible={editModalVisible} onDismiss={hideEditModal} contentContainerStyle={styles.modalContainer}>
+          <AppCard style={styles.modalCard}>
+            <AppText variant="headlineLarge" style={styles.modalTitle}>
+              Modifier la selle
+            </AppText>
+
+            <View style={styles.modalContent}>
+              <AppText variant="bodyMedium" style={styles.inputLabel}>
+                Date et heure
+              </AppText>
+              <View style={styles.dateTimeRow}>
+                <View style={styles.dateTimeInput}>
+                  <AppText variant="labelSmall" style={styles.inputHelper}>Date (JJ/MM/AAAA)</AppText>
+                  <AppText variant="bodyLarge">{editDateInput}</AppText>
+                </View>
+                <View style={styles.dateTimeInput}>
+                  <AppText variant="labelSmall" style={styles.inputHelper}>Heure (HH:MM)</AppText>
+                  <AppText variant="bodyLarge">{editTimeInput}</AppText>
+                </View>
+              </View>
+
+              <AppText variant="bodyMedium" style={styles.inputLabel}>
+                Consistance (Bristol)
+              </AppText>
+              <View style={styles.sliderContainer}>
+                <Slider
+                  style={styles.slider}
+                  minimumValue={1}
+                  maximumValue={7}
+                  step={1}
+                  value={editBristol}
+                  onValueChange={setEditBristol}
+                  minimumTrackTintColor="#4A90E2"
+                  maximumTrackTintColor="#E2E8F0"
+                />
+                <AppText variant="headlineLarge" style={styles.bristolValue}>
+                  {Math.round(editBristol)}
+                </AppText>
+              </View>
+              <AppText variant="labelSmall" style={styles.bristolDesc}>
+                {bristolDescriptions[Math.round(editBristol)]}
+              </AppText>
+
+              <View style={styles.switchRow}>
+                <AppText variant="bodyMedium">Présence de sang</AppText>
+                <Switch value={editHasBlood} onValueChange={setEditHasBlood} />
               </View>
             </View>
+
             <View style={styles.modalActions}>
-              <Button onPress={hideEditModal} mode="text">Annuler</Button>
-              <PrimaryButton onPress={handleSaveEdit}>Modifier</PrimaryButton>
-            </View>
+              <SecondaryButton onPress={hideEditModal} style={styles.modalButton}>
+                Annuler
+              </SecondaryButton>
+              <PrimaryButton onPress={handleSaveEdit} style={styles.modalButton}>
+                Enregistrer
+              </PrimaryButton>
+    </View>
           </AppCard>
         </Modal>
       </Portal>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16
+    backgroundColor: '#F8FAFB',
+  },
+  scrollContent: {
+    paddingBottom: 100,
+  },
+  header: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 24,
   },
   title: {
-    marginBottom: 16
+    color: '#2D3748',
+    marginBottom: 6,
+    fontWeight: '700',
   },
   subtitle: {
-    marginTop: 24,
-    marginBottom: 12
+    color: '#718096',
   },
-  toggle: {
-    marginBottom: 12
+  stoolsCard: {
+    marginHorizontal: 20,
+    marginBottom: 24,
+    padding: 20,
   },
-  muted: {
-    color: '#94A3B8'
+  sectionTitle: {
+    color: '#2D3748',
+    marginBottom: 16,
+    fontWeight: '700',
   },
-  actionButtons: {
+  emptyState: {
+    paddingVertical: 32,
+    alignItems: 'center',
+  },
+  emptyText: {
+    color: '#94A3B8',
+  },
+  stoolItem: {
+    marginBottom: 12,
+  },
+  stoolMain: {
     flexDirection: 'row',
-    alignItems: 'center'
+    alignItems: 'center',
+    backgroundColor: '#F8FAFB',
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  bristolBadge: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  bristolNumber: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  stoolInfo: {
+    flex: 1,
+  },
+  stoolDate: {
+    color: '#475569',
+    fontWeight: '500',
+  },
+  stoolActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  actionButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  actionIcon: {
+    fontSize: 18,
+  },
+  calendarCard: {
+    marginHorizontal: 20,
+    marginBottom: 24,
+    padding: 20,
+  },
+  calendarHeaderSection: {
+    marginBottom: 20,
+  },
+  calendarContainer: {
+    marginBottom: 16,
+  },
+  calendarMonth: {
+    color: '#2D3748',
+    fontWeight: '700',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  calendarHeader: {
+    flexDirection: 'row',
+    marginBottom: 8,
+  },
+  dayNameCell: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  dayName: {
+    color: '#64748B',
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
+  calendarGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  dayCell: {
+    width: '14.28%',
+    aspectRatio: 1,
+    padding: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dayCellEmpty: {
+    opacity: 0.4,
+  },
+  dayCellWithData: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#E2E8F0',
+  },
+  dayCellContent: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dayNumber: {
+    color: '#2D3748',
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  dayNumberEmpty: {
+    color: '#CBD5E1',
+  },
+  scoreBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    minWidth: 20,
+  },
+  scoreBadgeText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 10,
+  },
+  stoolCount: {
+    color: '#64748B',
+    fontSize: 10,
+  },
+  legend: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#E2E8F0',
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  legendDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+  },
+  legendText: {
+    color: '#64748B',
   },
   modalContainer: {
-    margin: 16
+    padding: 20,
   },
-  dateTimeSection: {
-    marginBottom: 16
+  modalCard: {
+    maxWidth: 500,
+    alignSelf: 'center',
+    width: '100%',
   },
-  fieldLabel: {
-    marginBottom: 8
+  modalTitle: {
+    color: '#2D3748',
+    marginBottom: 20,
+    fontWeight: '700',
+  },
+  modalContent: {
+    marginBottom: 20,
+  },
+  inputLabel: {
+    color: '#475569',
+    marginBottom: 8,
+    fontWeight: '600',
   },
   dateTimeRow: {
     flexDirection: 'row',
-    gap: 8,
-    marginTop: 8
-  },
-  dateTimeButton: {
-    flex: 1
+    gap: 12,
+    marginBottom: 20,
   },
   dateTimeInput: {
-    flex: 1
+    flex: 1,
+    backgroundColor: '#F8FAFB',
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
-  dateTimeHint: {
-    marginTop: 8,
-    color: '#6B7280',
-    textAlign: 'center'
+  inputHelper: {
+    color: '#94A3B8',
+    marginBottom: 4,
   },
-  bristolHint: {
-    marginTop: 6,
-    color: '#475569'
-  },
-  row: {
-    marginTop: 12,
+  sliderContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between'
+    gap: 16,
+    marginBottom: 8,
   },
-  switch: {
-    marginLeft: 12
+  slider: {
+    flex: 1,
+  },
+  bristolValue: {
+    color: '#4A90E2',
+    fontWeight: '700',
+    minWidth: 40,
+    textAlign: 'center',
+  },
+  bristolDesc: {
+    color: '#64748B',
+    marginBottom: 20,
+  },
+  switchRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFB',
+    padding: 12,
+    borderRadius: 12,
   },
   modalActions: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: 8,
-    marginTop: 16
-  }
+    gap: 12,
+  },
+  modalButton: {
+    flex: 1,
+  },
 });
