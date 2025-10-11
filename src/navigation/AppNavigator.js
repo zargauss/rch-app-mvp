@@ -22,7 +22,20 @@ function MainTabs() {
         headerShown: true,
         tabBarActiveTintColor: theme.colors.primary,
         tabBarInactiveTintColor: '#94A3B8',
-        tabBarLabelStyle: { fontSize: 12 },
+        tabBarLabelStyle: { fontSize: 12, fontWeight: '500' },
+        tabBarStyle: {
+          height: 70,
+          paddingBottom: 12,
+          paddingTop: 8,
+          borderTopWidth: 1,
+          borderTopColor: '#E2E8F0',
+          backgroundColor: '#FFFFFF',
+          elevation: 8,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.05,
+          shadowRadius: 8,
+        },
         tabBarIcon: ({ color, size }) => {
           let iconName = 'home';
           if (route.name === 'Accueil') iconName = 'home';

@@ -419,13 +419,14 @@ export default function HomeScreen() {
 
       {/* Modal d'enregistrement de selle */}
       <Portal>
-        <Modal visible={visible} onDismiss={hideModal} contentContainerStyle={containerStyle}>
+        <Modal visible={visible} onDismiss={hideModal} contentContainerStyle={styles.modalContainer}>
           <AppCard style={styles.modalCard}>
-            <AppText variant="headlineLarge" style={styles.modalTitle}>
-              Nouvelle selle
-            </AppText>
-            
-            <View style={styles.dateTimeSection}>
+            <ScrollView showsVerticalScrollIndicator={false} style={styles.modalScroll}>
+              <AppText variant="headlineLarge" style={styles.modalTitle}>
+                Nouvelle selle
+              </AppText>
+              
+              <View style={styles.dateTimeSection}>
               <AppText style={styles.fieldLabel}>Date et heure</AppText>
               <View style={styles.dateTimeRow}>
                 <TextInput
@@ -485,14 +486,15 @@ export default function HomeScreen() {
               </View>
             </View>
 
-            <View style={styles.modalActions}>
-              <SecondaryButton onPress={hideModal} style={styles.cancelButton}>
-                Annuler
-              </SecondaryButton>
-              <PrimaryButton onPress={handleSave} style={styles.saveButton}>
-                Enregistrer
-              </PrimaryButton>
-            </View>
+              <View style={styles.modalActions}>
+                <SecondaryButton onPress={hideModal} style={styles.cancelButton}>
+                  Annuler
+                </SecondaryButton>
+                <PrimaryButton onPress={handleSave} style={styles.saveButton}>
+                  Enregistrer
+                </PrimaryButton>
+              </View>
+            </ScrollView>
           </AppCard>
         </Modal>
       </Portal>
@@ -664,10 +666,11 @@ const styles = StyleSheet.create({
     color: '#2D5A4A',
     fontWeight: '500',
   },
-  modalCard: {
-    padding: 28,
+  modalContainer: {
     margin: 20,
-    maxHeight: '80%',
+    maxHeight: '85%',
+  },
+  modalCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 24,
     borderWidth: 1,
@@ -677,6 +680,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 24,
     elevation: 8,
+    overflow: 'hidden',
+  },
+  modalScroll: {
+    padding: 28,
   },
   modalTitle: {
     color: '#2D3748',
@@ -737,16 +744,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: 16,
-    marginTop: 8,
+    marginTop: 24,
+    marginBottom: 8,
   },
   cancelButton: {
     flex: 1,
     borderRadius: 16,
-    paddingVertical: 4,
+    paddingVertical: 12,
+    minHeight: 56,
   },
   saveButton: {
     flex: 1,
     borderRadius: 16,
-    paddingVertical: 4,
+    paddingVertical: 12,
+    minHeight: 56,
   },
 });
