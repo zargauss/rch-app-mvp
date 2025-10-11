@@ -7,6 +7,8 @@ import StatCard from '../components/ui/StatCard';
 import SegmentedControl from '../components/ui/SegmentedControl';
 import TrendChart from '../components/charts/TrendChart';
 import TrendIndicator from '../components/charts/TrendIndicator';
+import ScoreDistribution from '../components/charts/ScoreDistribution';
+import PatternAnalysis from '../components/charts/PatternAnalysis';
 import { useTheme } from 'react-native-paper';
 import { useFocusEffect } from '@react-navigation/native';
 
@@ -156,7 +158,7 @@ export default function StatsScreen() {
               Évolution du Score
             </AppText>
             <AppText variant="bodyMedium" style={styles.chartSubtitle}>
-              Graphique interactif avec ligne de tendance
+              Graphique avec ligne de tendance
             </AppText>
             
             {Platform.OS === 'web' ? (
@@ -182,6 +184,19 @@ export default function StatsScreen() {
             <TrendIndicator 
               data={chartData.data} 
               period={chartData.validDays}
+            />
+          )}
+
+          {/* Répartition des scores (Histogramme) */}
+          {chartData.validDays >= 3 && (
+            <ScoreDistribution data={chartData.data} />
+          )}
+
+          {/* Analyse des patterns */}
+          {chartData.validDays >= 7 && (
+            <PatternAnalysis 
+              data={chartData.data} 
+              labels={chartData.labels}
             />
           )}
         </>
