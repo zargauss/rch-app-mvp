@@ -23,6 +23,9 @@ export default function HistoryScreen({ navigation }) {
   const [editHasBlood, setEditHasBlood] = useState(false);
   const [editDateInput, setEditDateInput] = useState('');
   const [editTimeInput, setEditTimeInput] = useState('');
+  
+  // État pour la navigation du calendrier (offset en mois par rapport au mois actuel)
+  const [calendarMonthOffset, setCalendarMonthOffset] = useState(0);
 
   useEffect(() => {
     loadData();
@@ -178,8 +181,10 @@ export default function HistoryScreen({ navigation }) {
   // Rendu calendrier moderne
   const renderModernCalendar = () => {
     const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth();
+    // Appliquer l'offset de mois
+    const targetDate = new Date(now.getFullYear(), now.getMonth() + calendarMonthOffset, 1);
+    const year = targetDate.getFullYear();
+    const month = targetDate.getMonth();
     
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
@@ -205,11 +210,39 @@ export default function HistoryScreen({ navigation }) {
     const monthNames = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
     const dayNames = ['L', 'M', 'M', 'J', 'V', 'S', 'D']; // Lundi à Dimanche
 
+    const isCurrentMonth = calendarMonthOffset === 0;
+
     return (
       <View style={styles.calendarContainer}>
-        <AppText variant="headlineLarge" style={styles.calendarMonth}>
-          {monthNames[month]} {year}
-        </AppText>
+        {/* En-tête avec navigation */}
+        <View style={styles.calendarMonthHeader}>
+          <TouchableOpacity 
+            onPress={() => setCalendarMonthOffset(calendarMonthOffset - 1)}
+            style={styles.monthNavButton}
+          >
+            <AppText style={styles.monthNavIcon}>←</AppText>
+          </TouchableOpacity>
+          
+          <View style={styles.monthTitleContainer}>
+            <AppText variant="headlineLarge" style={styles.calendarMonth}>
+              {monthNames[month]} {year}
+            </AppText>
+            {isCurrentMonth && (
+              <View style={styles.currentMonthBadge}>
+                <AppText variant="labelSmall" style={styles.currentMonthText}>
+                  Aujourd'hui
+                </AppText>
+              </View>
+            )}
+          </View>
+          
+          <TouchableOpacity 
+            onPress={() => setCalendarMonthOffset(calendarMonthOffset + 1)}
+            style={styles.monthNavButton}
+          >
+            <AppText style={styles.monthNavIcon}>→</AppText>
+          </TouchableOpacity>
+        </View>
 
         {/* En-têtes des jours */}
         <View style={styles.calendarHeader}>
@@ -568,11 +601,47 @@ const styles = StyleSheet.create({
   calendarContainer: {
     marginBottom: 16,
   },
+  calendarMonthHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+    paddingHorizontal: 8,
+  },
+  monthNavButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: '#F8FAFB',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  monthNavIcon: {
+    fontSize: 24,
+    color: '#4A90E2',
+    fontWeight: '700',
+  },
+  monthTitleContainer: {
+    flex: 1,
+    alignItems: 'center',
+  },
   calendarMonth: {
     color: '#2D3748',
     fontWeight: '700',
-    marginBottom: 16,
     textAlign: 'center',
+  },
+  currentMonthBadge: {
+    backgroundColor: '#4A90E2',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginTop: 6,
+  },
+  currentMonthText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
   },
   calendarHeader: {
     flexDirection: 'row',
