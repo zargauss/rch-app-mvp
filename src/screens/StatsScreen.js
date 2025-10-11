@@ -87,12 +87,19 @@ export default function StatsScreen() {
     <ScrollView style={[styles.container, { backgroundColor: theme.colors.background }]}>
       {/* En-tête */}
       <View style={styles.header}>
-        <AppText variant="displayLarge" style={styles.title}>
-          📊 Statistiques
-        </AppText>
-        <AppText variant="bodyLarge" style={styles.subtitle}>
-          Analysez l'évolution de votre santé
-        </AppText>
+        <View style={styles.headerTop}>
+          <View style={styles.titleSection}>
+            <AppText variant="displayMedium" style={styles.title}>
+              📊 Statistiques
+            </AppText>
+            <AppText variant="bodyMedium" style={styles.subtitle}>
+              Analysez l'évolution de votre santé
+            </AppText>
+          </View>
+          <View style={styles.menuIcon}>
+            <AppText style={styles.menuEmoji}>⋯</AppText>
+          </View>
+        </View>
       </View>
 
       {/* Sélecteur de période moderne */}
@@ -278,50 +285,92 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 20,
     paddingTop: 20,
-    paddingBottom: 24,
+    paddingBottom: 32,
+  },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  titleSection: {
+    flex: 1,
   },
   title: {
-    color: '#1E293B',
-    marginBottom: 8,
+    color: '#2D3748',
+    marginBottom: 6,
+    fontWeight: '700',
   },
   subtitle: {
-    color: '#64748B',
+    color: '#718096',
+    fontWeight: '400',
+  },
+  menuIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  menuEmoji: {
+    fontSize: 20,
+    color: '#718096',
   },
   periodSection: {
     paddingHorizontal: 20,
     marginBottom: 24,
   },
   sectionTitle: {
-    color: '#1E293B',
-    marginBottom: 16,
+    color: '#2D3748',
+    marginBottom: 20,
+    fontWeight: '600',
   },
   periodSelector: {
     marginBottom: 8,
   },
   statsGrid: {
     paddingHorizontal: 20,
-    marginBottom: 24,
+    marginBottom: 32,
   },
   chartCard: {
     marginHorizontal: 20,
-    marginBottom: 24,
-    padding: 20,
+    marginBottom: 32,
+    padding: 24,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   chartTitle: {
-    color: '#1E293B',
-    marginBottom: 20,
+    color: '#2D3748',
+    marginBottom: 24,
     textAlign: 'center',
+    fontWeight: '600',
   },
   webChartContainer: {
     alignItems: 'center',
   },
   pointsChart: {
     width: '100%',
-    height: 200,
+    height: 220,
     position: 'relative',
-    backgroundColor: '#F8FAFC',
-    borderRadius: 12,
-    marginTop: 16,
+    backgroundColor: '#F8FAFB',
+    borderRadius: 16,
+    marginTop: 20,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   chartPoint: {
     position: 'absolute',
@@ -391,66 +440,83 @@ const styles = StyleSheet.create({
   },
   nativeChartPlaceholder: {
     alignItems: 'center',
-    padding: 40,
-    backgroundColor: '#F8FAFC',
-    borderRadius: 12,
+    padding: 48,
+    backgroundColor: '#F8FAFB',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   placeholderText: {
-    color: '#64748B',
+    color: '#718096',
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: 12,
+    fontWeight: '500',
   },
   placeholderSubtext: {
-    color: '#94A3B8',
+    color: '#A0AEC0',
     textAlign: 'center',
+    fontWeight: '400',
   },
   noDataContainer: {
     alignItems: 'center',
-    padding: 40,
-    backgroundColor: '#F8FAFC',
-    borderRadius: 12,
+    padding: 48,
+    backgroundColor: '#F8FAFB',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   noDataIcon: {
-    fontSize: 48,
-    marginBottom: 16,
+    fontSize: 56,
+    marginBottom: 20,
   },
   noDataText: {
-    color: '#64748B',
+    color: '#718096',
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: 12,
+    fontWeight: '600',
   },
   noDataSubtext: {
-    color: '#94A3B8',
+    color: '#A0AEC0',
     textAlign: 'center',
+    fontWeight: '400',
   },
   trendCard: {
     marginHorizontal: 20,
-    marginBottom: 24,
-    padding: 20,
-    backgroundColor: '#F0F9FF',
-    borderLeftWidth: 4,
-    borderLeftColor: '#2563EB',
+    marginBottom: 32,
+    padding: 24,
+    backgroundColor: '#E8F4FD',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#4A90E2',
+    shadowColor: '#4A90E2',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 2,
   },
   trendContent: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   trendIcon: {
-    fontSize: 32,
-    marginRight: 16,
+    fontSize: 36,
+    marginRight: 20,
   },
   trendText: {
     flex: 1,
   },
   trendTitle: {
-    color: '#1E293B',
-    marginBottom: 8,
+    color: '#2D3748',
+    marginBottom: 12,
+    fontWeight: '600',
   },
   trendDescription: {
     fontWeight: '600',
-    marginBottom: 4,
+    marginBottom: 8,
+    fontSize: 16,
   },
   trendDetails: {
-    color: '#64748B',
+    color: '#718096',
+    fontWeight: '400',
   },
 });

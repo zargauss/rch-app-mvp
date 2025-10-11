@@ -46,14 +46,12 @@ export default function StatCard({
   };
 
   return (
-    <Card style={[styles.card, style]} elevation={1}>
+    <Card style={[styles.card, style]} elevation={0}>
       <Card.Content style={styles.content}>
         <View style={styles.header}>
-          {icon && (
-            <View style={[styles.iconContainer, { backgroundColor: getColor() + '20' }]}>
-              <AppText style={[styles.icon, { color: getColor() }]}>{icon}</AppText>
-            </View>
-          )}
+          <View style={[styles.iconContainer, { backgroundColor: getColor() + '15' }]}>
+            <AppText style={[styles.icon, { color: getColor() }]}>{icon}</AppText>
+          </View>
           <View style={styles.headerText}>
             <AppText variant="labelMedium" style={styles.title}>{title}</AppText>
             {trend && trendValue && (
@@ -86,7 +84,15 @@ export default function StatCard({
 const styles = StyleSheet.create({
   card: {
     marginBottom: 16,
-    borderRadius: 16,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   content: {
     padding: 20,
@@ -94,34 +100,35 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 16,
   },
   iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: 16,
   },
   icon: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: '600',
   },
   headerText: {
     flex: 1,
   },
   title: {
-    color: '#64748B',
-    marginBottom: 4,
+    color: '#718096',
+    marginBottom: 6,
+    fontWeight: '500',
   },
   trendContainer: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   trendIcon: {
-    fontSize: 14,
-    marginRight: 4,
+    fontSize: 16,
+    marginRight: 6,
     fontWeight: '600',
   },
   trendText: {
@@ -131,8 +138,11 @@ const styles = StyleSheet.create({
   value: {
     fontWeight: '700',
     marginBottom: 8,
+    fontSize: 36,
+    lineHeight: 44,
   },
   subtitle: {
-    color: '#94A3B8',
+    color: '#A0AEC0',
+    fontWeight: '400',
   },
 });

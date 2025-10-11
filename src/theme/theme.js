@@ -2,39 +2,44 @@
 import { Platform } from 'react-native';
 
 const palette = {
-  // Couleur primaire - Bleu médical apaisant
-  primary: '#2563EB', // Bleu professionnel et rassurant
-  primaryContainer: '#E0E7FF', // Fond bleu très clair
+  // Couleur primaire - Bleu doux et apaisant
+  primary: '#4A90E2', // Bleu doux moderne
+  primaryContainer: '#E8F4FD', // Fond bleu très clair
   
-  // Couleur secondaire - Vert pour les tendances positives
-  secondary: '#059669', // Vert émeraude pour les améliorations
-  secondaryContainer: '#D1FAE5', // Fond vert très clair
+  // Couleur secondaire - Orange/Vert doux pour les accents
+  secondary: '#FF6B6B', // Rouge doux pour les alertes
+  secondaryContainer: '#FFE8E8', // Fond rouge très clair
   
-  // Couleurs sémantiques
-  success: '#10B981', // Vert pour les tendances positives
-  warning: '#F59E0B', // Orange pour les avertissements
-  error: '#EF4444', // Rouge pour les alertes
-  info: '#3B82F6', // Bleu pour les informations
+  // Couleurs sémantiques douces
+  success: '#4ECDC4', // Vert menthe doux
+  warning: '#FFB347', // Orange doux
+  error: '#FF6B6B', // Rouge doux
+  info: '#4A90E2', // Bleu doux
   
-  // Fonds et surfaces
-  background: '#FAFAFA', // Blanc cassé très doux
+  // Fonds et surfaces - Tons très doux
+  background: '#F8FAFB', // Gris très clair, presque blanc
   surface: '#FFFFFF', // Blanc pur pour les cartes
-  surfaceVariant: '#F8FAFC', // Gris très léger pour les variantes
+  surfaceVariant: '#F1F5F9', // Gris très léger pour les variantes
   
-  // Texte
+  // Texte - Tons doux mais lisibles
   onPrimary: '#FFFFFF',
   onSecondary: '#FFFFFF',
-  onBackground: '#1E293B', // Gris foncé pour le texte principal
-  onSurface: '#334155', // Gris moyen pour le texte sur surface
-  onSurfaceVariant: '#64748B', // Gris clair pour le texte secondaire
+  onBackground: '#2D3748', // Gris foncé doux
+  onSurface: '#4A5568', // Gris moyen doux
+  onSurfaceVariant: '#718096', // Gris clair doux
   
-  // Bordures et séparateurs
+  // Bordures et séparateurs - Très subtils
   outline: '#E2E8F0', // Gris très clair pour les bordures
-  outlineVariant: '#F1F5F9', // Encore plus clair
+  outlineVariant: '#F7FAFC', // Encore plus clair
   
   // États spéciaux
-  disabled: '#94A3B8', // Gris pour les éléments désactivés
-  placeholder: '#9CA3AF', // Gris pour les placeholders
+  disabled: '#A0AEC0', // Gris pour les éléments désactivés
+  placeholder: '#CBD5E0', // Gris pour les placeholders
+  
+  // Couleurs d'accent pour les cartes
+  cardBackground: '#FFFFFF',
+  cardBorder: '#E2E8F0',
+  cardShadow: 'rgba(0, 0, 0, 0.05)',
 };
 
 const systemFont = Platform.select({ ios: 'System', android: 'sans-serif', default: 'System' });

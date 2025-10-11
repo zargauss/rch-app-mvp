@@ -305,12 +305,24 @@ export default function HomeScreen() {
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* En-tête avec message d'accueil */}
         <View style={styles.header}>
-          <AppText variant="displayLarge" style={styles.greeting}>
-            Bonjour 👋
-          </AppText>
-          <AppText variant="bodyLarge" style={styles.subGreeting}>
-            Comment vous sentez-vous aujourd'hui ?
-          </AppText>
+          <View style={styles.headerTop}>
+            <View style={styles.profileSection}>
+              <View style={styles.profileIcon}>
+                <AppText style={styles.profileEmoji}>👤</AppText>
+              </View>
+              <View style={styles.greetingSection}>
+                <AppText variant="displayMedium" style={styles.greeting}>
+                  Bonjour !
+                </AppText>
+                <AppText variant="bodyMedium" style={styles.subGreeting}>
+                  Comment vous sentez-vous aujourd'hui ?
+                </AppText>
+              </View>
+            </View>
+            <View style={styles.notificationIcon}>
+              <AppText style={styles.bellIcon}>🔔</AppText>
+            </View>
+          </View>
         </View>
 
         {/* Cartes de résumé */}
@@ -485,14 +497,62 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingTop: 20,
-    paddingBottom: 24,
+    paddingBottom: 32,
+    paddingHorizontal: 20,
+  },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  profileSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  profileIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#E8F4FD',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+  },
+  profileEmoji: {
+    fontSize: 24,
+  },
+  greetingSection: {
+    flex: 1,
   },
   greeting: {
-    color: '#1E293B',
-    marginBottom: 8,
+    color: '#2D3748',
+    marginBottom: 4,
+    fontWeight: '700',
   },
   subGreeting: {
-    color: '#64748B',
+    color: '#718096',
+    fontWeight: '400',
+  },
+  notificationIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  bellIcon: {
+    fontSize: 20,
   },
   statsContainer: {
     marginBottom: 24,
@@ -501,48 +561,79 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   actionCard: {
-    padding: 20,
+    padding: 24,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   actionTitle: {
-    color: '#1E293B',
-    marginBottom: 16,
+    color: '#2D3748',
+    marginBottom: 20,
+    fontWeight: '600',
   },
   actionButtons: {
-    gap: 12,
+    gap: 16,
   },
   primaryAction: {
     marginBottom: 8,
+    borderRadius: 16,
+    paddingVertical: 4,
   },
   secondaryAction: {
     marginBottom: 8,
+    borderRadius: 16,
+    paddingVertical: 4,
   },
   encouragementCard: {
-    backgroundColor: '#D1FAE5',
-    borderLeftWidth: 4,
-    borderLeftColor: '#10B981',
+    backgroundColor: '#E8F8F5',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#4ECDC4',
+    shadowColor: '#4ECDC4',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 2,
   },
   encouragementContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    padding: 20,
   },
   encouragementIcon: {
-    fontSize: 24,
-    marginRight: 12,
+    fontSize: 28,
+    marginRight: 16,
   },
   encouragementText: {
     flex: 1,
-    color: '#065F46',
+    color: '#2D5A4A',
+    fontWeight: '500',
   },
   modalCard: {
-    padding: 24,
+    padding: 28,
     margin: 20,
     maxHeight: '80%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 24,
+    elevation: 8,
   },
   modalTitle: {
-    color: '#1E293B',
-    marginBottom: 24,
+    color: '#2D3748',
+    marginBottom: 28,
     textAlign: 'center',
+    fontWeight: '700',
   },
   dateTimeSection: {
     marginBottom: 24,
@@ -550,51 +641,63 @@ const styles = StyleSheet.create({
   fieldLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#374151',
-    marginBottom: 12,
+    color: '#4A5568',
+    marginBottom: 16,
   },
   dateTimeRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 16,
   },
   dateTimeInput: {
     flex: 1,
+    backgroundColor: '#F8FAFB',
+    borderRadius: 16,
   },
   dateTimeHint: {
-    color: '#6B7280',
-    marginTop: 8,
+    color: '#A0AEC0',
+    marginTop: 12,
     fontStyle: 'italic',
+    textAlign: 'center',
   },
   bristolSection: {
-    marginBottom: 24,
+    marginBottom: 28,
   },
   slider: {
-    height: 40,
-    marginVertical: 12,
+    height: 48,
+    marginVertical: 16,
   },
   bristolHint: {
-    color: '#6B7280',
+    color: '#718096',
     textAlign: 'center',
-    marginTop: 8,
+    marginTop: 12,
+    fontWeight: '500',
   },
   bloodSection: {
-    marginBottom: 24,
+    marginBottom: 28,
   },
   switchRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: '#F8FAFB',
+    borderRadius: 16,
   },
   modalActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: 12,
+    gap: 16,
+    marginTop: 8,
   },
   cancelButton: {
     flex: 1,
+    borderRadius: 16,
+    paddingVertical: 4,
   },
   saveButton: {
     flex: 1,
+    borderRadius: 16,
+    paddingVertical: 4,
   },
 });
