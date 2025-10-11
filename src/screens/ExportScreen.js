@@ -7,6 +7,7 @@ import AppText from '../components/ui/AppText';
 import AppCard from '../components/ui/AppCard';
 import PrimaryButton from '../components/ui/PrimaryButton';
 import { useTheme } from 'react-native-paper';
+import { useFocusEffect } from '@react-navigation/native';
 
 export default function ExportScreen() {
   const [scores, setScores] = useState([]);
@@ -19,6 +20,13 @@ export default function ExportScreen() {
   useEffect(() => {
     loadData();
   }, []);
+
+  // Recharger les données à chaque fois qu'on navigue vers cet écran
+  useFocusEffect(
+    React.useCallback(() => {
+      loadData();
+    }, [])
+  );
 
   const loadData = () => {
     // Charger les scores

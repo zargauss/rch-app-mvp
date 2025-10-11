@@ -6,6 +6,7 @@ import AppCard from '../components/ui/AppCard';
 import StatCard from '../components/ui/StatCard';
 import SegmentedControl from '../components/ui/SegmentedControl';
 import { useTheme } from 'react-native-paper';
+import { useFocusEffect } from '@react-navigation/native';
 
 export default function StatsScreen() {
   const [scores, setScores] = useState([]);
@@ -16,11 +17,21 @@ export default function StatsScreen() {
     loadScores();
   }, []);
 
+  // Recharger les données à chaque fois qu'on navigue vers cet écran
+  useFocusEffect(
+    React.useCallback(() => {
+      loadScores();
+    }, [])
+  );
+
   const loadScores = () => {
     const json = storage.getString('scoresHistory');
     if (json) {
       const history = JSON.parse(json);
       setScores(history);
+    } else {
+      // Si pas de données, initialiser avec un tableau vide
+      setScores([]);
     }
   };
 

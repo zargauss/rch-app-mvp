@@ -47,7 +47,7 @@ export default function SettingsScreen() {
               console.log('scoresHistory:', scoresHistory);
               
               if (dailySells === '[]' && dailySurvey === '{}' && scoresHistory === '[]') {
-                Alert.alert('Succès', 'Toutes les données ont été effacées avec succès.');
+                Alert.alert('Succès', 'Toutes les données ont été effacées avec succès. Les écrans se mettront à jour automatiquement.');
               } else {
                 Alert.alert('Attention', 'Certaines données n\'ont pas pu être effacées.');
               }
@@ -69,7 +69,7 @@ export default function SettingsScreen() {
       try {
         window.localStorage.clear();
         console.log('localStorage effacé manuellement');
-        Alert.alert('Succès', 'localStorage effacé manuellement via window.localStorage.clear()');
+        Alert.alert('Succès', 'localStorage effacé manuellement. Les écrans se mettront à jour automatiquement.');
       } catch (error) {
         console.error('Erreur localStorage:', error);
         Alert.alert('Erreur', `Erreur localStorage: ${error.message}`);
