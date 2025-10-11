@@ -29,6 +29,15 @@ export default function ExportScreen() {
     }, [])
   );
 
+  // Recharger les données périodiquement pour capturer les changements
+  useEffect(() => {
+    const interval = setInterval(() => {
+      loadData();
+    }, 2000); // Recharger toutes les 2 secondes
+
+    return () => clearInterval(interval);
+  }, []);
+
   const loadData = () => {
     // Charger les scores
     const histJson = storage.getString('scoresHistory');
@@ -191,6 +200,11 @@ export default function ExportScreen() {
       // Récupérer les données du bilan quotidien
       const surveyKey = getSurveyDayKey(new Date(score.date), 7);
       const survey = filteredSurveys[surveyKey];
+      
+      // Debug: afficher les clés disponibles
+      console.log('Export - Date:', score.date, 'SurveyKey:', surveyKey);
+      console.log('Export - Available survey keys:', Object.keys(filteredSurveys));
+      console.log('Export - Found survey:', survey);
       
       const painLevel = survey?.abdominalPain || 'N/A';
       const generalState = survey?.generalState || 'N/A';

@@ -24,6 +24,15 @@ export default function StatsScreen() {
     }, [])
   );
 
+  // Recharger les données périodiquement pour capturer les changements
+  useEffect(() => {
+    const interval = setInterval(() => {
+      loadScores();
+    }, 2000); // Recharger toutes les 2 secondes
+
+    return () => clearInterval(interval);
+  }, []);
+
   const loadScores = () => {
     const json = storage.getString('scoresHistory');
     if (json) {
