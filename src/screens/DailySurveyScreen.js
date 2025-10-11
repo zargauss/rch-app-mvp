@@ -22,6 +22,7 @@ export default function DailySurveyScreen() {
   const [antidiarrheal, setAntidiarrheal] = useState('non');
   const [alreadySubmitted, setAlreadySubmitted] = useState(false);
   const [dirty, setDirty] = useState(false);
+  const [initialValues, setInitialValues] = useState(null);
 
   const todayKey = useMemo(() => getTodayKey(), []);
 
@@ -39,9 +40,35 @@ export default function DailySurveyScreen() {
         if (typeof s.abdominalPain === 'string') setAbdominalPain(painMap[s.abdominalPain] ?? 0);
         if (typeof s.generalState === 'string') setGeneralState(generalMap[s.generalState] ?? 2);
         setAntidiarrheal(s.antidiarrheal);
+        
+        // Sauvegarder les valeurs initiales pour détecter les changements
+        setInitialValues({
+          fecalIncontinence: s.fecalIncontinence,
+          abdominalPain: painMap[s.abdominalPain] ?? 0,
+          generalState: generalMap[s.generalState] ?? 2,
+          antidiarrheal: s.antidiarrheal
+        });
+      } else {
+        // Première fois - pas de données existantes
+        setAlreadySubmitted(false);
+        setInitialValues(null);
+        setDirty(false);
       }
     }
   }, [todayKey]);
+
+  // Fonction pour détecter si des changements ont été faits
+  const hasChanges = () => {
+    if (!alreadySubmitted) return true; // Première fois, toujours activé
+    if (!initialValues) return true; // Pas de valeurs initiales, activé
+    
+    return (
+      fecalIncontinence !== initialValues.fecalIncontinence ||
+      abdominalPain !== initialValues.abdominalPain ||
+      generalState !== initialValues.generalState ||
+      antidiarrheal !== initialValues.antidiarrheal
+    );
+  };
 
   const handleSave = () => {
     const json = storage.getString('dailySurvey');
@@ -72,7 +99,6 @@ export default function DailySurveyScreen() {
       }
     }
     
-    setDirty(false);
     navigation.goBack();
   };
 
@@ -82,7 +108,7 @@ export default function DailySurveyScreen() {
 
       <AppCard style={styles.block}>
       <AppText style={styles.question}>Incontinence fécale</AppText>
-      <RadioButton.Group onValueChange={(v)=>{setFecalIncontinence(v); setDirty(true);}} value={fecalIncontinence}>
+      <RadioButton.Group onValueChange={setFecalIncontinence} value={fecalIncontinence}>
         <View style={styles.row}><RadioButton value="oui" /><AppText>Oui</AppText></View>
         <View style={styles.row}><RadioButton value="non" /><AppText>Non</AppText></View>
       </RadioButton.Group>
@@ -90,25 +116,35 @@ export default function DailySurveyScreen() {
 
       <AppCard style={styles.block}>
       <AppText style={styles.question}>Douleurs abdominales</AppText>
-      <Slider minimumValue={0} maximumValue={3} step={1} value={abdominalPain} onValueChange={(v)=>{setAbdominalPain(v); setDirty(true);}} />
-      <AppText>Intensité: {['Aucune','Légères','Moyennes','Intenses'][abdominalPain]}</AppText>
+      <RadioButton.Group onValueChange={(value) => setAbdominalPain(parseInt(value))} value={abdominalPain.toString()}>
+        <View style={styles.radioRow}><RadioButton value="0" /><AppText>Aucune</AppText></View>
+        <View style={styles.radioRow}><RadioButton value="1" /><AppText>Légères</AppText></View>
+        <View style={styles.radioRow}><RadioButton value="2" /><AppText>Moyennes</AppText></View>
+        <View style={styles.radioRow}><RadioButton value="3" /><AppText>Intenses</AppText></View>
+      </RadioButton.Group>
       </AppCard>
 
       <AppCard style={styles.block}>
       <AppText style={styles.question}>État général</AppText>
-      <Slider minimumValue={0} maximumValue={5} step={1} value={generalState} onValueChange={(v)=>{setGeneralState(v); setDirty(true);}} />
-      <AppText>Niveau: {['Parfait','Très bon','Bon','Moyen','Mauvais','Très mauvais'][generalState]}</AppText>
+      <RadioButton.Group onValueChange={(value) => setGeneralState(parseInt(value))} value={generalState.toString()}>
+        <View style={styles.radioRow}><RadioButton value="0" /><AppText>Parfait</AppText></View>
+        <View style={styles.radioRow}><RadioButton value="1" /><AppText>Très bon</AppText></View>
+        <View style={styles.radioRow}><RadioButton value="2" /><AppText>Bon</AppText></View>
+        <View style={styles.radioRow}><RadioButton value="3" /><AppText>Moyen</AppText></View>
+        <View style={styles.radioRow}><RadioButton value="4" /><AppText>Mauvais</AppText></View>
+        <View style={styles.radioRow}><RadioButton value="5" /><AppText>Très mauvais</AppText></View>
+      </RadioButton.Group>
       </AppCard>
 
       <AppCard style={styles.block}>
       <AppText style={styles.question}>Prise d'un antidiarrhéique</AppText>
       <View style={styles.row}>
         <AppText>Oui</AppText>
-        <Switch value={antidiarrheal === 'oui'} onValueChange={(v)=>{setAntidiarrheal(v ? 'oui' : 'non'); setDirty(true);}} />
+        <Switch value={antidiarrheal === 'oui'} onValueChange={(v)=>setAntidiarrheal(v ? 'oui' : 'non')} />
       </View>
       </AppCard>
 
-      <PrimaryButton onPress={handleSave} disabled={!dirty} style={styles.save}>
+      <PrimaryButton onPress={handleSave} disabled={!hasChanges()} style={styles.save}>
         Enregistrer mon bilan
       </PrimaryButton>
       {alreadySubmitted ? <Text style={styles.info}>Bilan déjà enregistré aujourd'hui (modifications possibles).</Text> : null}
@@ -132,6 +168,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8
+  },
+  radioRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8
   },
   save: {
     marginTop: 24,

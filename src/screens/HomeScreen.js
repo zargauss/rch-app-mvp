@@ -325,6 +325,38 @@ export default function HomeScreen() {
           </View>
         </View>
 
+        {/* Actions principales - Mises en avant */}
+        <View style={styles.mainActionsContainer}>
+          <AppCard style={styles.mainActionCard}>
+            <AppText variant="headlineLarge" style={styles.mainActionTitle}>
+              Actions importantes du jour
+            </AppText>
+            
+            <View style={styles.mainActionButtons}>
+              <PrimaryButton
+                mode="contained"
+                onPress={showModal}
+                style={styles.mainPrimaryAction}
+                icon="plus"
+                buttonColor="#4ECDC4"
+              >
+                Enregistrer une selle
+              </PrimaryButton>
+              
+              <PrimaryButton
+                mode="contained"
+                onPress={navigateToSurvey}
+                style={styles.mainSecondaryAction}
+                icon={surveyCompleted ? "check" : "clipboard-text"}
+                buttonColor="#4A90E2"
+                disabled={false}
+              >
+                {surveyCompleted ? "Modifier le bilan" : "Compléter le bilan"}
+              </PrimaryButton>
+            </View>
+          </AppCard>
+        </View>
+
         {/* Cartes de résumé */}
         <View style={styles.statsContainer}>
           <StatCard
@@ -354,35 +386,6 @@ export default function HomeScreen() {
           />
         </View>
 
-        {/* Actions principales */}
-        <View style={styles.actionsContainer}>
-          <AppCard style={styles.actionCard}>
-            <AppText variant="headlineLarge" style={styles.actionTitle}>
-              Actions du jour
-            </AppText>
-            
-            <View style={styles.actionButtons}>
-              <PrimaryButton
-                mode="contained"
-                onPress={showModal}
-                style={styles.primaryAction}
-                icon="plus"
-              >
-                Enregistrer une selle
-              </PrimaryButton>
-              
-              <SecondaryButton
-                mode="outlined"
-                onPress={navigateToSurvey}
-                style={styles.secondaryAction}
-                icon={surveyCompleted ? "check" : "clipboard-text"}
-                disabled={false}
-              >
-                {surveyCompleted ? "Modifier le bilan" : "Compléter le bilan"}
-              </SecondaryButton>
-            </View>
-          </AppCard>
-        </View>
 
         {/* Message d'encouragement */}
         {dailyCount > 0 && (
@@ -556,6 +559,42 @@ const styles = StyleSheet.create({
   },
   statsContainer: {
     marginBottom: 24,
+  },
+  mainActionsContainer: {
+    marginBottom: 32,
+  },
+  mainActionCard: {
+    padding: 28,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    borderWidth: 2,
+    borderColor: '#4A90E2',
+    shadowColor: '#4A90E2',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  mainActionTitle: {
+    color: '#2D3748',
+    marginBottom: 24,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  mainActionButtons: {
+    gap: 16,
+  },
+  mainPrimaryAction: {
+    marginBottom: 8,
+    borderRadius: 20,
+    paddingVertical: 8,
+    elevation: 4,
+  },
+  mainSecondaryAction: {
+    marginBottom: 8,
+    borderRadius: 20,
+    paddingVertical: 8,
+    elevation: 4,
   },
   actionsContainer: {
     marginBottom: 24,

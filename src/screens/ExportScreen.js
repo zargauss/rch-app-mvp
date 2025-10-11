@@ -3,6 +3,7 @@ import { View, StyleSheet, ScrollView, Alert, Platform } from 'react-native';
 import { Text, Button, Card, Divider, SegmentedButtons } from 'react-native-paper';
 import storage from '../utils/storage';
 import calculateLichtigerScore from '../utils/scoreCalculator';
+import { getSurveyDayKey } from '../utils/dayKey';
 import AppText from '../components/ui/AppText';
 import AppCard from '../components/ui/AppCard';
 import PrimaryButton from '../components/ui/PrimaryButton';
@@ -147,8 +148,12 @@ export default function ExportScreen() {
 
     // Calculer le nombre moyen de selles par jour
     const totalStools = filteredStools.length;
-    const averageStoolsPerDay = filteredScores.length > 0 ? 
-      (totalStools / filteredScores.length).toFixed(1) : 'N/A';
+    // Compter les jours uniques avec des selles
+    const uniqueDaysWithStools = new Set(
+      filteredStools.map(stool => new Date(stool.timestamp).toDateString())
+    ).size;
+    const averageStoolsPerDay = uniqueDaysWithStools > 0 ? 
+      (totalStools / uniqueDaysWithStools).toFixed(1) : 'N/A';
 
     // Trouver le score maximum avec sa date
     const maxScoreData = validScores.length > 0 ? 
@@ -184,7 +189,7 @@ export default function ExportScreen() {
       const bloodText = hasBlood ? `Oui (${bloodPercentage}%)` : 'Non';
       
       // Récupérer les données du bilan quotidien
-      const surveyKey = `${score.date}_${new Date(score.date).getDay()}`;
+      const surveyKey = getSurveyDayKey(new Date(score.date), 7);
       const survey = filteredSurveys[surveyKey];
       
       const painLevel = survey?.abdominalPain || 'N/A';
