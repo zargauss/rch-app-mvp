@@ -184,7 +184,11 @@ export default function HistoryScreen({ navigation }) {
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
     const daysInMonth = lastDay.getDate();
-    const startingDayOfWeek = firstDay.getDay();
+    
+    // Convertir le jour de la semaine pour commencer par Lundi (0=Lundi, 6=Dimanche)
+    // En JS : 0=Dimanche, 1=Lundi, 2=Mardi, etc.
+    let startingDayOfWeek = firstDay.getDay();
+    startingDayOfWeek = startingDayOfWeek === 0 ? 6 : startingDayOfWeek - 1; // Dimanche devient 6, Lundi devient 0
     
     const days = [];
     
@@ -199,7 +203,7 @@ export default function HistoryScreen({ navigation }) {
     }
 
     const monthNames = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
-    const dayNames = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
+    const dayNames = ['L', 'M', 'M', 'J', 'V', 'S', 'D']; // Lundi à Dimanche
 
     return (
       <View style={styles.calendarContainer}>
@@ -589,9 +593,9 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   dayCell: {
-    width: '14.28%',
+    width: '13.5%',
     aspectRatio: 1,
-    padding: 2,
+    margin: '0.4%',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -600,12 +604,10 @@ const styles = StyleSheet.create({
   },
   dayCellWithScore: {
     borderRadius: 10,
-    margin: 1,
   },
   dayCellWithStools: {
     backgroundColor: '#F1F5F9',
     borderRadius: 10,
-    margin: 1,
     borderWidth: 2,
     borderColor: '#4A90E2',
   },
