@@ -1,5 +1,5 @@
 ﻿import React, { useEffect, useMemo, useState } from 'react';
-import { View, StyleSheet, FlatList, Alert } from 'react-native';
+import { View, StyleSheet, FlatList, Alert, Platform } from 'react-native';
 import { Text, List, SegmentedButtons, Divider, IconButton, Portal, Modal, Button, Switch, TextInput } from 'react-native-paper';
 import CalendarMonth from '../components/CalendarMonth';
 import storage from '../utils/storage';
@@ -51,54 +51,71 @@ export default function HistoryScreen({ navigation }) {
   }), []);
 
   const handleDeleteStool = (stoolId) => {
-    Alert.alert(
-      'Supprimer la selle',
-      'Êtes-vous sûr de vouloir supprimer cette entrée ?',
-      [
-        { text: 'Annuler', style: 'cancel' },
-        { 
-          text: 'Supprimer', 
-          style: 'destructive',
-          onPress: () => {
-            const stoolsJson = storage.getString('dailySells');
-            const allStools = stoolsJson ? JSON.parse(stoolsJson) : [];
-            const updated = allStools.filter(s => s.id !== stoolId);
-            storage.set('dailySells', JSON.stringify(updated));
-            
-            // Mettre à jour l'état local immédiatement
-            setStools(updated);
-            
-            // Recalculer les scores pour les jours affectés
-            const deletedStool = allStools.find(s => s.id === stoolId);
-            if (deletedStool) {
-              const date = new Date(deletedStool.timestamp);
-              const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-              
-              // Recalculer le score pour ce jour
-              const calculateLichtigerScore = require('../utils/scoreCalculator').default;
-              const newScore = calculateLichtigerScore(dateStr, storage);
-              
-              // Mettre à jour l'historique des scores
-              const histJson = storage.getString('scoresHistory');
-              const history = histJson ? JSON.parse(histJson) : [];
-              const existingIndex = history.findIndex((h) => h.date === dateStr);
-              
-              if (newScore !== null && existingIndex >= 0) {
-                history[existingIndex].score = newScore;
-                storage.set('scoresHistory', JSON.stringify(history));
-              } else if (newScore === null && existingIndex >= 0) {
-                // Si plus de score, supprimer l'entrée
-                history.splice(existingIndex, 1);
-                storage.set('scoresHistory', JSON.stringify(history));
-              }
-              
-              // Recharger les scores
-              setScores([...history]);
-            }
-          }
+    // Fonction compatible web et mobile
+    const confirmDelete = () => {
+      if (Platform.OS === 'web') {
+        return window.confirm('Êtes-vous sûr de vouloir supprimer cette entrée ?');
+      }
+      return true; // Sur mobile, on passe par Alert.alert
+    };
+
+    const executeDelete = () => {
+      const stoolsJson = storage.getString('dailySells');
+      const allStools = stoolsJson ? JSON.parse(stoolsJson) : [];
+      const updated = allStools.filter(s => s.id !== stoolId);
+      storage.set('dailySells', JSON.stringify(updated));
+      
+      // Mettre à jour l'état local immédiatement
+      setStools(updated);
+      
+      // Recalculer les scores pour les jours affectés
+      const deletedStool = allStools.find(s => s.id === stoolId);
+      if (deletedStool) {
+        const date = new Date(deletedStool.timestamp);
+        const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        
+        // Recalculer le score pour ce jour
+        const newScore = calculateLichtigerScore(dateStr, storage);
+        
+        // Mettre à jour l'historique des scores
+        const histJson = storage.getString('scoresHistory');
+        const history = histJson ? JSON.parse(histJson) : [];
+        const existingIndex = history.findIndex((h) => h.date === dateStr);
+        
+        if (newScore !== null && existingIndex >= 0) {
+          history[existingIndex].score = newScore;
+          storage.set('scoresHistory', JSON.stringify(history));
+        } else if (newScore === null && existingIndex >= 0) {
+          // Si plus de score, supprimer l'entrée
+          history.splice(existingIndex, 1);
+          storage.set('scoresHistory', JSON.stringify(history));
         }
-      ]
-    );
+        
+        // Recharger les scores
+        setScores([...history]);
+      }
+    };
+
+    // Sur web, utiliser window.confirm directement
+    if (Platform.OS === 'web') {
+      if (window.confirm('Êtes-vous sûr de vouloir supprimer cette entrée ?')) {
+        executeDelete();
+      }
+    } else {
+      // Sur mobile, utiliser Alert.alert
+      Alert.alert(
+        'Supprimer la selle',
+        'Êtes-vous sûr de vouloir supprimer cette entrée ?',
+        [
+          { text: 'Annuler', style: 'cancel' },
+          { 
+            text: 'Supprimer', 
+            style: 'destructive',
+            onPress: executeDelete
+          }
+        ]
+      );
+    }
   };
 
   const bloodIcon = useMemo(() => '🩸', []);

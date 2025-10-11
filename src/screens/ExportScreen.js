@@ -201,15 +201,22 @@ export default function ExportScreen() {
         new Date(stool.timestamp).toDateString() === new Date(dateStr).toDateString()
       );
       
-      const dayStoolsCount = dayStools.length;
+      // Compter les selles nocturnes (23h-6h)
       const nightStoolsCount = dayStools.filter(stool => {
         const hour = new Date(stool.timestamp).getHours();
         return hour >= 23 || hour < 6;
       }).length;
       
+      // Compter les selles de jour (6h-23h)
+      const dayOnlyStoolsCount = dayStools.filter(stool => {
+        const hour = new Date(stool.timestamp).getHours();
+        return hour >= 6 && hour < 23;
+      }).length;
+      
       const hasBlood = dayStools.some(stool => stool.hasBlood);
-      const bloodPercentage = dayStoolsCount > 0 ? 
-        ((dayStools.filter(stool => stool.hasBlood).length / dayStoolsCount) * 100).toFixed(0) : 0;
+      const totalStoolsCount = dayStools.length; // Total pour le calcul du pourcentage de sang
+      const bloodPercentage = totalStoolsCount > 0 ? 
+        ((dayStools.filter(stool => stool.hasBlood).length / totalStoolsCount) * 100).toFixed(0) : 0;
       
       const bloodText = hasBlood ? `Oui (${bloodPercentage}%)` : 'Non';
       
@@ -242,7 +249,7 @@ export default function ExportScreen() {
         <tr>
           <td>${formatDate(dateStr)}</td>
           <td style="text-align: center; font-weight: bold;">${score}</td>
-          <td style="text-align: center;">${dayStoolsCount} / ${nightStoolsCount}</td>
+          <td style="text-align: center;">${dayOnlyStoolsCount} / ${nightStoolsCount}</td>
           <td style="text-align: center;">${bloodText}</td>
           <td style="text-align: center;">${painLevel}</td>
           <td style="text-align: center;">${generalState}</td>
