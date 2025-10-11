@@ -1,15 +1,63 @@
 ﻿import React, { useState } from 'react';
-import { View, StyleSheet, Alert, ScrollView } from 'react-native';
+import { View, StyleSheet, Alert, ScrollView, Platform } from 'react-native';
 import { Text, Button } from 'react-native-paper';
 import storage from '../utils/storage';
 import AppText from '../components/ui/AppText';
 import PrimaryButton from '../components/ui/PrimaryButton';
 import AppCard from '../components/ui/AppCard';
 import { useTheme } from 'react-native-paper';
+import { injectTestData, clearTestData, generateScenarioData } from '../utils/dataGenerator';
 
 export default function SettingsScreen() {
   const [isWiping, setIsWiping] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const theme = useTheme();
+
+  // Générer des données de test
+  const handleGenerateTestData = (scenario) => {
+    if (Platform.OS === 'web') {
+      if (window.confirm('Voulez-vous générer des données de test ? Cela écrasera vos données actuelles.')) {
+        setIsGenerating(true);
+        try {
+          const result = generateScenarioData(scenario);
+          setIsGenerating(false);
+          Alert.alert(
+            'Données générées !',
+            `${result.scores.length} jours de données ont été générés.\n\nAllez dans l'onglet Statistiques pour voir les graphiques.`,
+            [{ text: 'OK', onPress: () => {} }]
+          );
+        } catch (error) {
+          setIsGenerating(false);
+          Alert.alert('Erreur', 'Impossible de générer les données de test.');
+        }
+      }
+    } else {
+      Alert.alert(
+        'Générer des données de test',
+        'Voulez-vous générer des données de test ? Cela écrasera vos données actuelles.',
+        [
+          { text: 'Annuler', style: 'cancel' },
+          {
+            text: 'Générer',
+            onPress: () => {
+              setIsGenerating(true);
+              try {
+                const result = generateScenarioData(scenario);
+                setIsGenerating(false);
+                Alert.alert(
+                  'Données générées !',
+                  `${result.scores.length} jours de données ont été générés.\n\nAllez dans l'onglet Statistiques pour voir les graphiques.`
+                );
+              } catch (error) {
+                setIsGenerating(false);
+                Alert.alert('Erreur', 'Impossible de générer les données de test.');
+              }
+            }
+          }
+        ]
+      );
+    }
+  };
 
   const handleWipeData = () => {
     Alert.alert(
@@ -109,6 +157,61 @@ export default function SettingsScreen() {
         <AppText variant="bodyMedium" style={styles.infoDescription}>
           La période nocturne est définie de 23h à 6h du matin pour le calcul des scores de Lichtiger.
         </AppText>
+      </AppCard>
+
+      {/* Mode Développeur */}
+      <AppCard style={styles.devCard}>
+        <View style={styles.devHeader}>
+          <AppText style={styles.devIcon}>🎲</AppText>
+          <AppText variant="headlineLarge" style={styles.devTitle}>
+            Mode Développeur
+          </AppText>
+        </View>
+        <AppText variant="bodyMedium" style={styles.devDescription}>
+          Générez des données de test pour voir les graphiques et tendances sans attendre. Parfait pour tester l'application !
+        </AppText>
+        
+        <View style={styles.scenarioButtons}>
+          <PrimaryButton 
+            mode="contained" 
+            onPress={() => handleGenerateTestData('realiste')} 
+            disabled={isGenerating}
+            buttonColor="#10B981"
+            style={styles.scenarioButton}
+          >
+            {isGenerating ? '⏳' : '📊 Réaliste (60j)'}
+          </PrimaryButton>
+          
+          <PrimaryButton 
+            mode="outlined" 
+            onPress={() => handleGenerateTestData('remission')} 
+            disabled={isGenerating}
+            buttonColor="#10B981"
+            style={styles.scenarioButton}
+          >
+            📈 Amélioration (60j)
+          </PrimaryButton>
+          
+          <PrimaryButton 
+            mode="outlined" 
+            onPress={() => handleGenerateTestData('poussee')} 
+            disabled={isGenerating}
+            buttonColor="#F59E0B"
+            style={styles.scenarioButton}
+          >
+            📉 Poussée (30j)
+          </PrimaryButton>
+          
+          <PrimaryButton 
+            mode="outlined" 
+            onPress={() => handleGenerateTestData('stable')} 
+            disabled={isGenerating}
+            buttonColor="#6366F1"
+            style={styles.scenarioButton}
+          >
+            ➡️ Stable (90j)
+          </PrimaryButton>
+        </View>
       </AppCard>
 
       {/* Zone de danger */}
@@ -221,6 +324,45 @@ const styles = StyleSheet.create({
   infoDescription: {
     color: '#4A5568',
     fontWeight: '400',
+  },
+  devCard: {
+    marginHorizontal: 20,
+    marginBottom: 24,
+    padding: 24,
+    backgroundColor: '#F0FDF4',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#10B981',
+    shadowColor: '#10B981',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  devHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  devIcon: {
+    fontSize: 24,
+    marginRight: 12,
+  },
+  devTitle: {
+    color: '#065F46',
+    fontWeight: '700',
+  },
+  devDescription: {
+    color: '#047857',
+    marginBottom: 20,
+    lineHeight: 22,
+  },
+  scenarioButtons: {
+    gap: 12,
+  },
+  scenarioButton: {
+    borderRadius: 16,
+    paddingVertical: 4,
   },
   dangerCard: {
     marginHorizontal: 20,
