@@ -92,8 +92,13 @@ export default function DailySurveyScreen() {
     if (fullToday != null) {
       const histJson = storage.getString('scoresHistory');
       const history = histJson ? JSON.parse(histJson) : [];
-      const existingToday = history.find((h) => h.date === todayStr);
-      if (!existingToday) {
+      const existingIndex = history.findIndex((h) => h.date === todayStr);
+      if (existingIndex >= 0) {
+        // Mettre à jour le score existant
+        history[existingIndex].score = fullToday;
+        storage.set('scoresHistory', JSON.stringify(history));
+      } else {
+        // Ajouter un nouveau score
         const newHistory = [{ date: todayStr, score: fullToday }, ...history];
         storage.set('scoresHistory', JSON.stringify(newHistory));
       }

@@ -142,8 +142,13 @@ export default function HomeScreen() {
         // Si on a un score complet pour aujourd'hui, le sauvegarder dans l'historique
         const histJson = storage.getString('scoresHistory');
         const history = histJson ? JSON.parse(histJson) : [];
-        const existingToday = history.find((h) => h.date === tDateStr);
-        if (!existingToday) {
+        const existingIndex = history.findIndex((h) => h.date === tDateStr);
+        if (existingIndex >= 0) {
+          // Mettre à jour le score existant
+          history[existingIndex].score = fullToday;
+          storage.set('scoresHistory', JSON.stringify(history));
+        } else {
+          // Ajouter un nouveau score
           const newHistory = [{ date: tDateStr, score: fullToday }, ...history];
           storage.set('scoresHistory', JSON.stringify(newHistory));
         }
@@ -279,8 +284,13 @@ export default function HomeScreen() {
       // Sauvegarder le score complet dans l'historique
       const histJson = storage.getString('scoresHistory');
       const history = histJson ? JSON.parse(histJson) : [];
-      const existingToday = history.find((h) => h.date === tDateStr);
-      if (!existingToday) {
+      const existingIndex = history.findIndex((h) => h.date === tDateStr);
+      if (existingIndex >= 0) {
+        // Mettre à jour le score existant
+        history[existingIndex].score = fullToday;
+        storage.set('scoresHistory', JSON.stringify(history));
+      } else {
+        // Ajouter un nouveau score
         const newHistory = [{ date: tDateStr, score: fullToday }, ...history];
         storage.set('scoresHistory', JSON.stringify(newHistory));
       }
