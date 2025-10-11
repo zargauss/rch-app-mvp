@@ -179,10 +179,26 @@ export default function ExportScreen() {
       return '#F44336'; // Rouge
     };
 
+    // Créer une liste de tous les jours avec des données (scores OU selles)
+    const allDates = new Set();
+    filteredScores.forEach(score => allDates.add(score.date));
+    filteredStools.forEach(stool => {
+      const date = new Date(stool.timestamp);
+      const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+      allDates.add(dateStr);
+    });
+    
+    // Trier les dates (plus récentes en premier)
+    const sortedDates = Array.from(allDates).sort((a, b) => new Date(b) - new Date(a));
+    
     // Générer le tableau détaillé
-    const detailedTable = filteredScores.map(score => {
+    const detailedTable = sortedDates.map(dateStr => {
+      // Trouver le score pour ce jour
+      const scoreEntry = filteredScores.find(s => s.date === dateStr);
+      const score = scoreEntry ? scoreEntry.score : '—';
+      
       const dayStools = filteredStools.filter(stool => 
-        new Date(stool.timestamp).toDateString() === new Date(score.date).toDateString()
+        new Date(stool.timestamp).toDateString() === new Date(dateStr).toDateString()
       );
       
       const dayStoolsCount = dayStools.length;
@@ -198,18 +214,10 @@ export default function ExportScreen() {
       const bloodText = hasBlood ? `Oui (${bloodPercentage}%)` : 'Non';
       
       // Récupérer les données du bilan quotidien
-      // Important : pour l'export PDF, on cherche le survey avec la date exacte du score
+      // Important : pour l'export PDF, on cherche le survey avec la date exacte
       // sans appliquer la logique de reset à 7h (car le score est déjà au bon jour)
-      const surveyKey = score.date; // Utiliser directement la date du score
+      const surveyKey = dateStr; // Utiliser directement la date
       const survey = filteredSurveys[surveyKey];
-      
-      // Debug
-      console.log('📊 Export PDF - Score object:', score);
-      console.log('📊 Export PDF - Date from score:', score.date);
-      console.log('📊 Export PDF - SurveyKey calculated:', surveyKey);
-      console.log('📊 Export PDF - Survey found:', survey);
-      console.log('📊 Export PDF - Available surveys:', Object.keys(filteredSurveys));
-      console.log('📊 Export PDF - Checking if exists:', filteredSurveys[surveyKey]);
       
       // Traduire les valeurs
       const painMap = {
@@ -232,8 +240,8 @@ export default function ExportScreen() {
       
       return `
         <tr>
-          <td>${formatDate(score.date)}</td>
-          <td style="text-align: center; font-weight: bold;">${score.score}</td>
+          <td>${formatDate(dateStr)}</td>
+          <td style="text-align: center; font-weight: bold;">${score}</td>
           <td style="text-align: center;">${dayStoolsCount} / ${nightStoolsCount}</td>
           <td style="text-align: center;">${bloodText}</td>
           <td style="text-align: center;">${painLevel}</td>

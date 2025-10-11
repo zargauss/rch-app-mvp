@@ -61,10 +61,40 @@ export default function HistoryScreen({ navigation }) {
           style: 'destructive',
           onPress: () => {
             const stoolsJson = storage.getString('dailySells');
-            const stools = stoolsJson ? JSON.parse(stoolsJson) : [];
-            const updated = stools.filter(s => s.id !== stoolId);
+            const allStools = stoolsJson ? JSON.parse(stoolsJson) : [];
+            const updated = allStools.filter(s => s.id !== stoolId);
             storage.set('dailySells', JSON.stringify(updated));
+            
+            // Mettre à jour l'état local immédiatement
             setStools(updated);
+            
+            // Recalculer les scores pour les jours affectés
+            const deletedStool = allStools.find(s => s.id === stoolId);
+            if (deletedStool) {
+              const date = new Date(deletedStool.timestamp);
+              const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+              
+              // Recalculer le score pour ce jour
+              const calculateLichtigerScore = require('../utils/scoreCalculator').default;
+              const newScore = calculateLichtigerScore(dateStr, storage);
+              
+              // Mettre à jour l'historique des scores
+              const histJson = storage.getString('scoresHistory');
+              const history = histJson ? JSON.parse(histJson) : [];
+              const existingIndex = history.findIndex((h) => h.date === dateStr);
+              
+              if (newScore !== null && existingIndex >= 0) {
+                history[existingIndex].score = newScore;
+                storage.set('scoresHistory', JSON.stringify(history));
+              } else if (newScore === null && existingIndex >= 0) {
+                // Si plus de score, supprimer l'entrée
+                history.splice(existingIndex, 1);
+                storage.set('scoresHistory', JSON.stringify(history));
+              }
+              
+              // Recharger les scores
+              setScores([...history]);
+            }
           }
         }
       ]
