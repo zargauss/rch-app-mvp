@@ -198,14 +198,18 @@ export default function ExportScreen() {
       const bloodText = hasBlood ? `Oui (${bloodPercentage}%)` : 'Non';
       
       // Récupérer les données du bilan quotidien
-      const surveyKey = getSurveyDayKey(new Date(score.date), 7);
+      // Important : pour l'export PDF, on cherche le survey avec la date exacte du score
+      // sans appliquer la logique de reset à 7h (car le score est déjà au bon jour)
+      const surveyKey = score.date; // Utiliser directement la date du score
       const survey = filteredSurveys[surveyKey];
       
       // Debug
-      console.log('📊 Export PDF - Date:', score.date);
-      console.log('📊 Export PDF - SurveyKey:', surveyKey);
+      console.log('📊 Export PDF - Score object:', score);
+      console.log('📊 Export PDF - Date from score:', score.date);
+      console.log('📊 Export PDF - SurveyKey calculated:', surveyKey);
       console.log('📊 Export PDF - Survey found:', survey);
       console.log('📊 Export PDF - Available surveys:', Object.keys(filteredSurveys));
+      console.log('📊 Export PDF - Checking if exists:', filteredSurveys[surveyKey]);
       
       // Traduire les valeurs
       const painMap = {
