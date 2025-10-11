@@ -8,7 +8,7 @@ import SegmentedControl from '../components/ui/SegmentedControl';
 import TrendChart from '../components/charts/TrendChart';
 import TrendIndicator from '../components/charts/TrendIndicator';
 import ScoreDistribution from '../components/charts/ScoreDistribution';
-import PatternAnalysis from '../components/charts/PatternAnalysis';
+import KeyInsights from '../components/charts/KeyInsights';
 import { useTheme } from 'react-native-paper';
 import { useFocusEffect } from '@react-navigation/native';
 
@@ -192,12 +192,9 @@ export default function StatsScreen() {
             <ScoreDistribution data={chartData.data} />
           )}
 
-          {/* Analyse des patterns */}
+          {/* Points Clés (Analyses médicales) */}
           {chartData.validDays >= 7 && (
-            <PatternAnalysis 
-              data={chartData.data} 
-              labels={chartData.labels}
-            />
+            <KeyInsights data={chartData.data} />
           )}
         </>
       ) : (
