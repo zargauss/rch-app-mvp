@@ -197,8 +197,30 @@ export default function ExportScreen() {
       const surveyKey = getSurveyDayKey(new Date(score.date), 7);
       const survey = filteredSurveys[surveyKey];
       
-      const painLevel = survey?.abdominalPain || 'N/A';
-      const generalState = survey?.generalState || 'N/A';
+      // Debug
+      console.log('📊 Export PDF - Date:', score.date);
+      console.log('📊 Export PDF - SurveyKey:', surveyKey);
+      console.log('📊 Export PDF - Survey found:', survey);
+      console.log('📊 Export PDF - Available surveys:', Object.keys(filteredSurveys));
+      
+      // Traduire les valeurs
+      const painMap = {
+        'aucune': 'Aucune',
+        'legeres': 'Légères',
+        'moyennes': 'Moyennes',
+        'intenses': 'Intenses'
+      };
+      const generalMap = {
+        'parfait': 'Parfait',
+        'tres_bon': 'Très bon',
+        'bon': 'Bon',
+        'moyen': 'Moyen',
+        'mauvais': 'Mauvais',
+        'tres_mauvais': 'Très mauvais'
+      };
+      
+      const painLevel = survey?.abdominalPain ? (painMap[survey.abdominalPain] || survey.abdominalPain) : 'N/A';
+      const generalState = survey?.generalState ? (generalMap[survey.generalState] || survey.generalState) : 'N/A';
       
       return `
         <tr>
