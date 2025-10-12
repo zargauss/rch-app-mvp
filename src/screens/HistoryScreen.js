@@ -1,6 +1,7 @@
 ﻿import React, { useEffect, useMemo, useState } from 'react';
 import { View, StyleSheet, FlatList, Alert, Platform, TouchableOpacity, ScrollView } from 'react-native';
 import { IconButton, Portal, Modal, Switch, TextInput } from 'react-native-paper';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import storage from '../utils/storage';
 import calculateLichtigerScore from '../utils/scoreCalculator';
 import { useFocusEffect } from '@react-navigation/native';
@@ -70,7 +71,7 @@ export default function HistoryScreen({ navigation }) {
     7: 'Type 7 — Aqueux, sans morceaux'
   }), []);
 
-  const bloodIcon = useMemo(() => '🩸', []);
+  // Supprimé - remplacé par icône MaterialCommunityIcons inline
 
   const handleDeleteStool = (stoolId) => {
     const executeDelete = () => {
@@ -446,23 +447,32 @@ export default function HistoryScreen({ navigation }) {
                     </AppText>
                   </View>
                   <View style={styles.stoolInfo}>
-                    <AppText variant="bodyMedium" style={styles.stoolDate}>
-                      {formatCompactDate(item.timestamp)}
-                      {item.hasBlood && <AppText> {bloodIcon}</AppText>}
-                    </AppText>
+                    <View style={styles.stoolDateContainer}>
+                      <AppText variant="bodyMedium" style={styles.stoolDate}>
+                        {formatCompactDate(item.timestamp)}
+                      </AppText>
+                      {item.hasBlood && (
+                        <MaterialCommunityIcons 
+                          name="water" 
+                          size={16} 
+                          color="#EF4444" 
+                          style={{ marginLeft: 6 }}
+                        />
+                      )}
+                    </View>
                   </View>
                   <View style={styles.stoolActions}>
                     <TouchableOpacity 
                       onPress={() => handleEditStool(item)}
                       style={styles.actionButton}
                     >
-                      <AppText style={styles.actionIcon}>✏️</AppText>
+                      <MaterialCommunityIcons name="pencil" size={20} color="#4A90E2" />
                     </TouchableOpacity>
                     <TouchableOpacity 
                       onPress={() => handleDeleteStool(item.id)}
                       style={styles.actionButton}
                     >
-                      <AppText style={styles.actionIcon}>🗑️</AppText>
+                      <MaterialCommunityIcons name="delete" size={20} color="#EF4444" />
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -517,7 +527,7 @@ export default function HistoryScreen({ navigation }) {
       {/* Historique des traitements */}
       <AppCard style={styles.treatmentsCard}>
         <AppText variant="headlineLarge" style={styles.cardTitle}>
-          💊 Historique des traitements
+          Historique des traitements
         </AppText>
         
         {treatments.length === 0 ? (
@@ -534,7 +544,7 @@ export default function HistoryScreen({ navigation }) {
             renderItem={({ item }) => (
               <View style={styles.treatmentItem}>
                 <View style={styles.treatmentIcon}>
-                  <AppText style={{ fontSize: 24 }}>💊</AppText>
+                  <MaterialCommunityIcons name="pill" size={24} color="#9B59B6" />
                 </View>
                 <View style={styles.treatmentInfo}>
                   <AppText variant="bodyLarge" style={styles.treatmentName}>
@@ -549,13 +559,13 @@ export default function HistoryScreen({ navigation }) {
                     onPress={() => handleEditTreatment(item)}
                     style={styles.actionButton}
                   >
-                    <AppText style={styles.actionIcon}>✏️</AppText>
+                    <MaterialCommunityIcons name="pencil" size={20} color="#4A90E2" />
                   </TouchableOpacity>
                   <TouchableOpacity 
                     onPress={() => handleDeleteTreatment(item.id)}
                     style={styles.actionButton}
                   >
-                    <AppText style={styles.actionIcon}>🗑️</AppText>
+                    <MaterialCommunityIcons name="delete" size={20} color="#EF4444" />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -651,7 +661,7 @@ export default function HistoryScreen({ navigation }) {
                 />
 
                 <AppText variant="bodyMedium" style={[styles.inputLabel, { marginTop: 20 }]}>
-                  💊 Nom du traitement
+                  Nom du traitement
                 </AppText>
                 
                 <TextInput
@@ -745,6 +755,10 @@ const styles = StyleSheet.create({
   },
   stoolInfo: {
     flex: 1,
+  },
+  stoolDateContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   stoolDate: {
     color: '#475569',
