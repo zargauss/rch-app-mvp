@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { View, StyleSheet } from 'react-native';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import AppText from '../ui/AppText';
 import AppCard from '../ui/AppCard';
 
@@ -25,7 +26,7 @@ const KeyInsights = ({ data }) => {
       if (diff < -0.5) {
         results.push({
           type: 'improvement',
-          icon: '📈',
+          icon: 'trending-up',
           title: 'Amélioration récente',
           description: `Votre score moyen a diminué de ${percentChange.toFixed(0)}% ces 7 derniers jours.`,
           color: '#10B981',
@@ -34,7 +35,7 @@ const KeyInsights = ({ data }) => {
       } else if (diff > 0.5) {
         results.push({
           type: 'decline',
-          icon: '📉',
+          icon: 'trending-down',
           title: 'Dégradation récente',
           description: `Votre score moyen a augmenté de ${percentChange.toFixed(0)}% ces 7 derniers jours. Consultez votre médecin.`,
           color: '#EF4444',
@@ -43,7 +44,7 @@ const KeyInsights = ({ data }) => {
       } else {
         results.push({
           type: 'stable',
-          icon: '➡️',
+          icon: 'minus',
           title: 'Stabilité récente',
           description: `Votre score reste stable ces 7 derniers jours (variation de ${percentChange.toFixed(0)}%).`,
           color: '#F59E0B',
@@ -60,7 +61,7 @@ const KeyInsights = ({ data }) => {
     if (stdDev < 1.5) {
       results.push({
         type: 'stability',
-        icon: '🎯',
+        icon: 'target',
         title: 'Scores très stables',
         description: `Vos scores varient peu (±${stdDev.toFixed(1)} points). Excellente régularité !`,
         color: '#10B981',
@@ -69,7 +70,7 @@ const KeyInsights = ({ data }) => {
     } else if (stdDev > 3) {
       results.push({
         type: 'variability',
-        icon: '⚡',
+        icon: 'lightning-bolt',
         title: 'Scores variables',
         description: `Vos scores varient beaucoup (±${stdDev.toFixed(1)} points). Identifiez les déclencheurs.`,
         color: '#F59E0B',
@@ -90,7 +91,7 @@ const KeyInsights = ({ data }) => {
     if (currentGoodStreak >= 5) {
       results.push({
         type: 'good-streak',
-        icon: '🔥',
+        icon: 'fire',
         title: `${currentGoodStreak} jours de rémission`,
         description: `Vous maintenez un score < 5 depuis ${currentGoodStreak} jours consécutifs. Continuez !`,
         color: '#10B981',
@@ -99,7 +100,7 @@ const KeyInsights = ({ data }) => {
     } else if (currentGoodStreak >= 3) {
       results.push({
         type: 'good-streak',
-        icon: '✅',
+        icon: 'check-circle',
         title: `${currentGoodStreak} jours en amélioration`,
         description: `Vous maintenez un score < 5 depuis ${currentGoodStreak} jours. Bon début !`,
         color: '#10B981',
@@ -120,7 +121,7 @@ const KeyInsights = ({ data }) => {
     if (currentBadStreak >= 3) {
       results.push({
         type: 'alert',
-        icon: '⚠️',
+        icon: 'alert',
         title: `Alerte : ${currentBadStreak} jours de poussée`,
         description: `Votre score est élevé (≥7) depuis ${currentBadStreak} jours. Consultez rapidement votre médecin.`,
         color: '#EF4444',
@@ -147,7 +148,7 @@ const KeyInsights = ({ data }) => {
       if (flareCount === 1) {
         results.push({
           type: 'flares',
-          icon: '📊',
+          icon: 'chart-bar',
           title: '1 poussée détectée',
           description: `Une seule poussée (score ≥7) détectée ${periodText}.`,
           color: '#F59E0B',
@@ -156,7 +157,7 @@ const KeyInsights = ({ data }) => {
       } else if (flareCount >= 3) {
         results.push({
           type: 'flares',
-          icon: '🔴',
+          icon: 'alert-circle',
           title: `${flareCount} poussées détectées`,
           description: `Poussées fréquentes ${periodText}. Parlez-en à votre médecin pour ajuster le traitement.`,
           color: '#EF4444',
@@ -170,7 +171,7 @@ const KeyInsights = ({ data }) => {
     if (lastScore === 0) {
       results.push({
         type: 'perfect',
-        icon: '🌟',
+          icon: 'star',
         title: 'Score parfait aujourd\'hui',
         description: 'Félicitations ! Votre score est de 0. Continuez vos bonnes habitudes.',
         color: '#10B981',
@@ -194,9 +195,12 @@ const KeyInsights = ({ data }) => {
 
   return (
     <AppCard style={styles.container}>
-      <AppText variant="headlineLarge" style={styles.title}>
-        💡 Points Clés
-      </AppText>
+      <View style={styles.titleContainer}>
+        <MaterialCommunityIcons name="lightbulb-on" size={28} color="#2D3748" style={{ marginRight: 12 }} />
+        <AppText variant="headlineLarge" style={styles.title}>
+          Points Clés
+        </AppText>
+      </View>
       <AppText variant="bodyMedium" style={styles.subtitle}>
         Analyses médicalement pertinentes de votre évolution
       </AppText>
@@ -215,7 +219,7 @@ const KeyInsights = ({ data }) => {
           >
             <View style={styles.insightHeader}>
               <View style={[styles.iconContainer, { backgroundColor: insight.color + '20' }]}>
-                <AppText style={styles.icon}>{insight.icon}</AppText>
+                <MaterialCommunityIcons name={insight.icon} size={24} color={insight.color} />
               </View>
               <View style={styles.textContainer}>
                 <AppText variant="bodyLarge" style={[styles.insightTitle, { color: insight.color }]}>
@@ -232,9 +236,12 @@ const KeyInsights = ({ data }) => {
 
       {/* Message informatif */}
       <View style={styles.infoBox}>
-        <AppText variant="labelSmall" style={styles.infoText}>
-          ℹ️ Ces analyses vous aident à suivre votre évolution et à prendre des décisions éclairées avec votre médecin.
-        </AppText>
+        <View style={styles.infoContent}>
+          <MaterialCommunityIcons name="information" size={16} color="#64748B" style={{ marginRight: 8 }} />
+          <AppText variant="labelSmall" style={styles.infoText}>
+            Ces analyses vous aident à suivre votre évolution et à prendre des décisions éclairées avec votre médecin.
+          </AppText>
+        </View>
       </View>
     </AppCard>
   );
@@ -250,9 +257,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E2E8F0',
   },
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
   title: {
     color: '#2D3748',
-    marginBottom: 4,
     fontWeight: '700',
   },
   subtitle: {
@@ -301,10 +312,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#CBD5E1',
   },
+  infoContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   infoText: {
     color: '#64748B',
     lineHeight: 16,
-    textAlign: 'center',
+    flex: 1,
   },
 });
 

@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { View, StyleSheet, Dimensions } from 'react-native';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import AppText from '../ui/AppText';
 import AppCard from '../ui/AppCard';
 
@@ -76,9 +77,12 @@ const ScoreDistribution = ({ data }) => {
 
   return (
     <AppCard style={styles.container}>
-      <AppText variant="headlineLarge" style={styles.title}>
-        📊 Répartition des Scores
-      </AppText>
+      <View style={styles.titleContainer}>
+        <MaterialCommunityIcons name="chart-bar" size={28} color="#2D3748" style={{ marginRight: 12 }} />
+        <AppText variant="headlineLarge" style={styles.title}>
+          Répartition des Scores
+        </AppText>
+      </View>
       <AppText variant="bodyMedium" style={styles.subtitle}>
         Distribution de vos scores sur la période
       </AppText>
@@ -152,9 +156,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E2E8F0',
   },
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
   title: {
     color: '#2D3748',
-    marginBottom: 4,
     fontWeight: '700',
   },
   subtitle: {

@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import AppText from '../ui/AppText';
 import AppCard from '../ui/AppCard';
 
@@ -12,7 +13,7 @@ const TrendIndicator = ({ data, period }) => {
         direction: 'neutral',
         percentage: 0,
         text: 'Données insuffisantes',
-        icon: '➡️',
+        icon: 'minus',
         color: '#94A3B8',
         backgroundColor: '#F1F5F9',
         description: 'Enregistrez au moins 2 scores pour voir l\'analyse de tendance.'
@@ -36,7 +37,7 @@ const TrendIndicator = ({ data, period }) => {
         direction: 'improving',
         percentage: Math.abs(percentChange).toFixed(1),
         text: 'Amélioration',
-        icon: '📈',
+        icon: 'trending-up',
         color: '#10B981',
         backgroundColor: '#ECFDF5',
         description: `Votre score moyen a diminué de ${Math.abs(percentChange).toFixed(1)}% sur cette période. C'est une excellente nouvelle !`
@@ -48,7 +49,7 @@ const TrendIndicator = ({ data, period }) => {
         direction: 'declining',
         percentage: Math.abs(percentChange).toFixed(1),
         text: 'Dégradation',
-        icon: '📉',
+        icon: 'trending-down',
         color: '#EF4444',
         backgroundColor: '#FEF2F2',
         description: `Votre score moyen a augmenté de ${Math.abs(percentChange).toFixed(1)}% sur cette période. Consultez votre médecin si nécessaire.`
@@ -59,7 +60,7 @@ const TrendIndicator = ({ data, period }) => {
       direction: 'stable',
       percentage: Math.abs(percentChange).toFixed(1),
       text: 'Stable',
-      icon: '➡️',
+      icon: 'minus',
       color: '#F59E0B',
       backgroundColor: '#FFFBEB',
       description: `Votre score reste stable avec une variation de ${Math.abs(percentChange).toFixed(1)}% sur cette période.`
@@ -72,7 +73,7 @@ const TrendIndicator = ({ data, period }) => {
     <AppCard style={[styles.container, { backgroundColor: trend.backgroundColor }]}>
       <View style={styles.header}>
         <View style={[styles.iconContainer, { backgroundColor: trend.color + '20' }]}>
-          <AppText style={styles.icon}>{trend.icon}</AppText>
+          <MaterialCommunityIcons name={trend.icon} size={32} color={trend.color} />
         </View>
         <View style={styles.textContainer}>
           <AppText variant="labelSmall" style={styles.label}>
