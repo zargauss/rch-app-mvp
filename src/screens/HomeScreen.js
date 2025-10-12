@@ -509,7 +509,7 @@ export default function HomeScreen() {
             title="Score d'hier"
             value={yesterdayScore !== null ? yesterdayScore : 'N/A'}
             subtitle="Score de Lichtiger"
-            icon="📊"
+            icon="chart-line"
             color={yesterdayScore !== null ? (yesterdayScore < 5 ? 'success' : yesterdayScore <= 10 ? 'warning' : 'error') : 'info'}
             trend={yesterdayScore !== null ? 'stable' : null}
             trendValue={yesterdayScore !== null ? 'Stable' : null}
@@ -519,7 +519,7 @@ export default function HomeScreen() {
             title="Selles aujourd'hui"
             value={dailyCount.toString()}
             subtitle="Enregistrements"
-            icon="💩"
+            icon="toilet"
             color="primary"
           />
           
@@ -527,7 +527,7 @@ export default function HomeScreen() {
             title="Score du jour"
             value={todayProvisionalScore !== null ? todayProvisionalScore : 'N/A'}
             subtitle="Provisoire"
-            icon="📈"
+            icon="chart-bar"
             color={todayProvisionalScore !== null ? (todayProvisionalScore < 5 ? 'success' : todayProvisionalScore <= 10 ? 'warning' : 'error') : 'info'}
           />
         </View>

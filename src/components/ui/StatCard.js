@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Card, useTheme } from 'react-native-paper';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import AppText from './AppText';
 
 export default function StatCard({ 
@@ -28,9 +29,9 @@ export default function StatCard({
   const getTrendIcon = () => {
     if (!trend) return null;
     switch (trend) {
-      case 'up': return '↗';
-      case 'down': return '↘';
-      case 'stable': return '→';
+      case 'up': return 'trending-up';
+      case 'down': return 'trending-down';
+      case 'stable': return 'minus';
       default: return null;
     }
   };
@@ -50,15 +51,18 @@ export default function StatCard({
       <Card.Content style={styles.content}>
         <View style={styles.header}>
           <View style={[styles.iconContainer, { backgroundColor: getColor() + '15' }]}>
-            <AppText style={[styles.icon, { color: getColor() }]}>{icon}</AppText>
+            <MaterialCommunityIcons name={icon} size={28} color={getColor()} />
           </View>
           <View style={styles.headerText}>
             <AppText variant="labelMedium" style={styles.title}>{title}</AppText>
             {trend && trendValue && (
               <View style={styles.trendContainer}>
-                <AppText style={[styles.trendIcon, { color: getTrendColor() }]}>
-                  {getTrendIcon()}
-                </AppText>
+                <MaterialCommunityIcons 
+                  name={getTrendIcon()} 
+                  size={16} 
+                  color={getTrendColor()} 
+                  style={{ marginRight: 6 }}
+                />
                 <AppText style={[styles.trendText, { color: getTrendColor() }]}>
                   {trendValue}
                 </AppText>
