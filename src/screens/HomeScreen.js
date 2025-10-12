@@ -8,6 +8,7 @@ import SecondaryButton from '../components/ui/SecondaryButton';
 import StatCard from '../components/ui/StatCard';
 import FloatingActionButton from '../components/ui/FloatingActionButton';
 import Toast from '../components/ui/Toast';
+import DateTimeInput from '../components/ui/DateTimeInput';
 import Slider from '@react-native-community/slider';
 import storage from '../utils/storage';
 import calculateLichtigerScore from '../utils/scoreCalculator';
@@ -541,30 +542,14 @@ export default function HomeScreen() {
               
               <View style={styles.dateTimeSection}>
               <AppText style={styles.fieldLabel}>Date et heure</AppText>
-              <View style={styles.dateTimeRow}>
-                <TextInput
-                  mode="outlined"
-                  label="Date (DD/MM/YYYY)"
-                  value={dateInput}
-                  onChangeText={(text) => setDateInput(formatDateInput(text))}
-                  style={styles.dateTimeInput}
-                  placeholder="11/01/2025"
-                  keyboardType="numeric"
-                  maxLength={10}
-                  error={dateInput.length > 0 && !validateDate(dateInput)}
-                />
-                <TextInput
-                  mode="outlined"
-                  label="Heure (HH:MM)"
-                  value={timeInput}
-                  onChangeText={(text) => setTimeInput(formatTimeInput(text))}
-                  style={styles.dateTimeInput}
-                  placeholder="14:30"
-                  keyboardType="numeric"
-                  maxLength={5}
-                  error={timeInput.length > 0 && !validateTime(timeInput)}
-                />
-              </View>
+              <DateTimeInput
+                dateValue={dateInput}
+                timeValue={timeInput}
+                onDateChange={setDateInput}
+                onTimeChange={setTimeInput}
+                dateLabel="Date (DD/MM/YYYY)"
+                timeLabel="Heure (HH:MM)"
+              />
               <AppText variant="labelSmall" style={styles.dateTimeHint}>
                 Format: Date DD/MM/YYYY, Heure HH:MM (24h)
               </AppText>
@@ -633,24 +618,14 @@ export default function HomeScreen() {
                   📅 Date et heure de la prise
                 </AppText>
                 
-                <View style={styles.dateTimeRow}>
-                  <TextInput
-                    label="Date (JJ/MM/AAAA)"
-                    value={treatmentDateInput}
-                    onChangeText={setTreatmentDateInput}
-                    style={[styles.dateTimeInput, { flex: 1, marginRight: 8, backgroundColor: '#F8FAFB', borderRadius: 16 }]}
-                    mode="outlined"
-                    outlineStyle={{ borderRadius: 16 }}
-                  />
-                  <TextInput
-                    label="Heure (HH:MM)"
-                    value={treatmentTimeInput}
-                    onChangeText={setTreatmentTimeInput}
-                    style={[styles.dateTimeInput, { flex: 1, marginLeft: 8, backgroundColor: '#F8FAFB', borderRadius: 16 }]}
-                    mode="outlined"
-                    outlineStyle={{ borderRadius: 16 }}
-                  />
-                </View>
+                <DateTimeInput
+                  dateValue={treatmentDateInput}
+                  timeValue={treatmentTimeInput}
+                  onDateChange={setTreatmentDateInput}
+                  onTimeChange={setTreatmentTimeInput}
+                  dateLabel="Date (JJ/MM/AAAA)"
+                  timeLabel="Heure (HH:MM)"
+                />
 
                 {/* Nom du traitement */}
                 <AppText variant="bodyMedium" style={[styles.modalSectionLabel, { marginTop: 20 }]}>

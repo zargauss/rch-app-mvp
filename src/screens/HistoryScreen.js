@@ -9,6 +9,7 @@ import AppCard from '../components/ui/AppCard';
 import PrimaryButton from '../components/ui/PrimaryButton';
 import SecondaryButton from '../components/ui/SecondaryButton';
 import SegmentedControl from '../components/ui/SegmentedControl';
+import DateTimeInput from '../components/ui/DateTimeInput';
 import { useTheme } from 'react-native-paper';
 import Slider from '@react-native-community/slider';
 
@@ -629,24 +630,14 @@ export default function HistoryScreen({ navigation }) {
                   📅 Date et heure de la prise
                 </AppText>
                 
-                <View style={styles.dateTimeRow}>
-                  <TextInput
-                    label="Date (JJ/MM/AAAA)"
-                    value={editTreatmentDateInput}
-                    onChangeText={setEditTreatmentDateInput}
-                    style={[styles.textInputField, { flex: 1, marginRight: 8 }]}
-                    mode="outlined"
-                    outlineStyle={{ borderRadius: 12 }}
-                  />
-                  <TextInput
-                    label="Heure (HH:MM)"
-                    value={editTreatmentTimeInput}
-                    onChangeText={setEditTreatmentTimeInput}
-                    style={[styles.textInputField, { flex: 1, marginLeft: 8 }]}
-                    mode="outlined"
-                    outlineStyle={{ borderRadius: 12 }}
-                  />
-                </View>
+                <DateTimeInput
+                  dateValue={editTreatmentDateInput}
+                  timeValue={editTreatmentTimeInput}
+                  onDateChange={setEditTreatmentDateInput}
+                  onTimeChange={setEditTreatmentTimeInput}
+                  dateLabel="Date (JJ/MM/AAAA)"
+                  timeLabel="Heure (HH:MM)"
+                />
 
                 <AppText variant="bodyMedium" style={[styles.inputLabel, { marginTop: 20 }]}>
                   💊 Nom du traitement
