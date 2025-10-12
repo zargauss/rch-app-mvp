@@ -214,16 +214,8 @@ export default function HomeScreen() {
       return;
     }
 
-    const parsedDate = parseDateInput(treatmentDateInput);
-    const parsedMinutes = parseTimeToMinutes(treatmentTimeInput);
-    
-    if (!parsedDate || parsedMinutes === null) {
-      alert('Date ou heure invalide');
-      return;
-    }
-
-    const timestamp = new Date(parsedDate.year, parsedDate.month - 1, parsedDate.day, 
-                               Math.floor(parsedMinutes / 60), parsedMinutes % 60).getTime();
+    const selectedDateTime = parseDateTime(treatmentDateInput, treatmentTimeInput);
+    const timestamp = selectedDateTime.getTime();
 
     const treatmentsJson = storage.getString('treatments');
     const treatments = treatmentsJson ? JSON.parse(treatmentsJson) : [];
