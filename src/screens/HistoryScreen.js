@@ -15,6 +15,7 @@ import Slider from '@react-native-community/slider';
 export default function HistoryScreen({ navigation }) {
   const [scores, setScores] = useState([]);
   const [stools, setStools] = useState([]);
+  const [treatments, setTreatments] = useState([]);
   const [calendarMode, setCalendarMode] = useState('score');
   const theme = useTheme();
   const [editModalVisible, setEditModalVisible] = useState(false);
@@ -45,6 +46,10 @@ export default function HistoryScreen({ navigation }) {
     const histJson = storage.getString('scoresHistory');
     const history = histJson ? JSON.parse(histJson) : [];
     setScores(history);
+    
+    const treatmentsJson = storage.getString('treatments');
+    const treatmentsList = treatmentsJson ? JSON.parse(treatmentsJson) : [];
+    setTreatments(treatmentsList.sort((a, b) => b.timestamp - a.timestamp)); // Plus récent en premier
   };
 
   const bristolDescriptions = useMemo(() => ({
@@ -423,6 +428,42 @@ export default function HistoryScreen({ navigation }) {
             </View>
           )}
         </View>
+      </AppCard>
+
+      {/* Historique des traitements */}
+      <AppCard style={styles.treatmentsCard}>
+        <AppText variant="headlineLarge" style={styles.cardTitle}>
+          💊 Historique des traitements
+        </AppText>
+        
+        {treatments.length === 0 ? (
+          <View style={styles.emptyState}>
+            <AppText variant="bodyMedium" style={styles.emptyText}>
+              Aucun traitement enregistré
+            </AppText>
+          </View>
+        ) : (
+          <FlatList
+            data={treatments.slice(0, 20)} // Limiter à 20 derniers
+            keyExtractor={(item) => item.id}
+            scrollEnabled={false}
+            renderItem={({ item }) => (
+              <View style={styles.treatmentItem}>
+                <View style={styles.treatmentIcon}>
+                  <AppText style={{ fontSize: 24 }}>💊</AppText>
+                </View>
+                <View style={styles.treatmentInfo}>
+                  <AppText variant="bodyLarge" style={styles.treatmentName}>
+                    {item.name}
+                  </AppText>
+                  <AppText variant="bodyMedium" style={styles.treatmentDate}>
+                    {formatCompactDate(item.timestamp)}
+                  </AppText>
+                </View>
+              </View>
+            )}
+          />
+        )}
       </AppCard>
 
       {/* Modal d'édition */}
@@ -810,5 +851,34 @@ const styles = StyleSheet.create({
   },
   modalButton: {
     flex: 1,
+  },
+  treatmentsCard: {
+    marginHorizontal: 20,
+    marginBottom: 20,
+    padding: 20,
+  },
+  treatmentItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: '#F8FAFB',
+    borderRadius: 12,
+    marginBottom: 8,
+  },
+  treatmentIcon: {
+    marginRight: 12,
+  },
+  treatmentInfo: {
+    flex: 1,
+  },
+  treatmentName: {
+    color: '#2D3748',
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  treatmentDate: {
+    color: '#64748B',
+    fontSize: 13,
   },
 });

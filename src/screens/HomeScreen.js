@@ -26,6 +26,13 @@ export default function HomeScreen() {
   const [todayProvisionalScore, setTodayProvisionalScore] = useState(null);
   const [dateInput, setDateInput] = useState('');
   const [timeInput, setTimeInput] = useState('');
+  
+  // États pour la modale de traitement
+  const [treatmentModalVisible, setTreatmentModalVisible] = useState(false);
+  const [treatmentName, setTreatmentName] = useState('');
+  const [treatmentDateInput, setTreatmentDateInput] = useState('');
+  const [treatmentTimeInput, setTreatmentTimeInput] = useState('');
+  const [treatmentSuggestions, setTreatmentSuggestions] = useState([]);
 
   const bristolDescriptions = useMemo(() => ({
     1: 'Type 1 — Noix dures séparées (constipation sévère)',
@@ -161,6 +168,77 @@ export default function HomeScreen() {
     const now = new Date();
     setDateInput(now.toLocaleDateString('fr-FR'));
     setTimeInput(now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }));
+  };
+
+  // Fonctions pour la modale de traitement
+  const showTreatmentModal = () => {
+    const now = new Date();
+    setTreatmentDateInput(now.toLocaleDateString('fr-FR'));
+    setTreatmentTimeInput(now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }));
+    setTreatmentName('');
+    setTreatmentSuggestions([]);
+    setTreatmentModalVisible(true);
+  };
+
+  const hideTreatmentModal = () => {
+    setTreatmentModalVisible(false);
+    setTreatmentName('');
+    setTreatmentSuggestions([]);
+  };
+
+  const handleTreatmentNameChange = (text) => {
+    setTreatmentName(text);
+    
+    // Récupérer tous les traitements pour l'auto-complétion
+    if (text.length > 0) {
+      const treatmentsJson = storage.getString('treatments');
+      const treatments = treatmentsJson ? JSON.parse(treatmentsJson) : [];
+      
+      // Extraire les noms uniques
+      const uniqueNames = [...new Set(treatments.map(t => t.name))];
+      
+      // Filtrer ceux qui commencent par le texte entré
+      const suggestions = uniqueNames.filter(name => 
+        name.toLowerCase().startsWith(text.toLowerCase())
+      ).slice(0, 5); // Limiter à 5 suggestions
+      
+      setTreatmentSuggestions(suggestions);
+    } else {
+      setTreatmentSuggestions([]);
+    }
+  };
+
+  const saveTreatment = () => {
+    if (!treatmentName.trim()) {
+      alert('Veuillez entrer le nom du traitement');
+      return;
+    }
+
+    const parsedDate = parseDateInput(treatmentDateInput);
+    const parsedMinutes = parseTimeToMinutes(treatmentTimeInput);
+    
+    if (!parsedDate || parsedMinutes === null) {
+      alert('Date ou heure invalide');
+      return;
+    }
+
+    const timestamp = new Date(parsedDate.year, parsedDate.month - 1, parsedDate.day, 
+                               Math.floor(parsedMinutes / 60), parsedMinutes % 60).getTime();
+
+    const treatmentsJson = storage.getString('treatments');
+    const treatments = treatmentsJson ? JSON.parse(treatmentsJson) : [];
+    
+    const newTreatment = {
+      id: Date.now().toString(),
+      name: treatmentName.trim(),
+      timestamp: timestamp
+    };
+    
+    treatments.push(newTreatment);
+    storage.set('treatments', JSON.stringify(treatments));
+    
+    hideTreatmentModal();
+    alert('Traitement enregistré !');
   };
   const showModal = () => {
     const now = new Date();
@@ -384,6 +462,16 @@ export default function HomeScreen() {
               >
                 {surveyCompleted ? "Modifier le bilan" : "Compléter le bilan"}
               </PrimaryButton>
+              
+              <PrimaryButton
+                mode="contained"
+                onPress={showTreatmentModal}
+                style={styles.mainSecondaryAction}
+                icon="pill"
+                buttonColor="#9B59B6"
+              >
+                Prise de traitement
+              </PrimaryButton>
             </View>
           </AppCard>
         </View>
@@ -519,6 +607,100 @@ export default function HomeScreen() {
                   onPress={handleSave} 
                   style={styles.saveButton}
                   labelStyle={styles.buttonLabel}
+                >
+                  OK
+                </PrimaryButton>
+              </View>
+            </ScrollView>
+          </AppCard>
+        </Modal>
+      </Portal>
+
+      {/* Modale de prise de traitement */}
+      <Portal>
+        <Modal visible={treatmentModalVisible} onDismiss={hideTreatmentModal} contentContainerStyle={styles.modalContainer}>
+          <AppCard style={styles.modalCard}>
+            <ScrollView>
+              <Card.Title title="Prise de traitement" titleStyle={{ fontSize: 22, fontWeight: '700', color: '#1E293B' }} />
+              
+              <Card.Content>
+                {/* Date et Heure */}
+                <AppText variant="bodyMedium" style={styles.modalSectionLabel}>
+                  📅 Date et heure de la prise
+                </AppText>
+                
+                <View style={styles.dateTimeRow}>
+                  <TextInput
+                    label="Date (JJ/MM/AAAA)"
+                    value={treatmentDateInput}
+                    onChangeText={setTreatmentDateInput}
+                    style={[styles.dateTimeInput, { flex: 1, marginRight: 8, backgroundColor: '#F8FAFB', borderRadius: 16 }]}
+                    mode="outlined"
+                    outlineStyle={{ borderRadius: 16 }}
+                  />
+                  <TextInput
+                    label="Heure (HH:MM)"
+                    value={treatmentTimeInput}
+                    onChangeText={setTreatmentTimeInput}
+                    style={[styles.dateTimeInput, { flex: 1, marginLeft: 8, backgroundColor: '#F8FAFB', borderRadius: 16 }]}
+                    mode="outlined"
+                    outlineStyle={{ borderRadius: 16 }}
+                  />
+                </View>
+
+                {/* Nom du traitement */}
+                <AppText variant="bodyMedium" style={[styles.modalSectionLabel, { marginTop: 20 }]}>
+                  💊 Nom du traitement
+                </AppText>
+                
+                <TextInput
+                  label="Ex: Pentasa, Humira..."
+                  value={treatmentName}
+                  onChangeText={handleTreatmentNameChange}
+                  style={[styles.treatmentInput, { backgroundColor: '#F8FAFB', borderRadius: 16 }]}
+                  mode="outlined"
+                  outlineStyle={{ borderRadius: 16 }}
+                  autoCapitalize="words"
+                />
+
+                {/* Suggestions d'auto-complétion */}
+                {treatmentSuggestions.length > 0 && (
+                  <View style={styles.suggestionsContainer}>
+                    {treatmentSuggestions.map((suggestion, index) => (
+                      <Button
+                        key={index}
+                        mode="outlined"
+                        onPress={() => {
+                          setTreatmentName(suggestion);
+                          setTreatmentSuggestions([]);
+                        }}
+                        style={styles.suggestionButton}
+                        labelStyle={styles.suggestionButtonLabel}
+                      >
+                        {suggestion}
+                      </Button>
+                    ))}
+                  </View>
+                )}
+              </Card.Content>
+
+              <View style={styles.modalActions}>
+                <Button
+                  mode="text"
+                  onPress={hideTreatmentModal}
+                  textColor="#64748B"
+                  style={styles.cancelButton}
+                  labelStyle={{ fontSize: 16, fontWeight: '600' }}
+                >
+                  Annuler
+                </Button>
+                <PrimaryButton
+                  mode="contained"
+                  onPress={saveTreatment}
+                  buttonColor="#9B59B6"
+                  style={styles.saveButton}
+                  labelStyle={{ fontSize: 16, fontWeight: '700' }}
+                  contentStyle={{ height: 48 }}
                 >
                   OK
                 </PrimaryButton>
@@ -789,6 +971,21 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: 16,
     height: 52,
+  },
+  treatmentInput: {
+    marginTop: 8,
+  },
+  suggestionsContainer: {
+    marginTop: 12,
+    gap: 8,
+  },
+  suggestionButton: {
+    borderRadius: 12,
+    borderColor: '#9B59B6',
+  },
+  suggestionButtonLabel: {
+    color: '#9B59B6',
+    fontSize: 14,
   },
   buttonLabel: {
     fontSize: 15,

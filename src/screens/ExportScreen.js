@@ -14,6 +14,7 @@ export default function ExportScreen() {
   const [scores, setScores] = useState([]);
   const [stools, setStools] = useState([]);
   const [surveys, setSurveys] = useState([]);
+  const [treatments, setTreatments] = useState([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState('complet'); // complet, 90, 30, 7
   const theme = useTheme();
@@ -57,6 +58,12 @@ export default function ExportScreen() {
     setSurveys(surveysData);
     console.log('📦 Export - Surveys loaded:', Object.keys(surveysData));
     console.log('📦 Export - Survey details:', surveysData);
+
+    // Charger les traitements
+    const treatmentsJson = storage.getString('treatments');
+    const treatmentsData = treatmentsJson ? JSON.parse(treatmentsJson) : [];
+    setTreatments(treatmentsData);
+    console.log('📦 Export - Treatments loaded:', treatmentsData.length, 'treatments');
   };
 
   const formatDate = (dateStr) => {
@@ -96,6 +103,7 @@ export default function ExportScreen() {
     let filteredScores = [...scores];
     let filteredStools = [...stools];
     let filteredSurveys = { ...surveys };
+    let filteredTreatments = [...treatments];
     
     if (selectedPeriod !== 'complet' && scores.length > 0) {
       const days = parseInt(selectedPeriod);
@@ -122,13 +130,19 @@ export default function ExportScreen() {
           filteredSurveys[key] = surveys[key];
         }
       });
+
+      // Filtrer les traitements pour la période
+      filteredTreatments = treatments.filter(treatment => {
+        const treatmentDate = new Date(treatment.timestamp);
+        return treatmentDate >= startDate && treatmentDate <= endDate;
+      });
     }
 
-    return { scores: filteredScores, stools: filteredStools, surveys: filteredSurveys };
+    return { scores: filteredScores, stools: filteredStools, surveys: filteredSurveys, treatments: filteredTreatments };
   };
 
   const generateHTML = () => {
-    const { scores: filteredScores, stools: filteredStools, surveys: filteredSurveys } = getFilteredData();
+    const { scores: filteredScores, stools: filteredStools, surveys: filteredSurveys, treatments: filteredTreatments } = getFilteredData();
     
     const currentDate = new Date().toLocaleDateString('fr-FR', {
       year: 'numeric',
@@ -440,6 +454,33 @@ export default function ExportScreen() {
               </tbody>
             </table>
           ` : '<div class="no-data">Aucune donnée disponible pour cette période</div>'}
+        </div>
+
+        <div class="details-section">
+          <div class="details-title">💊 Historique des Traitements</div>
+          ${filteredTreatments.length > 0 ? `
+            <table>
+              <thead>
+                <tr>
+                  <th>Date et heure</th>
+                  <th>Nom du traitement</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${filteredTreatments.sort((a, b) => b.timestamp - a.timestamp).map(treatment => {
+                  const date = new Date(treatment.timestamp);
+                  const dateStr = date.toLocaleDateString('fr-FR');
+                  const timeStr = date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                  return `
+                    <tr>
+                      <td>${dateStr} à ${timeStr}</td>
+                      <td style="font-weight: 600;">${treatment.name}</td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          ` : '<div class="no-data">Aucun traitement enregistré pour cette période</div>'}
         </div>
 
         <div class="footer">
