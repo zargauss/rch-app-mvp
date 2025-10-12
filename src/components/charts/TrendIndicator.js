@@ -4,7 +4,7 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import AppText from '../ui/AppText';
 import AppCard from '../ui/AppCard';
 
-const TrendIndicator = ({ data, period }) => {
+const TrendIndicator = ({ data, period, dataType = 'score' }) => {
   // Calculer la tendance
   const getTrendAnalysis = () => {
     const validScores = data.filter(score => score !== null);
@@ -40,7 +40,9 @@ const TrendIndicator = ({ data, period }) => {
         icon: 'trending-up',
         color: '#10B981',
         backgroundColor: '#ECFDF5',
-        description: `Votre score moyen a diminué de ${Math.abs(percentChange).toFixed(1)}% sur cette période. C'est une excellente nouvelle !`
+        description: dataType === 'score' 
+          ? `Votre score moyen a diminué de ${Math.abs(percentChange).toFixed(1)}% sur cette période. C'est une excellente nouvelle !`
+          : `Votre nombre de selles moyen a diminué de ${Math.abs(percentChange).toFixed(1)}% sur cette période. C'est une excellente nouvelle !`
       };
     }
 
@@ -52,7 +54,9 @@ const TrendIndicator = ({ data, period }) => {
         icon: 'trending-down',
         color: '#EF4444',
         backgroundColor: '#FEF2F2',
-        description: `Votre score moyen a augmenté de ${Math.abs(percentChange).toFixed(1)}% sur cette période. Consultez votre médecin si nécessaire.`
+        description: dataType === 'score'
+          ? `Votre score moyen a augmenté de ${Math.abs(percentChange).toFixed(1)}% sur cette période. Consultez votre médecin si nécessaire.`
+          : `Votre nombre de selles moyen a augmenté de ${Math.abs(percentChange).toFixed(1)}% sur cette période. Consultez votre médecin si nécessaire.`
       };
     }
 
@@ -63,7 +67,9 @@ const TrendIndicator = ({ data, period }) => {
       icon: 'minus',
       color: '#F59E0B',
       backgroundColor: '#FFFBEB',
-      description: `Votre score reste stable avec une variation de ${Math.abs(percentChange).toFixed(1)}% sur cette période.`
+      description: dataType === 'score'
+        ? `Votre score reste stable avec une variation de ${Math.abs(percentChange).toFixed(1)}% sur cette période.`
+        : `Votre nombre de selles reste stable avec une variation de ${Math.abs(percentChange).toFixed(1)}% sur cette période.`
     };
   };
 

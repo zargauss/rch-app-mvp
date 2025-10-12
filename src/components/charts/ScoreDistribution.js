@@ -4,7 +4,7 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import AppText from '../ui/AppText';
 import AppCard from '../ui/AppCard';
 
-const ScoreDistribution = ({ data }) => {
+const ScoreDistribution = ({ data, dataType = 'score' }) => {
   const { width } = Dimensions.get('window');
   const chartWidth = Math.min(width - 80, 500);
   const chartHeight = 200;
@@ -42,49 +42,86 @@ const ScoreDistribution = ({ data }) => {
 
   // Regrouper par catégories
   const categories = useMemo(() => {
-    const excellent = distribution.filter(d => d.score <= 3).reduce((sum, d) => sum + d.count, 0);
-    const acceptable = distribution.filter(d => d.score >= 4 && d.score <= 6).reduce((sum, d) => sum + d.count, 0);
-    const preoccupant = distribution.filter(d => d.score >= 7).reduce((sum, d) => sum + d.count, 0);
-    const total = excellent + acceptable + preoccupant;
+    if (dataType === 'score') {
+      const excellent = distribution.filter(d => d.score <= 3).reduce((sum, d) => sum + d.count, 0);
+      const acceptable = distribution.filter(d => d.score >= 4 && d.score <= 6).reduce((sum, d) => sum + d.count, 0);
+      const preoccupant = distribution.filter(d => d.score >= 7).reduce((sum, d) => sum + d.count, 0);
+      const total = excellent + acceptable + preoccupant;
 
-    return [
-      {
-        label: 'Excellent',
-        range: '0-3',
-        count: excellent,
-        percentage: total > 0 ? ((excellent / total) * 100).toFixed(0) : 0,
-        color: '#10B981',
-        icon: 'circle'
-      },
-      {
-        label: 'Acceptable',
-        range: '4-6',
-        count: acceptable,
-        percentage: total > 0 ? ((acceptable / total) * 100).toFixed(0) : 0,
-        color: '#F59E0B',
-        icon: 'circle'
-      },
-      {
-        label: 'Préoccupant',
-        range: '7+',
-        count: preoccupant,
-        percentage: total > 0 ? ((preoccupant / total) * 100).toFixed(0) : 0,
-        color: '#EF4444',
-        icon: 'circle'
-      }
-    ];
-  }, [distribution]);
+      return [
+        {
+          label: 'Excellent',
+          range: '0-3',
+          count: excellent,
+          percentage: total > 0 ? ((excellent / total) * 100).toFixed(0) : 0,
+          color: '#10B981',
+          icon: 'circle'
+        },
+        {
+          label: 'Acceptable',
+          range: '4-6',
+          count: acceptable,
+          percentage: total > 0 ? ((acceptable / total) * 100).toFixed(0) : 0,
+          color: '#F59E0B',
+          icon: 'circle'
+        },
+        {
+          label: 'Préoccupant',
+          range: '7+',
+          count: preoccupant,
+          percentage: total > 0 ? ((preoccupant / total) * 100).toFixed(0) : 0,
+          color: '#EF4444',
+          icon: 'circle'
+        }
+      ];
+    } else {
+      // Pour les selles : bon (0-3), moyen (4-6), élevé (7+)
+      const bon = distribution.filter(d => d.score <= 3).reduce((sum, d) => sum + d.count, 0);
+      const moyen = distribution.filter(d => d.score >= 4 && d.score <= 6).reduce((sum, d) => sum + d.count, 0);
+      const eleve = distribution.filter(d => d.score >= 7).reduce((sum, d) => sum + d.count, 0);
+      const total = bon + moyen + eleve;
+
+      return [
+        {
+          label: 'Bon',
+          range: '0-3',
+          count: bon,
+          percentage: total > 0 ? ((bon / total) * 100).toFixed(0) : 0,
+          color: '#10B981',
+          icon: 'circle'
+        },
+        {
+          label: 'Moyen',
+          range: '4-6',
+          count: moyen,
+          percentage: total > 0 ? ((moyen / total) * 100).toFixed(0) : 0,
+          color: '#F59E0B',
+          icon: 'circle'
+        },
+        {
+          label: 'Élevé',
+          range: '7+',
+          count: eleve,
+          percentage: total > 0 ? ((eleve / total) * 100).toFixed(0) : 0,
+          color: '#EF4444',
+          icon: 'circle'
+        }
+      ];
+    }
+  }, [distribution, dataType]);
 
   return (
     <AppCard style={styles.container}>
       <View style={styles.titleContainer}>
         <MaterialCommunityIcons name="chart-bar" size={28} color="#2D3748" style={{ marginRight: 12 }} />
         <AppText variant="headlineLarge" style={styles.title}>
-          Répartition des Scores
+          {dataType === 'score' ? 'Répartition des Scores' : 'Répartition des Selles'}
         </AppText>
       </View>
       <AppText variant="bodyMedium" style={styles.subtitle}>
-        Distribution de vos scores sur la période
+        {dataType === 'score' 
+          ? 'Distribution de vos scores sur la période'
+          : 'Distribution du nombre de selles par jour sur la période'}
       </AppText>
 
       {/* Barres d'histogramme */}

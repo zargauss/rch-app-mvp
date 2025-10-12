@@ -272,16 +272,20 @@ export default function StatsScreen() {
             <TrendIndicator 
               data={chartData.data} 
               period={chartData.validDays}
+              dataType={dataType}
             />
           )}
 
-          {/* Répartition des scores (Histogramme) */}
+          {/* Répartition des scores/selles (Histogramme) */}
           {chartData.validDays >= 3 && (
-            <ScoreDistribution data={chartData.data} />
+            <ScoreDistribution 
+              data={chartData.data}
+              dataType={dataType}
+            />
           )}
 
-          {/* Points Clés (Analyses médicales) */}
-          {chartData.validDays >= 7 && (
+          {/* Points Clés (Analyses médicales) - uniquement pour les scores */}
+          {chartData.validDays >= 7 && dataType === 'score' && (
             <KeyInsights data={chartData.data} />
           )}
         </>
