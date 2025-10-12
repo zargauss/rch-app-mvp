@@ -9,7 +9,7 @@ import AppCard from '../components/ui/AppCard';
 import PrimaryButton from '../components/ui/PrimaryButton';
 import SecondaryButton from '../components/ui/SecondaryButton';
 import SegmentedControl from '../components/ui/SegmentedControl';
-import DateTimeInput from '../components/ui/DateTimeInput';
+import DateTimeInput, { isValidDate, isValidTime } from '../components/ui/DateTimeInput';
 import { useTheme } from 'react-native-paper';
 import Slider from '@react-native-community/slider';
 
@@ -157,6 +157,17 @@ export default function HistoryScreen({ navigation }) {
   const handleSaveTreatment = () => {
     if (!editTreatmentName.trim()) {
       alert('Veuillez entrer le nom du traitement');
+      return;
+    }
+
+    // Valider la date et l'heure
+    if (!isValidDate(editTreatmentDateInput)) {
+      alert('Date invalide');
+      return;
+    }
+
+    if (!isValidTime(editTreatmentTimeInput)) {
+      alert('Heure invalide');
       return;
     }
 

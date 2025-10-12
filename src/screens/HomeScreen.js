@@ -8,7 +8,7 @@ import SecondaryButton from '../components/ui/SecondaryButton';
 import StatCard from '../components/ui/StatCard';
 import FloatingActionButton from '../components/ui/FloatingActionButton';
 import Toast from '../components/ui/Toast';
-import DateTimeInput from '../components/ui/DateTimeInput';
+import DateTimeInput, { isValidDate, isValidTime } from '../components/ui/DateTimeInput';
 import Slider from '@react-native-community/slider';
 import storage from '../utils/storage';
 import calculateLichtigerScore from '../utils/scoreCalculator';
@@ -227,6 +227,17 @@ export default function HomeScreen() {
       return;
     }
 
+    // Valider la date et l'heure
+    if (!isValidDate(treatmentDateInput)) {
+      showToast('Date invalide', 'error');
+      return;
+    }
+
+    if (!isValidTime(treatmentTimeInput)) {
+      showToast('Heure invalide', 'error');
+      return;
+    }
+
     const selectedDateTime = parseDateTime(treatmentDateInput, treatmentTimeInput);
     const timestamp = selectedDateTime.getTime();
 
@@ -359,6 +370,17 @@ export default function HomeScreen() {
   };
 
   const handleSave = () => {
+    // Valider la date et l'heure
+    if (!isValidDate(dateInput)) {
+      showToast('Date invalide', 'error');
+      return;
+    }
+
+    if (!isValidTime(timeInput)) {
+      showToast('Heure invalide', 'error');
+      return;
+    }
+
     const selectedDateTime = parseDateTime(dateInput, timeInput);
     
     const entry = {
