@@ -7,6 +7,7 @@ import PrimaryButton from '../components/ui/PrimaryButton';
 import SecondaryButton from '../components/ui/SecondaryButton';
 import StatCard from '../components/ui/StatCard';
 import FloatingActionButton from '../components/ui/FloatingActionButton';
+import Toast from '../components/ui/Toast';
 import Slider from '@react-native-community/slider';
 import storage from '../utils/storage';
 import calculateLichtigerScore from '../utils/scoreCalculator';
@@ -33,6 +34,11 @@ export default function HomeScreen() {
   const [treatmentDateInput, setTreatmentDateInput] = useState('');
   const [treatmentTimeInput, setTreatmentTimeInput] = useState('');
   const [treatmentSuggestions, setTreatmentSuggestions] = useState([]);
+  
+  // État pour le Toast
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState('success');
 
   const bristolDescriptions = useMemo(() => ({
     1: 'Type 1 — Noix dures séparées (constipation sévère)',
@@ -186,6 +192,12 @@ export default function HomeScreen() {
     setTreatmentSuggestions([]);
   };
 
+  const showToast = (message, type = 'success') => {
+    setToastMessage(message);
+    setToastType(type);
+    setToastVisible(true);
+  };
+
   const handleTreatmentNameChange = (text) => {
     setTreatmentName(text);
     
@@ -210,7 +222,7 @@ export default function HomeScreen() {
 
   const saveTreatment = () => {
     if (!treatmentName.trim()) {
-      alert('Veuillez entrer le nom du traitement');
+      showToast('Veuillez entrer le nom du traitement', 'error');
       return;
     }
 
@@ -230,7 +242,7 @@ export default function HomeScreen() {
     storage.set('treatments', JSON.stringify(treatments));
     
     hideTreatmentModal();
-    alert('Traitement enregistré !');
+    showToast('💊 Traitement enregistré !', 'success');
   };
   const showModal = () => {
     const now = new Date();
@@ -701,6 +713,15 @@ export default function HomeScreen() {
           </AppCard>
         </Modal>
       </Portal>
+
+      {/* Toast de notification */}
+      <Toast
+        visible={toastVisible}
+        message={toastMessage}
+        type={toastType}
+        duration={3000}
+        onHide={() => setToastVisible(false)}
+      />
     </View>
   );
 }

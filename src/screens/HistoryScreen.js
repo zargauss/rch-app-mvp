@@ -25,6 +25,13 @@ export default function HistoryScreen({ navigation }) {
   const [editDateInput, setEditDateInput] = useState('');
   const [editTimeInput, setEditTimeInput] = useState('');
   
+  // États pour l'édition des traitements
+  const [treatmentEditModalVisible, setTreatmentEditModalVisible] = useState(false);
+  const [editingTreatment, setEditingTreatment] = useState(null);
+  const [editTreatmentName, setEditTreatmentName] = useState('');
+  const [editTreatmentDateInput, setEditTreatmentDateInput] = useState('');
+  const [editTreatmentTimeInput, setEditTreatmentTimeInput] = useState('');
+  
   // État pour la navigation du calendrier (offset en mois par rapport au mois actuel)
   const [calendarMonthOffset, setCalendarMonthOffset] = useState(0);
 
@@ -129,6 +136,71 @@ export default function HistoryScreen({ navigation }) {
   const hideEditModal = () => {
     setEditModalVisible(false);
     setEditingStool(null);
+  };
+
+  // Fonctions pour gérer les traitements
+  const handleEditTreatment = (treatment) => {
+    setEditingTreatment(treatment);
+    setEditTreatmentName(treatment.name);
+    const date = new Date(treatment.timestamp);
+    setEditTreatmentDateInput(date.toLocaleDateString('fr-FR'));
+    setEditTreatmentTimeInput(date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }));
+    setTreatmentEditModalVisible(true);
+  };
+
+  const hideTreatmentEditModal = () => {
+    setTreatmentEditModalVisible(false);
+    setEditingTreatment(null);
+  };
+
+  const handleSaveTreatment = () => {
+    if (!editTreatmentName.trim()) {
+      alert('Veuillez entrer le nom du traitement');
+      return;
+    }
+
+    const selectedDateTime = parseDateTime(editTreatmentDateInput, editTreatmentTimeInput);
+    const timestamp = selectedDateTime.getTime();
+
+    const treatmentsJson = storage.getString('treatments');
+    const allTreatments = treatmentsJson ? JSON.parse(treatmentsJson) : [];
+    
+    const updatedTreatments = allTreatments.map(t =>
+      t.id === editingTreatment.id
+        ? { ...t, name: editTreatmentName.trim(), timestamp }
+        : t
+    );
+    
+    storage.set('treatments', JSON.stringify(updatedTreatments));
+    setTreatments(updatedTreatments.sort((a, b) => b.timestamp - a.timestamp));
+    
+    hideTreatmentEditModal();
+  };
+
+  const handleDeleteTreatment = (treatmentId) => {
+    const executeDelete = () => {
+      const treatmentsJson = storage.getString('treatments');
+      const allTreatments = treatmentsJson ? JSON.parse(treatmentsJson) : [];
+      const updated = allTreatments.filter(t => t.id !== treatmentId);
+      storage.set('treatments', JSON.stringify(updated));
+      
+      setTreatments(updated.sort((a, b) => b.timestamp - a.timestamp));
+    };
+
+    if (Platform.OS === 'web') {
+      if (window.confirm('Êtes-vous sûr de vouloir supprimer ce traitement ?')) {
+        executeDelete();
+      }
+    } else {
+      Alert.alert(
+        'Supprimer le traitement',
+        'Êtes-vous sûr de vouloir supprimer ce traitement ?',
+        [
+          { text: 'Annuler', style: 'cancel' },
+          { text: 'Supprimer', onPress: executeDelete, style: 'destructive' }
+        ]
+      );
+    }
   };
 
   const parseDateTime = (dateStr, timeStr) => {
@@ -460,6 +532,20 @@ export default function HistoryScreen({ navigation }) {
                     {formatCompactDate(item.timestamp)}
                   </AppText>
                 </View>
+                <View style={styles.treatmentActions}>
+                  <TouchableOpacity 
+                    onPress={() => handleEditTreatment(item)}
+                    style={styles.actionButton}
+                  >
+                    <AppText style={styles.actionIcon}>✏️</AppText>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    onPress={() => handleDeleteTreatment(item.id)}
+                    style={styles.actionButton}
+                  >
+                    <AppText style={styles.actionIcon}>🗑️</AppText>
+                  </TouchableOpacity>
+                </View>
               </View>
             )}
           />
@@ -525,6 +611,49 @@ export default function HistoryScreen({ navigation }) {
                 Enregistrer
               </PrimaryButton>
     </View>
+          </AppCard>
+        </Modal>
+      </Portal>
+
+      {/* Modal d'édition des traitements */}
+      <Portal>
+        <Modal visible={treatmentEditModalVisible} onDismiss={hideTreatmentEditModal} contentContainerStyle={styles.modalContainer}>
+          <AppCard style={styles.modalCard}>
+            <AppText variant="headlineLarge" style={styles.modalTitle}>
+              Modifier le traitement
+            </AppText>
+
+            <View style={styles.modalContent}>
+              <AppText variant="bodyMedium" style={styles.inputLabel}>
+                Date et heure
+              </AppText>
+              <View style={styles.dateTimeRow}>
+                <View style={styles.dateTimeInput}>
+                  <AppText variant="labelSmall" style={styles.inputHelper}>Date (JJ/MM/AAAA)</AppText>
+                  <AppText variant="bodyLarge">{editTreatmentDateInput}</AppText>
+                </View>
+                <View style={styles.dateTimeInput}>
+                  <AppText variant="labelSmall" style={styles.inputHelper}>Heure (HH:MM)</AppText>
+                  <AppText variant="bodyLarge">{editTreatmentTimeInput}</AppText>
+                </View>
+              </View>
+
+              <AppText variant="bodyMedium" style={styles.inputLabel}>
+                Nom du traitement
+              </AppText>
+              <View style={styles.treatmentNameInput}>
+                <AppText variant="bodyLarge">{editTreatmentName}</AppText>
+              </View>
+            </View>
+
+            <View style={styles.modalActions}>
+              <SecondaryButton onPress={hideTreatmentEditModal} style={styles.modalButton}>
+                Annuler
+              </SecondaryButton>
+              <PrimaryButton onPress={handleSaveTreatment} style={styles.modalButton}>
+                Enregistrer
+              </PrimaryButton>
+            </View>
           </AppCard>
         </Modal>
       </Portal>
@@ -880,5 +1009,17 @@ const styles = StyleSheet.create({
   treatmentDate: {
     color: '#64748B',
     fontSize: 13,
+  },
+  treatmentActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  treatmentNameInput: {
+    backgroundColor: '#F8FAFB',
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    marginBottom: 16,
   },
 });
