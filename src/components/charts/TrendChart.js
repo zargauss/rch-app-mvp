@@ -94,11 +94,15 @@ const TrendChart = ({ data, labels, period }) => {
 
     const x1 = padding.left;
     const y1Value = trendLine.intercept;
-    const y1 = padding.top + innerHeight - ((y1Value - minScore) / range) * innerHeight;
+    // Clamper la valeur entre minScore et maxScore
+    const y1ValueClamped = Math.max(minScore, Math.min(maxScore, y1Value));
+    const y1 = padding.top + innerHeight - ((y1ValueClamped - minScore) / range) * innerHeight;
 
     const x2 = padding.left + innerWidth;
     const y2Value = trendLine.slope * (data.length - 1) + trendLine.intercept;
-    const y2 = padding.top + innerHeight - ((y2Value - minScore) / range) * innerHeight;
+    // Clamper la valeur entre minScore et maxScore
+    const y2ValueClamped = Math.max(minScore, Math.min(maxScore, y2Value));
+    const y2 = padding.top + innerHeight - ((y2ValueClamped - minScore) / range) * innerHeight;
 
     return `M ${x1} ${y1} L ${x2} ${y2}`;
   }, [trendLine, data, innerWidth, innerHeight, padding]);
@@ -263,7 +267,7 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
   },
   svg: {
-    overflow: 'visible',
+    overflow: 'hidden',
   },
   emptyContainer: {
     height: 200,
