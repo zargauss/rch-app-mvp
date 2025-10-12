@@ -7,19 +7,21 @@ const TrendIndicator = ({ data, period }) => {
   // Calculer la tendance
   const getTrendAnalysis = () => {
     const validScores = data.filter(score => score !== null);
-    if (validScores.length < 3) {
+    if (validScores.length < 2) {
       return {
         direction: 'neutral',
         percentage: 0,
         text: 'Données insuffisantes',
         icon: '➡️',
         color: '#94A3B8',
-        backgroundColor: '#F1F5F9'
+        backgroundColor: '#F1F5F9',
+        description: 'Enregistrez au moins 2 scores pour voir l\'analyse de tendance.'
       };
     }
 
     // Comparer les 25% plus récents avec les 25% plus anciens
-    const quarterSize = Math.max(Math.floor(validScores.length / 4), 3);
+    // Pour 2-3 scores, comparer le premier et le dernier
+    const quarterSize = validScores.length >= 4 ? Math.max(Math.floor(validScores.length / 4), 1) : 1;
     const recent = validScores.slice(-quarterSize);
     const older = validScores.slice(0, quarterSize);
 

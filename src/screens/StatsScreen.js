@@ -177,7 +177,7 @@ export default function StatsScreen() {
           </AppCard>
 
           {/* Analyse de tendance */}
-          {chartData.validDays >= 3 && (
+          {chartData.validDays >= 2 && (
             <TrendIndicator 
               data={chartData.data} 
               period={chartData.validDays}
