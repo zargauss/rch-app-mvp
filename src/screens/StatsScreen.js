@@ -155,7 +155,7 @@ export default function StatsScreen() {
               Évolution du Score
             </AppText>
             <AppText variant="bodyMedium" style={styles.chartSubtitle}>
-              Graphique avec ligne de tendance
+              Évolution de votre score
             </AppText>
             
             {Platform.OS === 'web' ? (

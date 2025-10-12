@@ -244,13 +244,19 @@ export default function ExportScreen() {
       
       const painLevel = survey?.abdominalPain ? (painMap[survey.abdominalPain] || survey.abdominalPain) : '—';
       const generalState = survey?.generalState ? (generalMap[survey.generalState] || survey.generalState) : '—';
+      const incontinence = survey?.fecalIncontinence === 'oui' ? 'Oui' : (survey?.fecalIncontinence === 'non' ? 'Non' : '—');
+      
+      // Format de date DD/MM/YYYY
+      const [year, month, day] = dateStr.split('-');
+      const shortDate = `${day}/${month}/${year}`;
       
       return `
         <tr>
-          <td>${formatDate(dateStr)}</td>
+          <td>${shortDate}</td>
           <td style="text-align: center; font-weight: bold;">${score}</td>
           <td style="text-align: center;">${dayOnlyStoolsCount} / ${nightStoolsCount}</td>
           <td style="text-align: center;">${bloodText}</td>
+          <td style="text-align: center;">${incontinence}</td>
           <td style="text-align: center;">${painLevel}</td>
           <td style="text-align: center;">${generalState}</td>
         </tr>
@@ -267,9 +273,9 @@ export default function ExportScreen() {
           body {
             font-family: Arial, sans-serif;
             margin: 0;
-            padding: 20px;
+            padding: 15px;
             color: #333;
-            line-height: 1.4;
+            line-height: 1.3;
             background: white;
           }
           .header {
@@ -346,20 +352,20 @@ export default function ExportScreen() {
             width: 100%;
             border-collapse: collapse;
             margin: 0;
-            font-size: 14px;
+            font-size: 11px;
           }
           th {
             background-color: #005A9C;
             color: white;
-            padding: 12px 8px;
+            padding: 10px 6px;
             text-align: left;
             font-weight: bold;
-            font-size: 13px;
+            font-size: 11px;
           }
           td {
-            padding: 10px 8px;
+            padding: 8px 6px;
             border: 1px solid #ddd;
-            font-size: 13px;
+            font-size: 11px;
           }
           tr:nth-child(even) {
             background-color: #f8f9fa;
@@ -421,11 +427,12 @@ export default function ExportScreen() {
               <thead>
                 <tr>
                   <th>Date</th>
-                  <th>Score Lichtiger</th>
-                  <th>Selles (jour/nuit)</th>
-                  <th>Saignement</th>
+                  <th>Lichtiger</th>
+                  <th>Selles (J/N)</th>
+                  <th>Sang</th>
+                  <th>Incontinence</th>
                   <th>Douleurs</th>
-                  <th>État Général</th>
+                  <th>État</th>
                 </tr>
               </thead>
               <tbody>

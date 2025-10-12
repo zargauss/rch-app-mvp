@@ -11,25 +11,6 @@ const TrendChart = ({ data, labels, period }) => {
   const innerWidth = chartWidth - padding.left - padding.right;
   const innerHeight = chartHeight - padding.top - padding.bottom;
 
-  // Calculer la ligne de tendance (régression linéaire)
-  const trendLine = useMemo(() => {
-    const validPoints = data
-      .map((value, index) => ({ x: index, y: value }))
-      .filter(point => point.y !== null);
-
-    if (validPoints.length < 2) return null;
-
-    const n = validPoints.length;
-    const sumX = validPoints.reduce((sum, point) => sum + point.x, 0);
-    const sumY = validPoints.reduce((sum, point) => sum + point.y, 0);
-    const sumXY = validPoints.reduce((sum, point) => sum + point.x * point.y, 0);
-    const sumX2 = validPoints.reduce((sum, point) => sum + point.x * point.x, 0);
-
-    const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
-    const intercept = (sumY - slope * sumX) / n;
-
-    return { slope, intercept };
-  }, [data]);
 
   // Calculer les points du graphique
   const points = useMemo(() => {
@@ -83,29 +64,6 @@ const TrendChart = ({ data, labels, period }) => {
     return path;
   }, [points, chartHeight, padding]);
 
-  // Créer la ligne de tendance
-  const trendLinePath = useMemo(() => {
-    if (!trendLine || data.length < 2) return '';
-
-    const validData = data.filter(d => d !== null);
-    const maxScore = Math.max(...validData, 12);
-    const minScore = 0;
-    const range = maxScore - minScore;
-
-    const x1 = padding.left;
-    const y1Value = trendLine.intercept;
-    // Clamper la valeur entre minScore et maxScore
-    const y1ValueClamped = Math.max(minScore, Math.min(maxScore, y1Value));
-    const y1 = padding.top + innerHeight - ((y1ValueClamped - minScore) / range) * innerHeight;
-
-    const x2 = padding.left + innerWidth;
-    const y2Value = trendLine.slope * (data.length - 1) + trendLine.intercept;
-    // Clamper la valeur entre minScore et maxScore
-    const y2ValueClamped = Math.max(minScore, Math.min(maxScore, y2Value));
-    const y2 = padding.top + innerHeight - ((y2ValueClamped - minScore) / range) * innerHeight;
-
-    return `M ${x1} ${y1} L ${x2} ${y2}`;
-  }, [trendLine, data, innerWidth, innerHeight, padding]);
 
   // Grille horizontale
   const gridLines = [0, 3, 6, 9, 12].map(value => {
@@ -181,17 +139,6 @@ const TrendChart = ({ data, labels, period }) => {
           d={areaPath}
           fill="url(#areaGradient)"
         />
-
-        {/* Ligne de tendance */}
-        {trendLinePath && (
-          <path
-            d={trendLinePath}
-            stroke="#F59E0B"
-            strokeWidth="2"
-            strokeDasharray="6 4"
-            fill="none"
-          />
-        )}
 
         {/* Ligne de données */}
         <path
