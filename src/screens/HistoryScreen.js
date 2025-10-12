@@ -1,6 +1,6 @@
 ﻿import React, { useEffect, useMemo, useState } from 'react';
 import { View, StyleSheet, FlatList, Alert, Platform, TouchableOpacity, ScrollView } from 'react-native';
-import { IconButton, Portal, Modal, Switch } from 'react-native-paper';
+import { IconButton, Portal, Modal, Switch, TextInput } from 'react-native-paper';
 import storage from '../utils/storage';
 import calculateLichtigerScore from '../utils/scoreCalculator';
 import { useFocusEffect } from '@react-navigation/native';
@@ -623,37 +623,55 @@ export default function HistoryScreen({ navigation }) {
               Modifier le traitement
             </AppText>
 
-            <View style={styles.modalContent}>
-              <AppText variant="bodyMedium" style={styles.inputLabel}>
-                Date et heure
-              </AppText>
-              <View style={styles.dateTimeRow}>
-                <View style={styles.dateTimeInput}>
-                  <AppText variant="labelSmall" style={styles.inputHelper}>Date (JJ/MM/AAAA)</AppText>
-                  <AppText variant="bodyLarge">{editTreatmentDateInput}</AppText>
+            <ScrollView>
+              <View style={styles.modalContent}>
+                <AppText variant="bodyMedium" style={styles.inputLabel}>
+                  📅 Date et heure de la prise
+                </AppText>
+                
+                <View style={styles.dateTimeRow}>
+                  <TextInput
+                    label="Date (JJ/MM/AAAA)"
+                    value={editTreatmentDateInput}
+                    onChangeText={setEditTreatmentDateInput}
+                    style={[styles.textInputField, { flex: 1, marginRight: 8 }]}
+                    mode="outlined"
+                    outlineStyle={{ borderRadius: 12 }}
+                  />
+                  <TextInput
+                    label="Heure (HH:MM)"
+                    value={editTreatmentTimeInput}
+                    onChangeText={setEditTreatmentTimeInput}
+                    style={[styles.textInputField, { flex: 1, marginLeft: 8 }]}
+                    mode="outlined"
+                    outlineStyle={{ borderRadius: 12 }}
+                  />
                 </View>
-                <View style={styles.dateTimeInput}>
-                  <AppText variant="labelSmall" style={styles.inputHelper}>Heure (HH:MM)</AppText>
-                  <AppText variant="bodyLarge">{editTreatmentTimeInput}</AppText>
-                </View>
+
+                <AppText variant="bodyMedium" style={[styles.inputLabel, { marginTop: 20 }]}>
+                  💊 Nom du traitement
+                </AppText>
+                
+                <TextInput
+                  label="Ex: Pentasa, Humira..."
+                  value={editTreatmentName}
+                  onChangeText={setEditTreatmentName}
+                  style={styles.textInputField}
+                  mode="outlined"
+                  outlineStyle={{ borderRadius: 12 }}
+                  autoCapitalize="words"
+                />
               </View>
 
-              <AppText variant="bodyMedium" style={styles.inputLabel}>
-                Nom du traitement
-              </AppText>
-              <View style={styles.treatmentNameInput}>
-                <AppText variant="bodyLarge">{editTreatmentName}</AppText>
+              <View style={styles.modalActions}>
+                <SecondaryButton onPress={hideTreatmentEditModal} style={styles.modalButton}>
+                  Annuler
+                </SecondaryButton>
+                <PrimaryButton onPress={handleSaveTreatment} style={styles.modalButton}>
+                  Enregistrer
+                </PrimaryButton>
               </View>
-            </View>
-
-            <View style={styles.modalActions}>
-              <SecondaryButton onPress={hideTreatmentEditModal} style={styles.modalButton}>
-                Annuler
-              </SecondaryButton>
-              <PrimaryButton onPress={handleSaveTreatment} style={styles.modalButton}>
-                Enregistrer
-              </PrimaryButton>
-            </View>
+            </ScrollView>
           </AppCard>
         </Modal>
       </Portal>
@@ -1020,6 +1038,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#E2E8F0',
+    marginBottom: 16,
+  },
+  textInputField: {
+    backgroundColor: '#F8FAFB',
     marginBottom: 16,
   },
 });
