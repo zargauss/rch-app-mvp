@@ -855,7 +855,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   dayCell: {
-    width: '13.5%',
+    width: '13.48%', // (100% - 7*2*0.4%) / 7 pour tenir compte des marges
     aspectRatio: 1,
     margin: '0.4%',
     justifyContent: 'center',
