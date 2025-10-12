@@ -88,7 +88,7 @@ export default function StatCard({
 const styles = StyleSheet.create({
   card: {
     marginBottom: 16,
-    borderRadius: 20,
+    borderRadius: 8,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#E2E8F0',
@@ -109,7 +109,7 @@ const styles = StyleSheet.create({
   iconContainer: {
     width: 48,
     height: 48,
-    borderRadius: 24,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,

@@ -802,7 +802,6 @@ const styles = StyleSheet.create({
   mainActionCard: {
     padding: 28,
     backgroundColor: '#FFFFFF',
-    borderRadius: 24,
     borderWidth: 2,
     borderColor: '#4A90E2',
     shadowColor: '#4A90E2',
@@ -822,13 +821,13 @@ const styles = StyleSheet.create({
   },
   mainPrimaryAction: {
     marginBottom: 8,
-    borderRadius: 20,
+    borderRadius: 12,
     paddingVertical: 8,
     elevation: 4,
   },
   mainSecondaryAction: {
     marginBottom: 8,
-    borderRadius: 20,
+    borderRadius: 12,
     paddingVertical: 8,
     elevation: 4,
   },
@@ -838,7 +837,6 @@ const styles = StyleSheet.create({
   actionCard: {
     padding: 24,
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
     borderWidth: 1,
     borderColor: '#E2E8F0',
     shadowColor: '#000',
@@ -857,17 +855,16 @@ const styles = StyleSheet.create({
   },
   primaryAction: {
     marginBottom: 8,
-    borderRadius: 16,
+    borderRadius: 12,
     paddingVertical: 4,
   },
   secondaryAction: {
     marginBottom: 8,
-    borderRadius: 16,
+    borderRadius: 12,
     paddingVertical: 4,
   },
   encouragementCard: {
     backgroundColor: '#E8F8F5',
-    borderRadius: 20,
     borderWidth: 1,
     borderColor: '#4ECDC4',
     shadowColor: '#4ECDC4',
@@ -896,7 +893,6 @@ const styles = StyleSheet.create({
   },
   modalCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 24,
     borderWidth: 1,
     borderColor: '#E2E8F0',
     shadowColor: '#000',

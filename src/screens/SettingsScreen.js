@@ -1,6 +1,7 @@
 ﻿import React, { useState } from 'react';
 import { View, StyleSheet, Alert, ScrollView, Platform } from 'react-native';
 import { Text, Button } from 'react-native-paper';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import storage from '../utils/storage';
 import AppText from '../components/ui/AppText';
 import PrimaryButton from '../components/ui/PrimaryButton';
@@ -133,15 +134,18 @@ export default function SettingsScreen() {
       <View style={styles.header}>
         <View style={styles.headerTop}>
           <View style={styles.titleSection}>
-            <AppText variant="displayMedium" style={styles.title}>
-              ⚙️ Paramètres
-            </AppText>
+            <View style={styles.titleWithIcon}>
+              <MaterialCommunityIcons name="cog" size={32} color="#2D3748" style={{ marginRight: 12 }} />
+              <AppText variant="displayMedium" style={styles.title}>
+                Paramètres
+              </AppText>
+            </View>
             <AppText variant="bodyMedium" style={styles.subtitle}>
               Configuration de l'application
             </AppText>
           </View>
           <View style={styles.menuIcon}>
-            <AppText style={styles.menuEmoji}>⋯</AppText>
+            <MaterialCommunityIcons name="dots-horizontal" size={24} color="#718096" />
           </View>
         </View>
       </View>
@@ -149,7 +153,7 @@ export default function SettingsScreen() {
       {/* Informations sur la période nocturne */}
       <AppCard style={styles.infoCard}>
         <View style={styles.infoHeader}>
-          <AppText style={styles.infoIcon}>🌙</AppText>
+          <MaterialCommunityIcons name="weather-night" size={28} color="#2D3748" style={{ marginRight: 16 }} />
           <AppText variant="headlineLarge" style={styles.infoTitle}>
             Période nocturne
           </AppText>
@@ -162,7 +166,7 @@ export default function SettingsScreen() {
       {/* Mode Développeur */}
       <AppCard style={styles.devCard}>
         <View style={styles.devHeader}>
-          <AppText style={styles.devIcon}>🎲</AppText>
+          <MaterialCommunityIcons name="dice-multiple" size={24} color="#065F46" style={{ marginRight: 12 }} />
           <AppText variant="headlineLarge" style={styles.devTitle}>
             Mode Développeur
           </AppText>
@@ -178,8 +182,9 @@ export default function SettingsScreen() {
             disabled={isGenerating}
             buttonColor="#10B981"
             style={styles.scenarioButton}
+            icon={isGenerating ? "timer-sand" : "chart-bar"}
           >
-            {isGenerating ? '⏳' : '📊 Réaliste (60j)'}
+            {isGenerating ? 'Génération...' : 'Réaliste (60j)'}
           </PrimaryButton>
           
           <PrimaryButton 
@@ -188,8 +193,9 @@ export default function SettingsScreen() {
             disabled={isGenerating}
             buttonColor="#10B981"
             style={styles.scenarioButton}
+            icon="trending-up"
           >
-            📈 Amélioration (60j)
+            Amélioration (60j)
           </PrimaryButton>
           
           <PrimaryButton 
@@ -198,8 +204,9 @@ export default function SettingsScreen() {
             disabled={isGenerating}
             buttonColor="#F59E0B"
             style={styles.scenarioButton}
+            icon="trending-down"
           >
-            📉 Poussée (30j)
+            Poussée (30j)
           </PrimaryButton>
           
           <PrimaryButton 
@@ -208,8 +215,9 @@ export default function SettingsScreen() {
             disabled={isGenerating}
             buttonColor="#6366F1"
             style={styles.scenarioButton}
+            icon="minus"
           >
-            ➡️ Stable (90j)
+            Stable (90j)
           </PrimaryButton>
         </View>
       </AppCard>
@@ -217,7 +225,7 @@ export default function SettingsScreen() {
       {/* Zone de danger */}
       <AppCard style={styles.dangerCard}>
         <View style={styles.dangerHeader}>
-          <AppText style={styles.dangerIcon}>⚠️</AppText>
+          <MaterialCommunityIcons name="alert" size={28} color="#2D3748" style={{ marginRight: 16 }} />
           <AppText variant="headlineLarge" style={styles.dangerTitle}>
             Zone de danger
           </AppText>
@@ -231,6 +239,7 @@ export default function SettingsScreen() {
           disabled={isWiping}
           buttonColor="#FF6B6B"
           style={styles.wipeButton}
+          icon="delete-forever"
         >
           {isWiping ? 'Suppression...' : 'Effacer toutes les données'}
         </PrimaryButton>
@@ -241,8 +250,9 @@ export default function SettingsScreen() {
           onPress={handleManualClear}
           buttonColor="#4A90E2"
           style={styles.debugButton}
+          icon="broom"
         >
-          🧹 Effacer localStorage (Debug)
+          Effacer localStorage (Debug)
         </PrimaryButton>
       </AppCard>
     </ScrollView>
@@ -266,9 +276,13 @@ const styles = StyleSheet.create({
   titleSection: {
     flex: 1,
   },
+  titleWithIcon: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
   title: {
     color: '#2D3748',
-    marginBottom: 6,
     fontWeight: '700',
   },
   subtitle: {
@@ -290,16 +304,11 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 2,
   },
-  menuEmoji: {
-    fontSize: 20,
-    color: '#718096',
-  },
   infoCard: {
     marginHorizontal: 20,
     marginBottom: 24,
     padding: 24,
     backgroundColor: '#E8F4FD',
-    borderRadius: 20,
     borderWidth: 1,
     borderColor: '#4A90E2',
     shadowColor: '#4A90E2',
@@ -312,10 +321,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 16,
-  },
-  infoIcon: {
-    fontSize: 28,
-    marginRight: 16,
   },
   infoTitle: {
     color: '#2D3748',
@@ -330,7 +335,6 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     padding: 24,
     backgroundColor: '#F0FDF4',
-    borderRadius: 20,
     borderWidth: 1,
     borderColor: '#10B981',
     shadowColor: '#10B981',
@@ -343,10 +347,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 16,
-  },
-  devIcon: {
-    fontSize: 24,
-    marginRight: 12,
   },
   devTitle: {
     color: '#065F46',
@@ -369,7 +369,6 @@ const styles = StyleSheet.create({
     marginBottom: 32,
     padding: 24,
     backgroundColor: '#FFE8E8',
-    borderRadius: 20,
     borderWidth: 1,
     borderColor: '#FF6B6B',
     shadowColor: '#FF6B6B',
@@ -382,10 +381,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 16,
-  },
-  dangerIcon: {
-    fontSize: 28,
-    marginRight: 16,
   },
   dangerTitle: {
     color: '#2D3748',

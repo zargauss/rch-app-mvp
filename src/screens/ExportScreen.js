@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Alert, Platform } from 'react-native';
 import { Text, Button, Card, Divider, SegmentedButtons } from 'react-native-paper';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import storage from '../utils/storage';
 import calculateLichtigerScore from '../utils/scoreCalculator';
 import { getSurveyDayKey } from '../utils/dayKey';
@@ -535,7 +536,10 @@ export default function ExportScreen() {
       <AppText variant="title" style={styles.title}>Export pour Médecin</AppText>
       
       <AppCard style={styles.infoCard}>
-        <AppText variant="body" style={styles.infoTitle}>📋 Rapport Médical</AppText>
+        <View style={styles.infoTitleContainer}>
+          <MaterialCommunityIcons name="file-document-outline" size={24} color="#4A90E2" />
+          <AppText variant="body" style={styles.infoTitle}>Rapport Médical</AppText>
+        </View>
         <AppText variant="body" style={styles.infoText}>
           Générez un rapport PDF complet avec vos données de suivi pour partager avec votre médecin.
         </AppText>
@@ -629,8 +633,13 @@ const styles = StyleSheet.create({
   segmentedButtons: {
     marginTop: 8
   },
-  infoTitle: {
+  infoTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 8,
+    gap: 8
+  },
+  infoTitle: {
     fontWeight: 'bold'
   },
   infoText: {

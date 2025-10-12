@@ -253,7 +253,6 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     padding: 20,
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
     borderWidth: 1,
     borderColor: '#E2E8F0',
     shadowColor: '#000',
@@ -272,7 +271,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#F8FAFB',
-    borderRadius: 16,
+    borderRadius: 8,
     padding: 24,
   },
   placeholderText: {
