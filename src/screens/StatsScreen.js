@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { View, StyleSheet, ScrollView, Platform } from 'react-native';
+import { SegmentedButtons } from 'react-native-paper';
 import storage from '../utils/storage';
 import AppText from '../components/ui/AppText';
 import AppCard from '../components/ui/AppCard';
@@ -14,36 +15,48 @@ import { useFocusEffect } from '@react-navigation/native';
 
 export default function StatsScreen() {
   const [scores, setScores] = useState([]);
+  const [stools, setStools] = useState([]);
   const [period, setPeriod] = useState('30'); // 7, 30, 90 jours
+  const [dataType, setDataType] = useState('score'); // 'score' ou 'stools'
   const theme = useTheme();
 
   useEffect(() => {
-    loadScores();
+    loadData();
   }, []);
 
   // Recharger les données à chaque fois qu'on navigue vers cet écran
   useFocusEffect(
     React.useCallback(() => {
-      loadScores();
+      loadData();
     }, [])
   );
 
   // Recharger les données périodiquement pour capturer les changements
   useEffect(() => {
     const interval = setInterval(() => {
-      loadScores();
+      loadData();
     }, 2000); // Recharger toutes les 2 secondes
 
     return () => clearInterval(interval);
   }, []);
 
-  const loadScores = () => {
-    const json = storage.getString('scoresHistory');
-    if (json) {
-      const history = JSON.parse(json);
+  const loadData = () => {
+    // Charger les scores
+    const scoresJson = storage.getString('scoresHistory');
+    if (scoresJson) {
+      const history = JSON.parse(scoresJson);
       setScores(history);
     } else {
       setScores([]);
+    }
+
+    // Charger les selles
+    const stoolsJson = storage.getString('dailySells');
+    if (stoolsJson) {
+      const stoolsData = JSON.parse(stoolsJson);
+      setStools(stoolsData);
+    } else {
+      setStools([]);
     }
   };
 
@@ -59,31 +72,59 @@ export default function StatsScreen() {
       dateRange.push(dateStr);
     }
 
-    const chartDataArray = dateRange.map(dateStr => {
-      const scoreEntry = scores.find(s => s.date === dateStr);
-      return scoreEntry ? scoreEntry.score : null;
-    });
-
-    const validScores = chartDataArray.filter(score => score !== null);
-    const average = validScores.length > 0 ? validScores.reduce((a, b) => a + b, 0) / validScores.length : null;
-    const min = validScores.length > 0 ? Math.min(...validScores) : null;
-    const max = validScores.length > 0 ? Math.max(...validScores) : null;
-
     const labels = dateRange.map(dateStr => {
       const date = new Date(dateStr);
       return `${date.getDate()}/${date.getMonth() + 1}`;
     });
 
-    return {
-      labels,
-      data: chartDataArray,
-      average,
-      min,
-      max,
-      validDays: validScores.length,
-      totalDays: days
-    };
-  }, [scores, period]);
+    if (dataType === 'score') {
+      // Données des scores
+      const chartDataArray = dateRange.map(dateStr => {
+        const scoreEntry = scores.find(s => s.date === dateStr);
+        return scoreEntry ? scoreEntry.score : null;
+      });
+
+      const validScores = chartDataArray.filter(score => score !== null);
+      const average = validScores.length > 0 ? validScores.reduce((a, b) => a + b, 0) / validScores.length : null;
+      const min = validScores.length > 0 ? Math.min(...validScores) : null;
+      const max = validScores.length > 0 ? Math.max(...validScores) : null;
+
+      return {
+        labels,
+        data: chartDataArray,
+        average,
+        min,
+        max,
+        validDays: validScores.length,
+        totalDays: days
+      };
+    } else {
+      // Données des selles (nombre de selles par jour)
+      const chartDataArray = dateRange.map(dateStr => {
+        const dayStool = stools.filter(s => s.date === dateStr);
+        return dayStool.length > 0 ? dayStool.length : null;
+      });
+
+      const validDays = chartDataArray.filter(count => count !== null);
+      const average = validDays.length > 0 ? validDays.reduce((a, b) => a + b, 0) / validDays.length : null;
+      const min = validDays.length > 0 ? Math.min(...validDays) : null;
+      const max = validDays.length > 0 ? Math.max(...validDays) : null;
+
+      // Calcul du nombre total de selles
+      const totalStools = validDays.reduce((a, b) => a + b, 0);
+
+      return {
+        labels,
+        data: chartDataArray,
+        average,
+        min,
+        max,
+        validDays: validDays.length,
+        totalDays: days,
+        totalStools
+      };
+    }
+  }, [scores, stools, period, dataType]);
 
   return (
     <ScrollView 
@@ -104,6 +145,26 @@ export default function StatsScreen() {
         </View>
       </View>
 
+      {/* Sélecteur de type de données */}
+      <View style={styles.dataTypeSection}>
+        <SegmentedButtons
+          value={dataType}
+          onValueChange={setDataType}
+          buttons={[
+            {
+              value: 'score',
+              label: 'Score Lichtiger',
+              icon: 'chart-line',
+            },
+            {
+              value: 'stools',
+              label: 'Selles',
+              icon: 'toilet',
+            },
+          ]}
+        />
+      </View>
+
       {/* Sélecteur de période */}
       <View style={styles.periodSection}>
         <SegmentedControl
@@ -121,35 +182,65 @@ export default function StatsScreen() {
         <>
           {/* Cartes de statistiques */}
           <View style={styles.statsGrid}>
-            <StatCard
-              title="Score moyen"
-              value={chartData.average !== null ? chartData.average.toFixed(1) : 'N/A'}
-              subtitle={`Sur ${chartData.validDays} jours`}
-              icon="chart-bar"
-              color={chartData.average !== null ? (chartData.average < 5 ? 'success' : chartData.average <= 10 ? 'warning' : 'error') : 'info'}
-            />
-            
-            <StatCard
-              title="Meilleur résultat"
-              value={chartData.min !== null ? chartData.min.toString() : 'N/A'}
-              subtitle="Score minimum"
-              icon="target"
-              color="success"
-            />
-            
-            <StatCard
-              title="Score maximum"
-              value={chartData.max !== null ? chartData.max.toString() : 'N/A'}
-              subtitle="Résultat le plus élevé"
-              icon="alert-circle"
-              color="error"
-            />
+            {dataType === 'score' ? (
+              <>
+                <StatCard
+                  title="Score moyen"
+                  value={chartData.average !== null ? chartData.average.toFixed(1) : 'N/A'}
+                  subtitle={`Sur ${chartData.validDays} jours`}
+                  icon="chart-bar"
+                  color={chartData.average !== null ? (chartData.average < 5 ? 'success' : chartData.average <= 10 ? 'warning' : 'error') : 'info'}
+                />
+                
+                <StatCard
+                  title="Meilleur résultat"
+                  value={chartData.min !== null ? chartData.min.toString() : 'N/A'}
+                  subtitle="Score minimum"
+                  icon="target"
+                  color="success"
+                />
+                
+                <StatCard
+                  title="Score maximum"
+                  value={chartData.max !== null ? chartData.max.toString() : 'N/A'}
+                  subtitle="Résultat le plus élevé"
+                  icon="alert-circle"
+                  color="error"
+                />
+              </>
+            ) : (
+              <>
+                <StatCard
+                  title="Moyenne par jour"
+                  value={chartData.average !== null ? chartData.average.toFixed(1) : 'N/A'}
+                  subtitle={`Sur ${chartData.validDays} jours`}
+                  icon="chart-bar"
+                  color={chartData.average !== null ? (chartData.average <= 3 ? 'success' : chartData.average <= 6 ? 'warning' : 'error') : 'info'}
+                />
+                
+                <StatCard
+                  title="Jour le plus calme"
+                  value={chartData.min !== null ? chartData.min.toString() : 'N/A'}
+                  subtitle="Minimum de selles"
+                  icon="check-circle"
+                  color="success"
+                />
+                
+                <StatCard
+                  title="Jour le plus actif"
+                  value={chartData.max !== null ? chartData.max.toString() : 'N/A'}
+                  subtitle="Maximum de selles"
+                  icon="alert-circle"
+                  color="error"
+                />
+              </>
+            )}
           </View>
 
           {/* Graphique d'évolution */}
           <AppCard style={styles.chartCard}>
             <AppText variant="headlineLarge" style={styles.chartTitle}>
-              Évolution du Score
+              {dataType === 'score' ? 'Évolution du Score' : 'Évolution des Selles'}
             </AppText>
             
             {Platform.OS === 'web' ? (
@@ -233,6 +324,10 @@ const styles = StyleSheet.create({
   subtitle: {
     color: '#718096',
     fontWeight: '400',
+  },
+  dataTypeSection: {
+    paddingHorizontal: 20,
+    marginBottom: 16,
   },
   periodSection: {
     paddingHorizontal: 20,

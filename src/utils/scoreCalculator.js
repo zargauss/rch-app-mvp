@@ -24,7 +24,9 @@ export function calculateLichtigerScore(dateStr, storage) {
     // Minuit -> minuit pour la date locale passée
     const stoolsJson = storage.getString('dailySells');
     const stools = stoolsJson ? JSON.parse(stoolsJson) : [];
-    const dayStart = new Date(dateStr + 'T00:00:00').getTime();
+    // Créer la date en heure locale (pas UTC) pour éviter les décalages de fuseau horaire
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const dayStart = new Date(y, m - 1, d, 0, 0, 0, 0).getTime();
     const dayEnd = dayStart + 24 * 60 * 60 * 1000;
     const dayStools = stools.filter(s => s.timestamp >= dayStart && s.timestamp < dayEnd);
 

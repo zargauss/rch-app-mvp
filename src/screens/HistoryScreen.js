@@ -384,7 +384,9 @@ export default function HistoryScreen({ navigation }) {
                 );
               }
             } else {
-              const dayStart = new Date(dateStr + 'T00:00:00').getTime();
+              // Créer la date en heure locale (pas UTC)
+              const [y, m, d] = dateStr.split('-').map(Number);
+              const dayStart = new Date(y, m - 1, d, 0, 0, 0, 0).getTime();
               const dayEnd = dayStart + 24 * 60 * 60 * 1000;
               const dayEntries = stools.filter(s => s.timestamp >= dayStart && s.timestamp < dayEnd);
               
