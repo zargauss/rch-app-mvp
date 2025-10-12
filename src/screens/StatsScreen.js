@@ -95,14 +95,11 @@ export default function StatsScreen() {
         <View style={styles.headerTop}>
           <View style={styles.titleSection}>
             <AppText variant="displayMedium" style={styles.title}>
-              📊 Statistiques
+              Statistiques
             </AppText>
             <AppText variant="bodyMedium" style={styles.subtitle}>
               Analysez l'évolution de votre santé
             </AppText>
-          </View>
-          <View style={styles.menuIcon}>
-            <AppText style={styles.menuEmoji}>⋯</AppText>
           </View>
         </View>
       </View>
@@ -128,7 +125,7 @@ export default function StatsScreen() {
               title="Score moyen"
               value={chartData.average !== null ? chartData.average.toFixed(1) : 'N/A'}
               subtitle={`Sur ${chartData.validDays} jours`}
-              icon="📊"
+              icon="chart-bar"
               color={chartData.average !== null ? (chartData.average < 5 ? 'success' : chartData.average <= 10 ? 'warning' : 'error') : 'info'}
             />
             
@@ -136,7 +133,7 @@ export default function StatsScreen() {
               title="Meilleur résultat"
               value={chartData.min !== null ? chartData.min.toString() : 'N/A'}
               subtitle="Score minimum"
-              icon="🎯"
+              icon="target"
               color="success"
             />
             
@@ -144,7 +141,7 @@ export default function StatsScreen() {
               title="Score maximum"
               value={chartData.max !== null ? chartData.max.toString() : 'N/A'}
               subtitle="Résultat le plus élevé"
-              icon="⚠️"
+              icon="alert-circle"
               color="error"
             />
           </View>
@@ -153,9 +150,6 @@ export default function StatsScreen() {
           <AppCard style={styles.chartCard}>
             <AppText variant="headlineLarge" style={styles.chartTitle}>
               Évolution du Score
-            </AppText>
-            <AppText variant="bodyMedium" style={styles.chartSubtitle}>
-              Évolution de votre score
             </AppText>
             
             {Platform.OS === 'web' ? (
@@ -167,7 +161,7 @@ export default function StatsScreen() {
             ) : (
               <View style={styles.nativeChartPlaceholder}>
                 <AppText variant="bodyLarge" style={styles.placeholderText}>
-                  📊 Graphique interactif disponible sur la version web
+                  Graphique interactif disponible sur la version web
                 </AppText>
                 <AppText variant="bodyMedium" style={styles.placeholderSubtext}>
                   {chartData.validDays} jours de données disponibles
@@ -196,7 +190,6 @@ export default function StatsScreen() {
         </>
       ) : (
         <View style={styles.noDataContainer}>
-          <AppText style={styles.noDataIcon}>📊</AppText>
           <AppText variant="headlineLarge" style={styles.noDataTitle}>
             Aucune donnée disponible
           </AppText>
@@ -204,7 +197,7 @@ export default function StatsScreen() {
             Enregistrez des selles et complétez vos bilans pour voir l'évolution de votre santé.
           </AppText>
           <AppText variant="bodySmall" style={styles.noDataHint}>
-            💡 Conseil : Utilisez le Mode Développeur dans les Paramètres pour générer des données de test.
+            Conseil : Utilisez le Mode Développeur dans les Paramètres pour générer des données de test.
           </AppText>
         </View>
       )}
@@ -241,25 +234,6 @@ const styles = StyleSheet.create({
     color: '#718096',
     fontWeight: '400',
   },
-  menuIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#FFFFFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  menuEmoji: {
-    fontSize: 20,
-    color: '#718096',
-  },
   periodSection: {
     paddingHorizontal: 20,
     marginBottom: 24,
@@ -290,12 +264,8 @@ const styles = StyleSheet.create({
   },
   chartTitle: {
     color: '#2D3748',
-    marginBottom: 4,
-    fontWeight: '700',
-  },
-  chartSubtitle: {
-    color: '#64748B',
     marginBottom: 16,
+    fontWeight: '700',
   },
   nativeChartPlaceholder: {
     height: 250,
@@ -320,10 +290,6 @@ const styles = StyleSheet.create({
     marginTop: 40,
     padding: 40,
     alignItems: 'center',
-  },
-  noDataIcon: {
-    fontSize: 64,
-    marginBottom: 16,
   },
   noDataTitle: {
     color: '#2D3748',
