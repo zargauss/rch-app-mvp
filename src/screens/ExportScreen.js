@@ -413,7 +413,7 @@ export default function ExportScreen() {
         </div>
 
         <div class="summary-section">
-          <div class="summary-title">📊 Résumé de la Période</div>
+          <div class="summary-title">Résumé de la Période</div>
           <div class="summary-grid">
             <div class="summary-card">
               <div class="summary-value" style="color: ${getScoreColor(averageScore)};">${averageScore}</div>
@@ -435,7 +435,7 @@ export default function ExportScreen() {
         </div>
 
         <div class="details-section">
-          <div class="details-title">📈 Historique Détaillé des Scores</div>
+          <div class="details-title">Historique Détaillé des Scores</div>
           ${filteredScores.length > 0 ? `
             <table>
               <thead>
@@ -457,7 +457,7 @@ export default function ExportScreen() {
         </div>
 
         <div class="details-section">
-          <div class="details-title">💊 Historique des Traitements</div>
+          <div class="details-title">Historique des Traitements</div>
           ${filteredTreatments.length > 0 ? `
             <table>
               <thead>
@@ -557,7 +557,7 @@ export default function ExportScreen() {
       </AppCard>
 
       <AppCard style={styles.statsCard}>
-        <AppText variant="body" style={styles.statsTitle}>📊 Données Disponibles</AppText>
+        <AppText variant="body" style={styles.statsTitle}>Données Disponibles</AppText>
         <View style={styles.statsGrid}>
           <View style={styles.statItem}>
             <AppText variant="headline">{getFilteredData().scores.length}</AppText>
@@ -575,7 +575,7 @@ export default function ExportScreen() {
       </AppCard>
 
       <AppCard style={styles.contentCard}>
-        <AppText variant="body" style={styles.contentTitle}>📄 Contenu du Rapport</AppText>
+        <AppText variant="body" style={styles.contentTitle}>Contenu du Rapport</AppText>
         <View style={styles.contentList}>
           <AppText variant="body">• Résumé de la période (score moyen, saignements, selles)</AppText>
           <AppText variant="body">• Historique détaillé avec scores, selles jour/nuit, saignements</AppText>
@@ -599,7 +599,7 @@ export default function ExportScreen() {
       {getFilteredData().scores.length === 0 && (
         <AppCard style={styles.warningCard}>
           <AppText variant="body" style={styles.warningText}>
-            ⚠️ Aucune donnée disponible pour générer un rapport. 
+            Aucune donnée disponible pour générer un rapport. 
             Enregistrez quelques selles et bilans quotidiens pour pouvoir exporter vos données.
           </AppText>
         </AppCard>
