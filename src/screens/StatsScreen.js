@@ -101,7 +101,13 @@ export default function StatsScreen() {
     } else {
       // Données des selles (nombre de selles par jour)
       const chartDataArray = dateRange.map(dateStr => {
-        const dayStool = stools.filter(s => s.date === dateStr);
+        // Convertir la date en timestamps (début et fin du jour)
+        const [y, m, d] = dateStr.split('-').map(Number);
+        const dayStart = new Date(y, m - 1, d, 0, 0, 0, 0).getTime();
+        const dayEnd = dayStart + 24 * 60 * 60 * 1000;
+        
+        // Filtrer les selles de ce jour
+        const dayStool = stools.filter(s => s.timestamp >= dayStart && s.timestamp < dayEnd);
         return dayStool.length > 0 ? dayStool.length : null;
       });
 
@@ -111,7 +117,7 @@ export default function StatsScreen() {
       const max = validDays.length > 0 ? Math.max(...validDays) : null;
 
       // Calcul du nombre total de selles
-      const totalStools = validDays.reduce((a, b) => a + b, 0);
+      const totalStools = validDays.length > 0 ? validDays.reduce((a, b) => a + b, 0) : 0;
 
       return {
         labels,
