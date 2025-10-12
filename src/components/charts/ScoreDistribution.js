@@ -54,7 +54,7 @@ const ScoreDistribution = ({ data }) => {
         count: excellent,
         percentage: total > 0 ? ((excellent / total) * 100).toFixed(0) : 0,
         color: '#10B981',
-        icon: '🟢'
+        icon: 'circle'
       },
       {
         label: 'Acceptable',
@@ -62,7 +62,7 @@ const ScoreDistribution = ({ data }) => {
         count: acceptable,
         percentage: total > 0 ? ((acceptable / total) * 100).toFixed(0) : 0,
         color: '#F59E0B',
-        icon: '🟡'
+        icon: 'circle'
       },
       {
         label: 'Préoccupant',
@@ -70,7 +70,7 @@ const ScoreDistribution = ({ data }) => {
         count: preoccupant,
         percentage: total > 0 ? ((preoccupant / total) * 100).toFixed(0) : 0,
         color: '#EF4444',
-        icon: '🔴'
+        icon: 'circle'
       }
     ];
   }, [distribution]);
@@ -125,7 +125,7 @@ const ScoreDistribution = ({ data }) => {
         {categories.map((category, index) => (
           <View key={index} style={styles.categoryCard}>
             <View style={styles.categoryHeader}>
-              <AppText style={styles.categoryIcon}>{category.icon}</AppText>
+              <MaterialCommunityIcons name={category.icon} size={16} color={category.color} />
               <AppText variant="labelSmall" style={styles.categoryRange}>
                 {category.range}
               </AppText>
