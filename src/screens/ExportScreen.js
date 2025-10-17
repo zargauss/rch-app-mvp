@@ -622,14 +622,25 @@ export default function ExportScreen() {
                   <div style="margin-top: 15px; font-size: 11px; color: #9CA3AF; text-align: center;">
                     <p style="margin: 0;">Scores détaillés disponibles dans l'application</p>
                   </div>
+                  
+                  <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #E2E8F0; text-align: center;">
+                    <p style="margin: 0; font-size: 12px; color: #9CA3AF;">Rapport généré avec l'application de suivi RCH</p>
+                  </div>
                 </div>
               `;
             })()}
-          ` : '<div class="no-data">Aucun questionnaire IBDisk disponible</div>'}
-        </div>
-
-        <div class="footer">
-          <p>Rapport généré avec l'application de suivi RCH</p>
+          ` : `
+            <div style="display: flex; flex-direction: column; height: 100%; justify-content: center; align-items: center;">
+              <div style="text-align: center; color: #9CA3AF;">
+                <h3 style="margin: 0; color: #64748B;">Aucun questionnaire IBDisk disponible</h3>
+                <p style="margin: 10px 0; font-size: 14px;">Remplissez un questionnaire IBDisk dans l'application pour voir vos résultats ici.</p>
+              </div>
+              
+              <div style="margin-top: 50px; padding-top: 20px; border-top: 1px solid #E2E8F0; text-align: center;">
+                <p style="margin: 0; font-size: 12px; color: #9CA3AF;">Rapport généré avec l'application de suivi RCH</p>
+              </div>
+            </div>
+          `}
         </div>
       </body>
       </html>
