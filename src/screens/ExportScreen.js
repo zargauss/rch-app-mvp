@@ -492,7 +492,7 @@ export default function ExportScreen() {
           ` : '<div class="no-data">Aucun traitement enregistré pour cette période</div>'}
         </div>
 
-        <div class="details-section">
+        <div class="details-section" style="page-break-before: always; min-height: 100vh; display: flex; flex-direction: column;">
           <div class="details-title">Dernier IBDisk</div>
           ${filteredIbdisk.length > 0 ? `
             ${(() => {
@@ -505,51 +505,123 @@ export default function ExportScreen() {
               const scores = Object.values(answers);
               const averageScore = scores.length > 0 ? (scores.reduce((sum, score) => sum + score, 0) / scores.length).toFixed(1) : 0;
               
-              // Générer le tableau des scores
-              const scoresTable = Object.entries(answers).map(([key, value]) => {
-                const labels = {
-                  'abdominal_pain': 'Douleur abdominale',
-                  'bowel_regulation': 'Régulation défécation',
-                  'social_life': 'Vie sociale',
-                  'professional_activities': 'Activités professionnelles',
-                  'sleep': 'Sommeil',
-                  'energy': 'Énergie',
-                  'stress_anxiety': 'Stress et anxiété',
-                  'self_image': 'Image de soi',
-                  'intimate_life': 'Vie intime',
-                  'joint_pain': 'Douleur articulaire'
-                };
-                return `
-                  <tr>
-                    <td style="font-weight: 600;">${labels[key] || key}</td>
-                    <td style="text-align: center; font-weight: 600; color: ${value <= 3 ? '#10B981' : value <= 6 ? '#F59E0B' : '#EF4444'};">${value}/10</td>
-                  </tr>
-                `;
-              }).join('');
+              // Définir les questions pour le graphique
+              const questions = [
+                { key: 'abdominal_pain', label: 'Douleur abdominale', shortLabel: 'Douleur' },
+                { key: 'bowel_regulation', label: 'Régulation défécation', shortLabel: 'Régulation' },
+                { key: 'social_life', label: 'Vie sociale', shortLabel: 'Social' },
+                { key: 'professional_activities', label: 'Activités professionnelles', shortLabel: 'Activités' },
+                { key: 'sleep', label: 'Sommeil', shortLabel: 'Sommeil' },
+                { key: 'energy', label: 'Énergie', shortLabel: 'Énergie' },
+                { key: 'stress_anxiety', label: 'Stress et anxiété', shortLabel: 'Stress' },
+                { key: 'self_image', label: 'Image de soi', shortLabel: 'Image' },
+                { key: 'intimate_life', label: 'Vie intime', shortLabel: 'Intime' },
+                { key: 'joint_pain', label: 'Douleur articulaire', shortLabel: 'Articulaire' }
+              ];
+              
+              // Générer le graphique SVG
+              const chartSize = 400;
+              const center = chartSize / 2;
+              const radius = chartSize / 2 - 60;
+              const maxValue = 10;
+              
+              // Calculer les points du graphique
+              const getPoints = () => {
+                return questions.map((question, index) => {
+                  const value = answers[question.key] || 0;
+                  const angle = (index * 2 * Math.PI) / questions.length - Math.PI / 2;
+                  const distance = (value / maxValue) * radius;
+                  const x = center + distance * Math.cos(angle);
+                  const y = center + distance * Math.sin(angle);
+                  const color = value <= 3 ? '#10B981' : value <= 6 ? '#F59E0B' : '#EF4444';
+                  return { x, y, value, color, label: question.shortLabel };
+                });
+              };
+              
+              const points = getPoints();
+              const polygonPoints = points.map(p => `${p.x},${p.y}`).join(' ');
+              
+              // Générer les axes
+              const axes = questions.map((question, index) => {
+                const angle = (index * 2 * Math.PI) / questions.length - Math.PI / 2;
+                const x2 = center + radius * Math.cos(angle);
+                const y2 = center + radius * Math.sin(angle);
+                return { x1: center, y1: center, x2, y2, label: question.shortLabel, angle };
+              });
+              
+              // Générer les cercles de grille
+              const gridCircles = [0.2, 0.4, 0.6, 0.8, 1.0].map(factor => ({
+                cx: center,
+                cy: center,
+                r: radius * factor
+              }));
               
               return `
-                <div style="margin-bottom: 20px;">
-                  <p><strong>Date :</strong> ${dateStr}</p>
-                  <p><strong>Score moyen :</strong> ${averageScore}/10</p>
-                </div>
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Dimension</th>
-                      <th>Score</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    ${scoresTable}
-                  </tbody>
-                </table>
-                <div style="margin-top: 15px; padding: 10px; background-color: #f8f9fa; border-radius: 5px;">
-                  <p style="margin: 0; font-size: 12px; color: #666;">
-                    <strong>Légende des couleurs :</strong><br>
-                    🟢 Vert (0-3) : Très satisfaisant<br>
-                    🟠 Orange (4-6) : Modérément satisfaisant<br>
-                    🔴 Rouge (7-10) : Peu satisfaisant
-                  </p>
+                <div style="display: flex; flex-direction: column; height: 100%;">
+                  <div style="margin-bottom: 20px; text-align: center;">
+                    <h3 style="margin: 0; color: #2D3748;">Questionnaire IBDisk du ${dateStr}</h3>
+                    <p style="margin: 5px 0; color: #64748B; font-size: 14px;">Score moyen : <strong>${averageScore}/10</strong></p>
+                  </div>
+                  
+                  <div style="flex: 1; display: flex; justify-content: center; align-items: center;">
+                    <svg width="${chartSize}" height="${chartSize}" style="border: 1px solid #E2E8F0; border-radius: 8px; background: white;">
+                      <!-- Cercles de grille -->
+                      ${gridCircles.map(circle => `
+                        <circle cx="${circle.cx}" cy="${circle.cy}" r="${circle.r}" 
+                                fill="none" stroke="#E2E8F0" stroke-width="1"/>
+                      `).join('')}
+                      
+                      <!-- Axes -->
+                      ${axes.map(axis => `
+                        <line x1="${axis.x1}" y1="${axis.y1}" x2="${axis.x2}" y2="${axis.y2}" 
+                              stroke="#CBD5E1" stroke-width="1"/>
+                        <text x="${axis.x2 + 15 * Math.cos(axis.angle)}" 
+                              y="${axis.y2 + 15 * Math.sin(axis.angle)}" 
+                              text-anchor="middle" dominant-baseline="middle" 
+                              font-size="12" font-weight="600" fill="#64748B">
+                          ${axis.label}
+                        </text>
+                      `).join('')}
+                      
+                      <!-- Polygone des données -->
+                      <polygon points="${polygonPoints}" 
+                               fill="rgba(100, 116, 139, 0.1)" 
+                               stroke="#64748B" stroke-width="2"/>
+                      
+                      <!-- Points de données -->
+                      ${points.map((point, index) => `
+                        <circle cx="${point.x}" cy="${point.y}" r="6" 
+                                fill="${point.color}" stroke="#FFFFFF" stroke-width="2"/>
+                        <text x="${point.x}" y="${point.y - 15}" 
+                              text-anchor="middle" font-size="10" font-weight="600" 
+                              fill="${point.color}">
+                          ${point.value}
+                        </text>
+                      `).join('')}
+                    </svg>
+                  </div>
+                  
+                  <div style="margin-top: 20px; padding: 15px; background-color: #F8FAFB; border-radius: 8px; border: 1px solid #E2E8F0;">
+                    <h4 style="margin: 0 0 10px 0; color: #374151; font-size: 14px;">Légende des couleurs</h4>
+                    <div style="display: flex; justify-content: space-around; font-size: 12px;">
+                      <div style="display: flex; align-items: center;">
+                        <div style="width: 12px; height: 12px; background-color: #10B981; border-radius: 50%; margin-right: 5px;"></div>
+                        <span style="color: #64748B;">Très satisfaisant (0-3)</span>
+                      </div>
+                      <div style="display: flex; align-items: center;">
+                        <div style="width: 12px; height: 12px; background-color: #F59E0B; border-radius: 50%; margin-right: 5px;"></div>
+                        <span style="color: #64748B;">Modérément satisfaisant (4-6)</span>
+                      </div>
+                      <div style="display: flex; align-items: center;">
+                        <div style="width: 12px; height: 12px; background-color: #EF4444; border-radius: 50%; margin-right: 5px;"></div>
+                        <span style="color: #64748B;">Peu satisfaisant (7-10)</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div style="margin-top: 15px; font-size: 11px; color: #9CA3AF; text-align: center;">
+                    <p style="margin: 0;">Scores détaillés disponibles dans l'application</p>
+                  </div>
                 </div>
               `;
             })()}
