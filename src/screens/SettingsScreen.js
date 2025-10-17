@@ -147,6 +147,92 @@ export default function SettingsScreen() {
     }
   };
 
+  // Export des données
+  const handleExportData = () => {
+    try {
+      const allData = {
+        scoresHistory: storage.getString('scoresHistory') || '[]',
+        dailySells: storage.getString('dailySells') || '[]',
+        dailySurvey: storage.getString('dailySurvey') || '{}',
+        treatments: storage.getString('treatments') || '[]',
+        ibdiskHistory: storage.getString('ibdiskHistory') || '[]',
+        ibdiskLastUsed: storage.getString('ibdiskLastUsed') || '',
+        exportDate: new Date().toISOString(),
+        version: '1.2.0'
+      };
+
+      const dataStr = JSON.stringify(allData, null, 2);
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      
+      const url = URL.createObjectURL(dataBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `rch-suivi-backup-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      Alert.alert('Succès', 'Données exportées avec succès ! Le fichier a été téléchargé.');
+    } catch (error) {
+      console.error('Erreur export:', error);
+      Alert.alert('Erreur', `Impossible d'exporter les données: ${error.message}`);
+    }
+  };
+
+  // Import des données
+  const handleImportData = () => {
+    Alert.alert(
+      'Importer des données',
+      'Cette action va remplacer toutes vos données actuelles par celles du fichier importé. Voulez-vous continuer ?',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Importer',
+          style: 'destructive',
+          onPress: () => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = (e) => {
+              const file = e.target.files[0];
+              if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                  try {
+                    const data = JSON.parse(e.target.result);
+                    
+                    // Vérifier que c'est un fichier de sauvegarde RCH
+                    if (!data.version || !data.scoresHistory) {
+                      Alert.alert('Erreur', 'Ce fichier ne semble pas être une sauvegarde RCH Suivi valide.');
+                      return;
+                    }
+
+                    // Restaurer les données
+                    storage.set('scoresHistory', data.scoresHistory);
+                    storage.set('dailySells', data.dailySells);
+                    storage.set('dailySurvey', data.dailySurvey);
+                    storage.set('treatments', data.treatments);
+                    storage.set('ibdiskHistory', data.ibdiskHistory);
+                    storage.set('ibdiskLastUsed', data.ibdiskLastUsed);
+
+                    Alert.alert('Succès', 'Données importées avec succès ! L\'application va se recharger.');
+                    setTimeout(() => window.location.reload(), 1000);
+                  } catch (error) {
+                    console.error('Erreur import:', error);
+                    Alert.alert('Erreur', `Impossible d'importer les données: ${error.message}`);
+                  }
+                };
+                reader.readAsText(file);
+              }
+            };
+            input.click();
+          }
+        }
+      ]
+    );
+  };
+
   return (
     <ScrollView style={[styles.container, { backgroundColor: theme.colors.background }]}>
       {/* En-tête */}
@@ -247,6 +333,41 @@ export default function SettingsScreen() {
             icon="chart-box-outline"
           >
             IBDisk (3 questionnaires)
+          </PrimaryButton>
+        </View>
+      </AppCard>
+
+      {/* Sauvegarde des données */}
+      <AppCard style={styles.backupCard}>
+        <View style={styles.backupHeader}>
+          <MaterialCommunityIcons name="cloud-upload" size={24} color="#059669" style={{ marginRight: 12 }} />
+          <AppText variant="headlineLarge" style={styles.backupTitle}>
+            Sauvegarde des données
+          </AppText>
+        </View>
+        <AppText variant="bodyMedium" style={styles.backupDescription}>
+          Exportez vos données pour les sauvegarder ou les transférer vers un autre appareil.
+        </AppText>
+        
+        <View style={styles.backupButtons}>
+          <PrimaryButton 
+            mode="contained" 
+            onPress={handleExportData} 
+            buttonColor="#059669"
+            style={styles.backupButton}
+            icon="download"
+          >
+            Exporter les données
+          </PrimaryButton>
+          
+          <PrimaryButton 
+            mode="outlined" 
+            onPress={handleImportData} 
+            buttonColor="#059669"
+            style={styles.backupButton}
+            icon="upload"
+          >
+            Importer des données
           </PrimaryButton>
         </View>
       </AppCard>
@@ -428,5 +549,32 @@ const styles = StyleSheet.create({
   debugButton: {
     borderRadius: 16,
     paddingVertical: 4,
+  },
+  // Styles pour la sauvegarde
+  backupCard: {
+    marginBottom: 20,
+    backgroundColor: '#F0FDF4',
+    borderWidth: 1,
+    borderColor: '#BBF7D0',
+  },
+  backupHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  backupTitle: {
+    color: '#059669',
+    fontWeight: '700',
+  },
+  backupDescription: {
+    color: '#047857',
+    marginBottom: 16,
+  },
+  backupButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  backupButton: {
+    flex: 1,
   },
 });
