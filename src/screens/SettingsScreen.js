@@ -63,31 +63,20 @@ export default function SettingsScreen() {
   // Générer des questionnaires IBDisk de test
   const handleGenerateIBDiskData = () => {
     console.log('🎯 Début génération IBDisk...');
-    Alert.alert(
-      'Générer des questionnaires IBDisk',
-      'Voulez-vous générer 3 questionnaires IBDisk de test avec différents scénarios (poussée, amélioration, rémission) ?',
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Générer',
-          onPress: () => {
-            console.log('🎯 Confirmation génération IBDisk...');
-            try {
-              const result = generateIBDiskTestData(3);
-              console.log('✅ IBDisk générés:', result);
-              Alert.alert(
-                'Questionnaires IBDisk générés !',
-                `${result.length} questionnaires IBDisk ont été générés.\n\nAllez dans l'onglet Historique pour voir les graphiques en araignée.`,
-                [{ text: 'OK' }]
-              );
-            } catch (error) {
-              console.error('❌ Erreur génération IBDisk:', error);
-              Alert.alert('Erreur', `Impossible de générer les questionnaires: ${error.message}`);
-            }
-          }
-        }
-      ]
-    );
+    
+    // Génération directe sans alerte pour éviter les problèmes de compatibilité
+    try {
+      console.log('🎯 Génération directe des questionnaires IBDisk...');
+      const result = generateIBDiskTestData(3);
+      console.log('✅ IBDisk générés:', result);
+      
+      // Afficher un message de succès simple
+      alert(`✅ ${result.length} questionnaires IBDisk générés !\n\nAllez dans l'onglet Historique pour voir les graphiques en araignée.`);
+      
+    } catch (error) {
+      console.error('❌ Erreur génération IBDisk:', error);
+      alert(`❌ Erreur: Impossible de générer les questionnaires: ${error.message}`);
+    }
   };
 
   const handleWipeData = () => {
