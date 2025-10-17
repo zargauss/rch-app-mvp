@@ -16,6 +16,7 @@ export default function ExportScreen() {
   const [stools, setStools] = useState([]);
   const [surveys, setSurveys] = useState([]);
   const [treatments, setTreatments] = useState([]);
+  const [ibdiskHistory, setIbdiskHistory] = useState([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState('complet'); // complet, 90, 30, 7
   const theme = useTheme();
@@ -65,6 +66,12 @@ export default function ExportScreen() {
     const treatmentsData = treatmentsJson ? JSON.parse(treatmentsJson) : [];
     setTreatments(treatmentsData);
     console.log('📦 Export - Treatments loaded:', treatmentsData.length, 'treatments');
+
+    // Charger les questionnaires IBDisk
+    const ibdiskJson = storage.getString('ibdiskHistory');
+    const ibdiskData = ibdiskJson ? JSON.parse(ibdiskJson) : [];
+    setIbdiskHistory(ibdiskData);
+    console.log('📦 Export - IBDisk loaded:', ibdiskData.length, 'questionnaires');
   };
 
   const formatDate = (dateStr) => {
@@ -105,6 +112,7 @@ export default function ExportScreen() {
     let filteredStools = [...stools];
     let filteredSurveys = { ...surveys };
     let filteredTreatments = [...treatments];
+    let filteredIbdisk = [...ibdiskHistory];
     
     if (selectedPeriod !== 'complet' && scores.length > 0) {
       const days = parseInt(selectedPeriod);
@@ -139,11 +147,11 @@ export default function ExportScreen() {
       });
     }
 
-    return { scores: filteredScores, stools: filteredStools, surveys: filteredSurveys, treatments: filteredTreatments };
+    return { scores: filteredScores, stools: filteredStools, surveys: filteredSurveys, treatments: filteredTreatments, ibdisk: filteredIbdisk };
   };
 
   const generateHTML = () => {
-    const { scores: filteredScores, stools: filteredStools, surveys: filteredSurveys, treatments: filteredTreatments } = getFilteredData();
+    const { scores: filteredScores, stools: filteredStools, surveys: filteredSurveys, treatments: filteredTreatments, ibdisk: filteredIbdisk } = getFilteredData();
     
     const currentDate = new Date().toLocaleDateString('fr-FR', {
       year: 'numeric',
@@ -482,6 +490,70 @@ export default function ExportScreen() {
               </tbody>
             </table>
           ` : '<div class="no-data">Aucun traitement enregistré pour cette période</div>'}
+        </div>
+
+        <div class="details-section">
+          <div class="details-title">Dernier IBDisk</div>
+          ${filteredIbdisk.length > 0 ? `
+            ${(() => {
+              const latestIbdisk = filteredIbdisk.sort((a, b) => b.timestamp - a.timestamp)[0];
+              const answers = latestIbdisk.answers;
+              const date = new Date(latestIbdisk.timestamp);
+              const dateStr = date.toLocaleDateString('fr-FR');
+              
+              // Calculer le score moyen
+              const scores = Object.values(answers);
+              const averageScore = scores.length > 0 ? (scores.reduce((sum, score) => sum + score, 0) / scores.length).toFixed(1) : 0;
+              
+              // Générer le tableau des scores
+              const scoresTable = Object.entries(answers).map(([key, value]) => {
+                const labels = {
+                  'abdominal_pain': 'Douleur abdominale',
+                  'bowel_regulation': 'Régulation défécation',
+                  'social_life': 'Vie sociale',
+                  'professional_activities': 'Activités professionnelles',
+                  'sleep': 'Sommeil',
+                  'energy': 'Énergie',
+                  'stress_anxiety': 'Stress et anxiété',
+                  'self_image': 'Image de soi',
+                  'intimate_life': 'Vie intime',
+                  'joint_pain': 'Douleur articulaire'
+                };
+                return `
+                  <tr>
+                    <td style="font-weight: 600;">${labels[key] || key}</td>
+                    <td style="text-align: center; font-weight: 600; color: ${value <= 3 ? '#10B981' : value <= 6 ? '#F59E0B' : '#EF4444'};">${value}/10</td>
+                  </tr>
+                `;
+              }).join('');
+              
+              return `
+                <div style="margin-bottom: 20px;">
+                  <p><strong>Date :</strong> ${dateStr}</p>
+                  <p><strong>Score moyen :</strong> ${averageScore}/10</p>
+                </div>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Dimension</th>
+                      <th>Score</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${scoresTable}
+                  </tbody>
+                </table>
+                <div style="margin-top: 15px; padding: 10px; background-color: #f8f9fa; border-radius: 5px;">
+                  <p style="margin: 0; font-size: 12px; color: #666;">
+                    <strong>Légende des couleurs :</strong><br>
+                    🟢 Vert (0-3) : Très satisfaisant<br>
+                    🟠 Orange (4-6) : Modérément satisfaisant<br>
+                    🔴 Rouge (7-10) : Peu satisfaisant
+                  </p>
+                </div>
+              `;
+            })()}
+          ` : '<div class="no-data">Aucun questionnaire IBDisk disponible</div>'}
         </div>
 
         <div class="footer">
