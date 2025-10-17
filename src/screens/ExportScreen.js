@@ -492,7 +492,7 @@ export default function ExportScreen() {
           ` : '<div class="no-data">Aucun traitement enregistré pour cette période</div>'}
         </div>
 
-        <div class="details-section" style="page-break-before: always; min-height: 100vh; display: flex; flex-direction: column;">
+        <div class="details-section" style="page-break-before: always; page-break-inside: avoid; min-height: 100vh; display: flex; flex-direction: column;">
           <div class="details-title">Dernier IBDisk</div>
           ${filteredIbdisk.length > 0 ? `
             ${(() => {
@@ -520,9 +520,9 @@ export default function ExportScreen() {
               ];
               
               // Générer le graphique SVG
-              const chartSize = 400;
+              const chartSize = 350;
               const center = chartSize / 2;
-              const radius = chartSize / 2 - 60;
+              const radius = chartSize / 2 - 50;
               const maxValue = 10;
               
               // Calculer les points du graphique
@@ -557,13 +557,13 @@ export default function ExportScreen() {
               }));
               
               return `
-                <div style="display: flex; flex-direction: column; height: 100%;">
-                  <div style="margin-bottom: 20px; text-align: center;">
-                    <h3 style="margin: 0; color: #2D3748;">Questionnaire IBDisk du ${dateStr}</h3>
+                <div style="display: flex; flex-direction: column; height: 100%; page-break-inside: avoid;">
+                  <div style="margin-bottom: 15px; text-align: center;">
+                    <h3 style="margin: 0; color: #2D3748; font-size: 18px;">Questionnaire IBDisk du ${dateStr}</h3>
                     <p style="margin: 5px 0; color: #64748B; font-size: 14px;">Score moyen : <strong>${averageScore}/10</strong></p>
                   </div>
                   
-                  <div style="flex: 1; display: flex; justify-content: center; align-items: center;">
+                  <div style="flex: 1; display: flex; justify-content: center; align-items: center; min-height: 0;">
                     <svg width="${chartSize}" height="${chartSize}" style="border: 1px solid #E2E8F0; border-radius: 8px; background: white;">
                       <!-- Cercles de grille -->
                       ${gridCircles.map(circle => `
@@ -601,30 +601,30 @@ export default function ExportScreen() {
                     </svg>
                   </div>
                   
-                  <div style="margin-top: 20px; padding: 15px; background-color: #F8FAFB; border-radius: 8px; border: 1px solid #E2E8F0;">
-                    <h4 style="margin: 0 0 10px 0; color: #374151; font-size: 14px;">Légende des couleurs</h4>
-                    <div style="display: flex; justify-content: space-around; font-size: 12px;">
+                  <div style="margin-top: 15px; padding: 12px; background-color: #F8FAFB; border-radius: 8px; border: 1px solid #E2E8F0;">
+                    <h4 style="margin: 0 0 8px 0; color: #374151; font-size: 13px;">Légende des couleurs</h4>
+                    <div style="display: flex; justify-content: space-around; font-size: 11px;">
                       <div style="display: flex; align-items: center;">
-                        <div style="width: 12px; height: 12px; background-color: #10B981; border-radius: 50%; margin-right: 5px;"></div>
+                        <div style="width: 10px; height: 10px; background-color: #10B981; border-radius: 50%; margin-right: 4px;"></div>
                         <span style="color: #64748B;">Très satisfaisant (0-3)</span>
                       </div>
                       <div style="display: flex; align-items: center;">
-                        <div style="width: 12px; height: 12px; background-color: #F59E0B; border-radius: 50%; margin-right: 5px;"></div>
+                        <div style="width: 10px; height: 10px; background-color: #F59E0B; border-radius: 50%; margin-right: 4px;"></div>
                         <span style="color: #64748B;">Modérément satisfaisant (4-6)</span>
                       </div>
                       <div style="display: flex; align-items: center;">
-                        <div style="width: 12px; height: 12px; background-color: #EF4444; border-radius: 50%; margin-right: 5px;"></div>
+                        <div style="width: 10px; height: 10px; background-color: #EF4444; border-radius: 50%; margin-right: 4px;"></div>
                         <span style="color: #64748B;">Peu satisfaisant (7-10)</span>
                       </div>
                     </div>
                   </div>
                   
-                  <div style="margin-top: 15px; font-size: 11px; color: #9CA3AF; text-align: center;">
+                  <div style="margin-top: 10px; font-size: 10px; color: #9CA3AF; text-align: center;">
                     <p style="margin: 0;">Scores détaillés disponibles dans l'application</p>
                   </div>
                   
-                  <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #E2E8F0; text-align: center;">
-                    <p style="margin: 0; font-size: 12px; color: #9CA3AF;">Rapport généré avec l'application de suivi RCH</p>
+                  <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #E2E8F0; text-align: center;">
+                    <p style="margin: 0; font-size: 11px; color: #9CA3AF;">Rapport généré avec l'application de suivi RCH</p>
                   </div>
                 </div>
               `;
