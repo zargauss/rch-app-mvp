@@ -1,19 +1,21 @@
 {
   "expo": {
-    "name": "RCH Suivi",
+    "name": "RCH Suivi - Suivi de la Rectocolite Hémorragique",
     "slug": "rch-suivi",
     "version": "1.2.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
+    "description": "Application de suivi médical pour la Rectocolite Hémorragique avec calcul automatique du score de Lichtiger et questionnaire IBDisk",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.rchsuivi.app"
     },
     "android": {
       "adaptiveIcon": {
@@ -21,10 +23,20 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.anonymous.RCH_APP_MVP"
+      "package": "com.rchsuivi.app"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "name": "RCH Suivi",
+      "shortName": "RCH Suivi",
+      "description": "Application de suivi médical pour la Rectocolite Hémorragique",
+      "themeColor": "#005A9C",
+      "backgroundColor": "#F5F5F7",
+      "display": "standalone",
+      "orientation": "portrait",
+      "startUrl": "/",
+      "lang": "fr",
+      "categories": ["medical", "health", "productivity"]
     },
     "extra": {
       "eas": {
