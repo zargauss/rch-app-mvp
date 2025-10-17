@@ -371,7 +371,7 @@ export default function HistoryScreen({ navigation }) {
               if (score !== null) {
                 hasData = true;
                 let scoreColor = '#10B981';
-                if (score >= 7) scoreColor = '#EF4444';
+                if (score >= 10) scoreColor = '#EF4444';
                 else if (score >= 4) scoreColor = '#F59E0B';
                 
                 cellStyle.push(styles.dayCellWithScore, { backgroundColor: scoreColor });
@@ -509,11 +509,11 @@ export default function HistoryScreen({ navigation }) {
               </View>
               <View style={styles.legendItem}>
                 <View style={[styles.legendSquare, { backgroundColor: '#F59E0B' }]} />
-                <AppText variant="labelSmall" style={styles.legendText}>Acceptable (4-6)</AppText>
+                <AppText variant="labelSmall" style={styles.legendText}>Acceptable (4-9)</AppText>
               </View>
               <View style={styles.legendItem}>
                 <View style={[styles.legendSquare, { backgroundColor: '#EF4444' }]} />
-                <AppText variant="labelSmall" style={styles.legendText}>Préoccupant (7+)</AppText>
+                <AppText variant="labelSmall" style={styles.legendText}>Préoccupant (10+)</AppText>
               </View>
             </>
           ) : (

@@ -1,6 +1,7 @@
 ﻿import React, { useMemo, useState } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { Text, Button, Portal, Modal, Card, Switch, TextInput } from 'react-native-paper';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import AppCard from '../components/ui/AppCard';
 import AppText from '../components/ui/AppText';
 import PrimaryButton from '../components/ui/PrimaryButton';
@@ -446,7 +447,7 @@ export default function HomeScreen() {
           <View style={styles.headerTop}>
             <View style={styles.profileSection}>
               <View style={styles.profileIcon}>
-                <AppText style={styles.profileEmoji}>👤</AppText>
+                <MaterialCommunityIcons name="account-circle" size={32} color="#4A90E2" />
               </View>
               <View style={styles.greetingSection}>
                 <AppText variant="displayMedium" style={styles.greeting}>
@@ -456,9 +457,6 @@ export default function HomeScreen() {
                   Comment vous sentez-vous aujourd'hui ?
                 </AppText>
               </View>
-            </View>
-            <View style={styles.notificationIcon}>
-              <AppText style={styles.bellIcon}>🔔</AppText>
             </View>
           </View>
         </View>
@@ -762,9 +760,6 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#FFFFFF',
   },
-  profileEmoji: {
-    fontSize: 24,
-  },
   greetingSection: {
     flex: 1,
   },
@@ -776,24 +771,6 @@ const styles = StyleSheet.create({
   subGreeting: {
     color: '#718096',
     fontWeight: '400',
-  },
-  notificationIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#FFFFFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  bellIcon: {
-    fontSize: 20,
   },
   statsContainer: {
     marginBottom: 24,

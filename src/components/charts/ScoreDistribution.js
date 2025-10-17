@@ -44,8 +44,8 @@ const ScoreDistribution = ({ data, dataType = 'score' }) => {
   const categories = useMemo(() => {
     if (dataType === 'score') {
       const excellent = distribution.filter(d => d.score <= 3).reduce((sum, d) => sum + d.count, 0);
-      const acceptable = distribution.filter(d => d.score >= 4 && d.score <= 6).reduce((sum, d) => sum + d.count, 0);
-      const preoccupant = distribution.filter(d => d.score >= 7).reduce((sum, d) => sum + d.count, 0);
+      const acceptable = distribution.filter(d => d.score >= 4 && d.score <= 9).reduce((sum, d) => sum + d.count, 0);
+      const preoccupant = distribution.filter(d => d.score >= 10).reduce((sum, d) => sum + d.count, 0);
       const total = excellent + acceptable + preoccupant;
 
       return [
@@ -59,7 +59,7 @@ const ScoreDistribution = ({ data, dataType = 'score' }) => {
         },
         {
           label: 'Acceptable',
-          range: '4-6',
+          range: '4-9',
           count: acceptable,
           percentage: total > 0 ? ((acceptable / total) * 100).toFixed(0) : 0,
           color: '#F59E0B',
@@ -67,7 +67,7 @@ const ScoreDistribution = ({ data, dataType = 'score' }) => {
         },
         {
           label: 'Préoccupant',
-          range: '7+',
+          range: '10+',
           count: preoccupant,
           percentage: total > 0 ? ((preoccupant / total) * 100).toFixed(0) : 0,
           color: '#EF4444',
@@ -128,7 +128,7 @@ const ScoreDistribution = ({ data, dataType = 'score' }) => {
       <View style={styles.chartContainer}>
         {distribution.filter(d => d.count > 0).map((item) => {
           let barColor = '#10B981';
-          if (item.score >= 7) barColor = '#EF4444';
+          if (item.score >= 10) barColor = '#EF4444';
           else if (item.score >= 4) barColor = '#F59E0B';
 
           return (

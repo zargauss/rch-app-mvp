@@ -108,10 +108,10 @@ const KeyInsights = ({ data }) => {
       });
     }
 
-    // 4. Alerte : série de mauvais scores (>= 7)
+    // 4. Alerte : série de mauvais scores (>= 10)
     let currentBadStreak = 0;
     for (let i = validScores.length - 1; i >= 0; i--) {
-      if (validScores[i] >= 7) {
+      if (validScores[i] >= 10) {
         currentBadStreak++;
       } else {
         break;
@@ -123,7 +123,7 @@ const KeyInsights = ({ data }) => {
         type: 'alert',
         icon: 'alert',
         title: `Alerte : ${currentBadStreak} jours de poussée`,
-        description: `Votre score est élevé (≥7) depuis ${currentBadStreak} jours. Consultez rapidement votre médecin.`,
+        description: `Votre score est élevé (≥10) depuis ${currentBadStreak} jours. Consultez rapidement votre médecin.`,
         color: '#EF4444',
         backgroundColor: '#FEF2F2'
       });
@@ -133,10 +133,10 @@ const KeyInsights = ({ data }) => {
     let flareCount = 0;
     let inFlare = false;
     validScores.forEach(score => {
-      if (score >= 7 && !inFlare) {
+      if (score >= 10 && !inFlare) {
         flareCount++;
         inFlare = true;
-      } else if (score < 7) {
+      } else if (score < 10) {
         inFlare = false;
       }
     });
@@ -150,7 +150,7 @@ const KeyInsights = ({ data }) => {
           type: 'flares',
           icon: 'chart-bar',
           title: '1 poussée détectée',
-          description: `Une seule poussée (score ≥7) détectée ${periodText}.`,
+          description: `Une seule poussée (score ≥10) détectée ${periodText}.`,
           color: '#F59E0B',
           backgroundColor: '#FFFBEB'
         });
@@ -203,6 +203,9 @@ const KeyInsights = ({ data }) => {
       </View>
       <AppText variant="bodyMedium" style={styles.subtitle}>
         Analyses médicalement pertinentes de votre évolution
+      </AppText>
+      <AppText variant="bodySmall" style={styles.infoSubtitle}>
+        💡 Seuil de gravité : score ≥10 (selon les critères médicaux du score de Litchtiger)
       </AppText>
 
       <View style={styles.insightsContainer}>
@@ -268,7 +271,13 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     color: '#64748B',
+    marginBottom: 8,
+  },
+  infoSubtitle: {
+    color: '#059669',
     marginBottom: 20,
+    fontStyle: 'italic',
+    fontWeight: '500',
   },
   insightsContainer: {
     gap: 12,
