@@ -270,16 +270,12 @@ const IBDiskQuestionnaireScreen = () => {
           
           {/* Labels explicatifs */}
           <View style={styles.scaleLabels}>
-            <View style={styles.scaleLabelItem}>
-              <AppText variant="labelSmall" style={styles.scaleLabelText}>
-                Pas du tout d'accord
-              </AppText>
-            </View>
-            <View style={styles.scaleLabelItem}>
-              <AppText variant="labelSmall" style={styles.scaleLabelText}>
-                Tout à fait d'accord
-              </AppText>
-            </View>
+            <AppText variant="labelSmall" style={styles.scaleLabelLeft}>
+              Pas du tout d'accord
+            </AppText>
+            <AppText variant="labelSmall" style={styles.scaleLabelRight}>
+              Tout à fait d'accord
+            </AppText>
           </View>
         </View>
       </AppCard>
@@ -287,19 +283,21 @@ const IBDiskQuestionnaireScreen = () => {
       {/* Boutons de navigation */}
       <View style={styles.navigationContainer}>
         <SecondaryButton
-          title="Précédent"
           onPress={handlePrevious}
           disabled={currentQuestion === 0}
           style={styles.navButton}
-        />
+        >
+          Précédent
+        </SecondaryButton>
         
         <PrimaryButton
-          title={currentQuestion === questions.length - 1 ? 'Terminer' : 'Suivant'}
           onPress={handleNext}
           loading={isLoading}
           disabled={currentAnswer === undefined}
           style={styles.navButton}
-        />
+        >
+          {currentQuestion === questions.length - 1 ? 'Terminer' : 'Suivant'}
+        </PrimaryButton>
       </View>
     </ScrollView>
   );
@@ -433,14 +431,19 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#E2E8F0',
   },
-  scaleLabelItem: {
-    flex: 1,
-  },
-  scaleLabelText: {
+  scaleLabelLeft: {
     color: '#64748B',
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '500',
+    textAlign: 'left',
+  },
+  scaleLabelRight: {
+    color: '#64748B',
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '500',
+    textAlign: 'right',
   },
   navigationContainer: {
     flexDirection: 'row',
