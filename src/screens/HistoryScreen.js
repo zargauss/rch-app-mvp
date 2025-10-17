@@ -13,11 +13,14 @@ import SegmentedControl from '../components/ui/SegmentedControl';
 import DateTimeInput, { isValidDate, isValidTime } from '../components/ui/DateTimeInput';
 import { useTheme } from 'react-native-paper';
 import Slider from '@react-native-community/slider';
+import IBDiskChart from '../components/charts/IBDiskChart';
 
 export default function HistoryScreen({ navigation }) {
   const [scores, setScores] = useState([]);
   const [stools, setStools] = useState([]);
   const [treatments, setTreatments] = useState([]);
+  const [ibdiskHistory, setIbdiskHistory] = useState([]);
+  const [currentIbdiskIndex, setCurrentIbdiskIndex] = useState(0);
   const [calendarMode, setCalendarMode] = useState('score');
   const theme = useTheme();
   const [editModalVisible, setEditModalVisible] = useState(false);
@@ -59,6 +62,25 @@ export default function HistoryScreen({ navigation }) {
     const treatmentsJson = storage.getString('treatments');
     const treatmentsList = treatmentsJson ? JSON.parse(treatmentsJson) : [];
     setTreatments(treatmentsList.sort((a, b) => b.timestamp - a.timestamp)); // Plus récent en premier
+    
+    // Charger l'historique IBDisk
+    const ibdiskJson = storage.getString('ibdiskHistory');
+    const ibdiskList = ibdiskJson ? JSON.parse(ibdiskJson) : [];
+    setIbdiskHistory(ibdiskList);
+    setCurrentIbdiskIndex(0); // Toujours commencer par le plus récent
+  };
+
+  // Fonctions pour la navigation IBDisk
+  const handlePreviousIbdisk = () => {
+    if (currentIbdiskIndex < ibdiskHistory.length - 1) {
+      setCurrentIbdiskIndex(currentIbdiskIndex + 1);
+    }
+  };
+
+  const handleNextIbdisk = () => {
+    if (currentIbdiskIndex > 0) {
+      setCurrentIbdiskIndex(currentIbdiskIndex - 1);
+    }
   };
 
   const bristolDescriptions = useMemo(() => ({
@@ -525,6 +547,60 @@ export default function HistoryScreen({ navigation }) {
           )}
         </View>
       </AppCard>
+
+      {/* Historique IBDisk */}
+      {ibdiskHistory.length > 0 && (
+        <AppCard style={styles.ibdiskCard}>
+          <View style={styles.ibdiskHeader}>
+            <AppText variant="headlineLarge" style={styles.cardTitle}>
+              Historique IBDisk
+            </AppText>
+            
+            {ibdiskHistory.length > 1 && (
+              <View style={styles.ibdiskNavigation}>
+                <TouchableOpacity
+                  onPress={handlePreviousIbdisk}
+                  disabled={currentIbdiskIndex >= ibdiskHistory.length - 1}
+                  style={[
+                    styles.navButton,
+                    currentIbdiskIndex >= ibdiskHistory.length - 1 && styles.navButtonDisabled
+                  ]}
+                >
+                  <MaterialCommunityIcons 
+                    name="chevron-left" 
+                    size={24} 
+                    color={currentIbdiskIndex >= ibdiskHistory.length - 1 ? '#CBD5E1' : '#64748B'} 
+                  />
+                </TouchableOpacity>
+                
+                <AppText variant="labelMedium" style={styles.navText}>
+                  {currentIbdiskIndex + 1} / {ibdiskHistory.length}
+                </AppText>
+                
+                <TouchableOpacity
+                  onPress={handleNextIbdisk}
+                  disabled={currentIbdiskIndex <= 0}
+                  style={[
+                    styles.navButton,
+                    currentIbdiskIndex <= 0 && styles.navButtonDisabled
+                  ]}
+                >
+                  <MaterialCommunityIcons 
+                    name="chevron-right" 
+                    size={24} 
+                    color={currentIbdiskIndex <= 0 ? '#CBD5E1' : '#64748B'} 
+                  />
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+          
+          <IBDiskChart 
+            data={ibdiskHistory[currentIbdiskIndex]?.answers || {}} 
+            date={ibdiskHistory[currentIbdiskIndex]?.date || ''} 
+          />
+        </AppCard>
+      )}
 
       {/* Historique des traitements */}
       <AppCard style={styles.treatmentsCard}>
@@ -1061,5 +1137,40 @@ const styles = StyleSheet.create({
   textInputField: {
     backgroundColor: '#F8FAFB',
     marginBottom: 16,
+  },
+  // Styles IBDisk
+  ibdiskCard: {
+    marginHorizontal: 20,
+    marginBottom: 24,
+    padding: 20,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  ibdiskHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  ibdiskNavigation: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  navButton: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: '#F1F5F9',
+  },
+  navButtonDisabled: {
+    backgroundColor: '#F8FAFB',
+  },
+  navText: {
+    color: '#64748B',
+    fontWeight: '600',
+    minWidth: 40,
+    textAlign: 'center',
   },
 });

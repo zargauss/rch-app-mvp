@@ -12,6 +12,7 @@ import ExportScreen from '../screens/ExportScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import theme from '../theme/theme';
 import DailySurveyScreen from '../screens/DailySurveyScreen';
+import IBDiskQuestionnaireScreen from '../screens/IBDiskQuestionnaireScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -74,6 +75,7 @@ export default function AppNavigator() {
       <Stack.Navigator>
         <Stack.Screen name="Main" component={MainTabs} options={{ headerShown: false }} />
         <Stack.Screen name="DailySurvey" component={DailySurveyScreen} options={{ title: 'Bilan du jour' }} />
+        <Stack.Screen name="IBDiskQuestionnaire" component={IBDiskQuestionnaireScreen} options={{ title: 'Votre quotidien' }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

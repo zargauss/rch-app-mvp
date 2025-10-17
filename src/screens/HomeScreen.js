@@ -41,6 +41,10 @@ export default function HomeScreen() {
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState('success');
+  
+  // États pour IBDisk
+  const [ibdiskAvailable, setIbdiskAvailable] = useState(true);
+  const [ibdiskDaysRemaining, setIbdiskDaysRemaining] = useState(0);
 
   const bristolDescriptions = useMemo(() => ({
     1: 'Type 1 — Noix dures séparées (constipation sévère)',
@@ -51,6 +55,28 @@ export default function HomeScreen() {
     6: 'Type 6 — Morceaux floconneux (diarrhée)',
     7: 'Type 7 — Aqueux, sans morceaux (diarrhée sévère)'
   }), []);
+
+  // Fonction pour vérifier la disponibilité d'IBDisk
+  const checkIBDiskAvailability = () => {
+    const lastUsedStr = storage.getString('ibdiskLastUsed');
+    if (!lastUsedStr) {
+      setIbdiskAvailable(true);
+      setIbdiskDaysRemaining(0);
+      return;
+    }
+
+    const lastUsed = parseInt(lastUsedStr);
+    const now = new Date().getTime();
+    const daysSinceLastUsed = Math.floor((now - lastUsed) / (1000 * 60 * 60 * 24));
+    
+    if (daysSinceLastUsed >= 30) {
+      setIbdiskAvailable(true);
+      setIbdiskDaysRemaining(0);
+    } else {
+      setIbdiskAvailable(false);
+      setIbdiskDaysRemaining(30 - daysSinceLastUsed);
+    }
+  };
 
   const computeTodayCount = () => {
     const json = storage.getString('dailySells');
@@ -130,6 +156,9 @@ export default function HomeScreen() {
       } else {
         setSurveyCompleted(false);
       }
+      
+      // Vérifier la disponibilité d'IBDisk
+      checkIBDiskAvailability();
 
       // Compute yesterday score and persist to history if needed
       const today = new Date();
@@ -498,6 +527,17 @@ export default function HomeScreen() {
                 buttonColor="#9B59B6"
               >
                 Prise de traitement
+              </PrimaryButton>
+              
+              <PrimaryButton
+                mode="contained"
+                onPress={() => navigation.navigate('IBDiskQuestionnaire')}
+                style={styles.mainSecondaryAction}
+                icon="chart-box-outline"
+                buttonColor="#F39C12"
+                disabled={!ibdiskAvailable}
+              >
+                {ibdiskAvailable ? 'Votre quotidien' : `Disponible dans ${ibdiskDaysRemaining} jour${ibdiskDaysRemaining > 1 ? 's' : ''}`}
               </PrimaryButton>
             </View>
           </AppCard>
