@@ -103,12 +103,12 @@ const IBDiskChart = ({ data, date }) => {
             );
           })}
 
-          {/* Polygone des données avec couleur moyenne */}
+          {/* Polygone des données avec couleur neutre */}
           <Polygon
             points={polygonPoints}
-            fill="rgba(5, 150, 105, 0.15)"
-            stroke="#059669"
-            strokeWidth="2"
+            fill="rgba(100, 116, 139, 0.1)"
+            stroke="#64748B"
+            strokeWidth="1"
           />
 
           {/* Points de données avec couleurs selon le score */}

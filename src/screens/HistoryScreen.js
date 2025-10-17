@@ -556,7 +556,7 @@ export default function HistoryScreen({ navigation }) {
               Historique IBDisk
             </AppText>
             
-            {ibdiskHistory.length > 1 && (
+            {ibdiskHistory.length > 1 ? (
               <View style={styles.ibdiskNavigation}>
                 <TouchableOpacity
                   onPress={handlePreviousIbdisk}
@@ -592,6 +592,10 @@ export default function HistoryScreen({ navigation }) {
                   />
                 </TouchableOpacity>
               </View>
+            ) : (
+              <AppText variant="labelSmall" style={styles.singleQuestionnaireText}>
+                Premier questionnaire IBDisk
+              </AppText>
             )}
           </View>
           
@@ -1172,5 +1176,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     minWidth: 40,
     textAlign: 'center',
+  },
+  singleQuestionnaireText: {
+    color: '#64748B',
+    fontStyle: 'italic',
   },
 });
