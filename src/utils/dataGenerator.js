@@ -13,6 +13,7 @@ export const generateTestData = (days = 30, scenario = 'realistic') => {
   const scores = [];
   const stools = [];
   const surveys = {};
+  const ibdiskHistory = [];
   
   // Paramètres selon le scénario
   let baseScore, trendDirection, volatility;
@@ -95,16 +96,49 @@ export const generateTestData = (days = 30, scenario = 'realistic') => {
       generalState: finalScore > 8 ? 5 : finalScore > 6 ? 4 : finalScore > 4 ? 3 : finalScore > 2 ? 2 : 1,
       antidiarrheal: finalScore > 5 ? 'oui' : 'non'
     };
+    
+    // Générer un questionnaire IBDisk tous les 30 jours (simulation réaliste)
+    if (i % 30 === 0) {
+      const ibdiskAnswers = generateIBDiskAnswers(finalScore);
+      ibdiskHistory.push({
+        date: dateStr,
+        timestamp: date.getTime(),
+        answers: ibdiskAnswers,
+        completed: true
+      });
+    }
   }
   
-  return { scores, stools, surveys };
+  return { scores, stools, surveys, ibdiskHistory };
+};
+
+/**
+ * Génère des réponses réalistes pour le questionnaire IBDisk
+ * @param {number} lichtigerScore - Score de Litchtiger du jour pour cohérence
+ */
+const generateIBDiskAnswers = (lichtigerScore) => {
+  // Les réponses IBDisk sont cohérentes avec le score de Litchtiger
+  const baseLevel = Math.min(10, Math.max(0, Math.round(lichtigerScore * 0.8 + Math.random() * 2)));
+  
+  return {
+    abdominal_pain: Math.min(10, Math.max(0, baseLevel + Math.floor(Math.random() * 3) - 1)),
+    bowel_regulation: Math.min(10, Math.max(0, baseLevel + Math.floor(Math.random() * 3) - 1)),
+    social_life: Math.min(10, Math.max(0, baseLevel + Math.floor(Math.random() * 3) - 1)),
+    professional_activities: Math.min(10, Math.max(0, baseLevel + Math.floor(Math.random() * 3) - 1)),
+    sleep: Math.min(10, Math.max(0, baseLevel + Math.floor(Math.random() * 3) - 1)),
+    energy: Math.min(10, Math.max(0, baseLevel + Math.floor(Math.random() * 3) - 1)),
+    stress_anxiety: Math.min(10, Math.max(0, baseLevel + Math.floor(Math.random() * 3) - 1)),
+    self_image: Math.min(10, Math.max(0, baseLevel + Math.floor(Math.random() * 3) - 1)),
+    intimate_life: Math.min(10, Math.max(0, baseLevel + Math.floor(Math.random() * 3) - 1)),
+    joint_pain: Math.min(10, Math.max(0, baseLevel + Math.floor(Math.random() * 3) - 1))
+  };
 };
 
 /**
  * Injecte les données de test dans le storage
  */
 export const injectTestData = (days = 30, scenario = 'realistic') => {
-  const { scores, stools, surveys } = generateTestData(days, scenario);
+  const { scores, stools, surveys, ibdiskHistory } = generateTestData(days, scenario);
   
   // Sauvegarder les scores
   storage.set('scoresHistory', JSON.stringify(scores));
@@ -115,12 +149,16 @@ export const injectTestData = (days = 30, scenario = 'realistic') => {
   // Sauvegarder les bilans quotidiens
   storage.set('dailySurvey', JSON.stringify(surveys));
   
+  // Sauvegarder les questionnaires IBDisk
+  storage.set('ibdiskHistory', JSON.stringify(ibdiskHistory));
+  
   console.log('✅ Données de test générées et sauvegardées :');
   console.log(`  - ${scores.length} scores`);
   console.log(`  - ${stools.length} selles`);
   console.log(`  - ${Object.keys(surveys).length} bilans quotidiens`);
+  console.log(`  - ${ibdiskHistory.length} questionnaires IBDisk`);
   
-  return { scores, stools, surveys };
+  return { scores, stools, surveys, ibdiskHistory };
 };
 
 /**
@@ -130,6 +168,7 @@ export const clearTestData = () => {
   storage.set('scoresHistory', '[]');
   storage.set('dailySells', '[]');
   storage.set('dailySurvey', '{}');
+  storage.set('ibdiskHistory', '[]');
   
   console.log('🗑️ Toutes les données de test ont été effacées');
 };
@@ -149,10 +188,54 @@ export const generateScenarioData = (scenarioName) => {
   return injectTestData(config.days, config.scenario);
 };
 
+/**
+ * Génère uniquement des questionnaires IBDisk de test
+ * @param {number} count - Nombre de questionnaires à générer
+ */
+export const generateIBDiskTestData = (count = 3) => {
+  console.log(`🎲 Génération de ${count} questionnaires IBDisk de test...`);
+  
+  const now = new Date();
+  const ibdiskHistory = [];
+  
+  for (let i = 0; i < count; i++) {
+    const date = new Date(now);
+    date.setDate(date.getDate() - (i * 30)); // Un questionnaire tous les 30 jours
+    
+    const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    
+    // Générer des scores variés pour tester différents scénarios
+    let baseScore;
+    switch (i) {
+      case 0: baseScore = 8; break; // Poussée récente
+      case 1: baseScore = 4; break; // Amélioration
+      case 2: baseScore = 2; break; // Rémission
+      default: baseScore = Math.floor(Math.random() * 8) + 1;
+    }
+    
+    const ibdiskAnswers = generateIBDiskAnswers(baseScore);
+    
+    ibdiskHistory.push({
+      date: dateStr,
+      timestamp: date.getTime(),
+      answers: ibdiskAnswers,
+      completed: true
+    });
+  }
+  
+  // Sauvegarder les questionnaires IBDisk
+  storage.set('ibdiskHistory', JSON.stringify(ibdiskHistory));
+  
+  console.log(`✅ ${ibdiskHistory.length} questionnaires IBDisk générés et sauvegardés`);
+  
+  return ibdiskHistory;
+};
+
 export default {
   generateTestData,
   injectTestData,
   clearTestData,
-  generateScenarioData
+  generateScenarioData,
+  generateIBDiskTestData
 };
 

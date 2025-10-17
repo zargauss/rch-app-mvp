@@ -7,7 +7,7 @@ import AppText from '../components/ui/AppText';
 import PrimaryButton from '../components/ui/PrimaryButton';
 import AppCard from '../components/ui/AppCard';
 import { useTheme } from 'react-native-paper';
-import { injectTestData, clearTestData, generateScenarioData } from '../utils/dataGenerator';
+import { injectTestData, clearTestData, generateScenarioData, generateIBDiskTestData } from '../utils/dataGenerator';
 
 export default function SettingsScreen() {
   const [isWiping, setIsWiping] = useState(false);
@@ -58,6 +58,32 @@ export default function SettingsScreen() {
         ]
       );
     }
+  };
+
+  // Générer des questionnaires IBDisk de test
+  const handleGenerateIBDiskData = () => {
+    Alert.alert(
+      'Générer des questionnaires IBDisk',
+      'Voulez-vous générer 3 questionnaires IBDisk de test avec différents scénarios (poussée, amélioration, rémission) ?',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Générer',
+          onPress: () => {
+            try {
+              const result = generateIBDiskTestData(3);
+              Alert.alert(
+                'Questionnaires IBDisk générés !',
+                `${result.length} questionnaires IBDisk ont été générés.\n\nAllez dans l'onglet Historique pour voir les graphiques en araignée.`,
+                [{ text: 'OK' }]
+              );
+            } catch (error) {
+              Alert.alert('Erreur', `Impossible de générer les questionnaires: ${error.message}`);
+            }
+          }
+        }
+      ]
+    );
   };
 
   const handleWipeData = () => {
@@ -218,6 +244,16 @@ export default function SettingsScreen() {
             icon="minus"
           >
             Stable (90j)
+          </PrimaryButton>
+          
+          <PrimaryButton 
+            mode="outlined" 
+            onPress={handleGenerateIBDiskData} 
+            buttonColor="#F39C12"
+            style={styles.scenarioButton}
+            icon="chart-radar"
+          >
+            IBDisk (3 questionnaires)
           </PrimaryButton>
         </View>
       </AppCard>
