@@ -196,16 +196,17 @@ const IBDiskQuestionnaireScreen = () => {
       // Marquer comme utilisé aujourd'hui
       storage.set('ibdiskLastUsed', today.getTime().toString());
       
-      Alert.alert(
-        'Questionnaire terminé',
-        'Merci d\'avoir rempli le questionnaire IBDisk. Vos réponses ont été enregistrées.',
-        [
-          {
-            text: 'OK',
-            onPress: () => navigation.goBack()
-          }
-        ]
-      );
+      // Naviguer vers l'accueil immédiatement
+      navigation.goBack();
+      
+      // Afficher un message de confirmation après navigation
+      setTimeout(() => {
+        Alert.alert(
+          'Questionnaire terminé',
+          'Merci d\'avoir rempli le questionnaire IBDisk. Vos réponses ont été enregistrées.',
+          [{ text: 'OK' }]
+        );
+      }, 100);
       
     } catch (error) {
       console.error('Erreur lors de la sauvegarde:', error);
