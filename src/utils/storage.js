@@ -20,6 +20,13 @@ export const storage = {
       return;
     }
     mmkv.set(key, value);
+  },
+  delete(key) {
+    if (Platform.OS === 'web') {
+      window.localStorage.removeItem(key);
+      return;
+    }
+    mmkv.delete(key);
   }
 };
 

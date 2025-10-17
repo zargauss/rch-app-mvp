@@ -79,15 +79,24 @@ const IBDiskQuestionnaireScreen = () => {
 
   // Charger les réponses existantes
   useEffect(() => {
-    const savedAnswers = storage.getString('ibdiskCurrentAnswers');
-    if (savedAnswers) {
+    const savedProgress = storage.getString('ibdiskCurrentAnswers');
+    if (savedProgress) {
       try {
-        const parsedAnswers = JSON.parse(savedAnswers);
-        setAnswers(parsedAnswers);
-        // Trouver la première question non répondue
-        const firstUnanswered = questions.findIndex(q => !parsedAnswers[q.id]);
-        if (firstUnanswered !== -1) {
-          setCurrentQuestion(firstUnanswered);
+        const progressData = JSON.parse(savedProgress);
+        
+        // Vérifier si c'est l'ancien format (juste les réponses) ou le nouveau format
+        if (progressData.answers && typeof progressData.currentQuestion === 'number') {
+          // Nouveau format avec position
+          setAnswers(progressData.answers);
+          setCurrentQuestion(progressData.currentQuestion);
+        } else {
+          // Ancien format (juste les réponses) - compatibilité
+          setAnswers(progressData);
+          // Trouver la première question non répondue
+          const firstUnanswered = questions.findIndex(q => !progressData[q.id]);
+          if (firstUnanswered !== -1) {
+            setCurrentQuestion(firstUnanswered);
+          }
         }
       } catch (e) {
         console.error('Erreur lors du chargement des réponses:', e);
@@ -99,13 +108,25 @@ const IBDiskQuestionnaireScreen = () => {
     const newAnswers = { ...answers, [questions[currentQuestion].id]: value };
     setAnswers(newAnswers);
     
-    // Sauvegarder automatiquement
-    storage.set('ibdiskCurrentAnswers', JSON.stringify(newAnswers));
+    // Sauvegarder automatiquement les réponses et la position
+    const progressData = {
+      answers: newAnswers,
+      currentQuestion: currentQuestion
+    };
+    storage.set('ibdiskCurrentAnswers', JSON.stringify(progressData));
   };
 
   const handleNext = () => {
     if (currentQuestion < questions.length - 1) {
-      setCurrentQuestion(currentQuestion + 1);
+      const nextQuestion = currentQuestion + 1;
+      setCurrentQuestion(nextQuestion);
+      
+      // Sauvegarder la nouvelle position
+      const progressData = {
+        answers: answers,
+        currentQuestion: nextQuestion
+      };
+      storage.set('ibdiskCurrentAnswers', JSON.stringify(progressData));
     } else {
       handleSubmit();
     }
@@ -113,7 +134,15 @@ const IBDiskQuestionnaireScreen = () => {
 
   const handlePrevious = () => {
     if (currentQuestion > 0) {
-      setCurrentQuestion(currentQuestion - 1);
+      const prevQuestion = currentQuestion - 1;
+      setCurrentQuestion(prevQuestion);
+      
+      // Sauvegarder la nouvelle position
+      const progressData = {
+        answers: answers,
+        currentQuestion: prevQuestion
+      };
+      storage.set('ibdiskCurrentAnswers', JSON.stringify(progressData));
     }
   };
 
