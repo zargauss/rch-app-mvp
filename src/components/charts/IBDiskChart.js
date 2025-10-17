@@ -11,6 +11,13 @@ const IBDiskChart = ({ data, date }) => {
   const radius = chartSize / 2 - 40;
   const maxValue = 10;
 
+  // Fonction pour formater la date au format français DD/MM/YYYY
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '';
+    const [year, month, day] = dateStr.split('-');
+    return `${day}/${month}/${year}`;
+  };
+
   const questions = [
     { key: 'abdominal_pain', label: 'Douleur\nabdominale', shortLabel: 'Douleur' },
     { key: 'bowel_regulation', label: 'Régulation\ndéfécation', shortLabel: 'Régulation' },
@@ -63,7 +70,7 @@ const IBDiskChart = ({ data, date }) => {
     <View style={styles.container}>
       <View style={styles.header}>
         <AppText variant="headlineSmall" style={styles.title}>
-          IBDisk - {date}
+          IBDisk : {formatDate(date)}
         </AppText>
         <AppText variant="bodyMedium" style={styles.subtitle}>
           Score moyen : {averageScore}/10
