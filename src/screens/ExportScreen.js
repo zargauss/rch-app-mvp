@@ -492,7 +492,9 @@ export default function ExportScreen() {
           ` : '<div class="no-data">Aucun traitement enregistré pour cette période</div>'}
         </div>
 
-        <div class="details-section" style="page-break-before: always; page-break-inside: avoid; min-height: 100vh; display: flex; flex-direction: column;">
+        <div style="page-break-after: always;"></div>
+
+        <div class="details-section" style="page-break-inside: avoid; min-height: 100vh; display: flex; flex-direction: column;">
           <div class="details-title">Dernier IBDisk</div>
           ${filteredIbdisk.length > 0 ? `
             ${(() => {
