@@ -24,6 +24,13 @@ const IBDiskChart = ({ data, date }) => {
     { key: 'joint_pain', label: 'Articulations', shortLabel: 'Articulations' }
   ];
 
+  // Fonction pour obtenir la couleur selon le score
+  const getScoreColor = (value) => {
+    if (value <= 3) return '#10B981'; // Vert pour les bons scores (0-3)
+    if (value <= 6) return '#F59E0B'; // Orange pour les scores moyens (4-6)
+    return '#EF4444'; // Rouge pour les mauvais scores (7-10)
+  };
+
   // Calculer les points du polygone
   const getPoints = () => {
     return questions.map((question, index) => {
@@ -32,7 +39,7 @@ const IBDiskChart = ({ data, date }) => {
       const distance = (value / maxValue) * radius;
       const x = center + distance * Math.cos(angle);
       const y = center + distance * Math.sin(angle);
-      return { x, y, value };
+      return { x, y, value, color: getScoreColor(value) };
     });
   };
 
@@ -96,22 +103,22 @@ const IBDiskChart = ({ data, date }) => {
             );
           })}
 
-          {/* Polygone des données */}
+          {/* Polygone des données avec couleur moyenne */}
           <Polygon
             points={polygonPoints}
-            fill="rgba(5, 150, 105, 0.2)"
+            fill="rgba(5, 150, 105, 0.15)"
             stroke="#059669"
             strokeWidth="2"
           />
 
-          {/* Points de données */}
+          {/* Points de données avec couleurs selon le score */}
           {points.map((point, index) => (
             <Circle
               key={index}
               cx={point.x}
               cy={point.y}
-              r="4"
-              fill="#059669"
+              r="5"
+              fill={point.color}
               stroke="#FFFFFF"
               strokeWidth="2"
             />
@@ -139,17 +146,48 @@ const IBDiskChart = ({ data, date }) => {
 
       {/* Légende détaillée */}
       <View style={styles.legendContainer}>
-        {questions.map((question, index) => (
-          <View key={index} style={styles.legendItem}>
-            <View style={styles.legendDot} />
-            <AppText variant="labelSmall" style={styles.legendLabel}>
-              {question.shortLabel}
-            </AppText>
-            <AppText variant="labelSmall" style={styles.legendValue}>
-              {data[question.key] || 0}/10
+        {questions.map((question, index) => {
+          const value = data[question.key] || 0;
+          const color = getScoreColor(value);
+          return (
+            <View key={index} style={styles.legendItem}>
+              <View style={[styles.legendDot, { backgroundColor: color }]} />
+              <AppText variant="labelSmall" style={styles.legendLabel}>
+                {question.shortLabel}
+              </AppText>
+              <AppText variant="labelSmall" style={[styles.legendValue, { color }]}>
+                {value}/10
+              </AppText>
+            </View>
+          );
+        })}
+      </View>
+
+      {/* Légende des couleurs */}
+      <View style={styles.colorLegendContainer}>
+        <AppText variant="labelSmall" style={styles.colorLegendTitle}>
+          Légende des couleurs :
+        </AppText>
+        <View style={styles.colorLegendItems}>
+          <View style={styles.colorLegendItem}>
+            <View style={[styles.colorLegendDot, { backgroundColor: '#10B981' }]} />
+            <AppText variant="labelSmall" style={styles.colorLegendText}>
+              0-3 : Très satisfaisant
             </AppText>
           </View>
-        ))}
+          <View style={styles.colorLegendItem}>
+            <View style={[styles.colorLegendDot, { backgroundColor: '#F59E0B' }]} />
+            <AppText variant="labelSmall" style={styles.colorLegendText}>
+              4-6 : Modérément satisfaisant
+            </AppText>
+          </View>
+          <View style={styles.colorLegendItem}>
+            <View style={[styles.colorLegendDot, { backgroundColor: '#EF4444' }]} />
+            <AppText variant="labelSmall" style={styles.colorLegendText}>
+              7-10 : Peu satisfaisant
+            </AppText>
+          </View>
+        </View>
       </View>
 
       {/* Interprétation */}
@@ -206,7 +244,6 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#059669',
     marginRight: 8,
   },
   legendLabel: {
@@ -214,8 +251,41 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   legendValue: {
-    color: '#059669',
     fontWeight: '700',
+  },
+  colorLegendContainer: {
+    backgroundColor: '#F8FAFB',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  colorLegendTitle: {
+    color: '#374151',
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  colorLegendItems: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  colorLegendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    minWidth: '30%',
+  },
+  colorLegendDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginRight: 6,
+  },
+  colorLegendText: {
+    color: '#64748B',
+    fontSize: 11,
   },
   interpretationContainer: {
     backgroundColor: '#F0FDF4',
