@@ -62,6 +62,7 @@ export default function SettingsScreen() {
 
   // Générer des questionnaires IBDisk de test
   const handleGenerateIBDiskData = () => {
+    console.log('🎯 Début génération IBDisk...');
     Alert.alert(
       'Générer des questionnaires IBDisk',
       'Voulez-vous générer 3 questionnaires IBDisk de test avec différents scénarios (poussée, amélioration, rémission) ?',
@@ -70,14 +71,17 @@ export default function SettingsScreen() {
         {
           text: 'Générer',
           onPress: () => {
+            console.log('🎯 Confirmation génération IBDisk...');
             try {
               const result = generateIBDiskTestData(3);
+              console.log('✅ IBDisk générés:', result);
               Alert.alert(
                 'Questionnaires IBDisk générés !',
                 `${result.length} questionnaires IBDisk ont été générés.\n\nAllez dans l'onglet Historique pour voir les graphiques en araignée.`,
                 [{ text: 'OK' }]
               );
             } catch (error) {
+              console.error('❌ Erreur génération IBDisk:', error);
               Alert.alert('Erreur', `Impossible de générer les questionnaires: ${error.message}`);
             }
           }
@@ -251,7 +255,7 @@ export default function SettingsScreen() {
             onPress={handleGenerateIBDiskData} 
             buttonColor="#F39C12"
             style={styles.scenarioButton}
-            icon="chart-radar"
+            icon="chart-box-outline"
           >
             IBDisk (3 questionnaires)
           </PrimaryButton>

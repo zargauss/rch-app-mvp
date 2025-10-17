@@ -213,6 +213,8 @@ export const generateIBDiskTestData = (count = 3) => {
       default: baseScore = Math.floor(Math.random() * 8) + 1;
     }
     
+    console.log(`📊 Génération questionnaire ${i + 1} pour ${dateStr} (baseScore: ${baseScore})`);
+    
     const ibdiskAnswers = generateIBDiskAnswers(baseScore);
     
     ibdiskHistory.push({
@@ -223,6 +225,7 @@ export const generateIBDiskTestData = (count = 3) => {
     });
   }
   
+  console.log('💾 Sauvegarde des questionnaires IBDisk...');
   // Sauvegarder les questionnaires IBDisk
   storage.set('ibdiskHistory', JSON.stringify(ibdiskHistory));
   
