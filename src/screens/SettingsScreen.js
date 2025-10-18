@@ -1,5 +1,5 @@
 ﻿import React, { useState } from 'react';
-import { View, StyleSheet, Alert, ScrollView, Platform } from 'react-native';
+import { View, StyleSheet, Alert, ScrollView, Platform, TextInput } from 'react-native';
 import { Text, Button } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import storage from '../utils/storage';
@@ -11,6 +11,8 @@ import { injectTestData, clearTestData, generateScenarioData, generateIBDiskTest
 
 export default function SettingsScreen() {
   const [isWiping, setIsWiping] = useState(false);
+  const [showManualImport, setShowManualImport] = useState(false);
+  const [importJsonText, setImportJsonText] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const theme = useTheme();
 
@@ -191,46 +193,94 @@ export default function SettingsScreen() {
           text: 'Importer',
           style: 'destructive',
           onPress: () => {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = '.json';
-            input.onchange = (e) => {
-              const file = e.target.files[0];
-              if (file) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                  try {
-                    const data = JSON.parse(e.target.result);
-                    
-                    // Vérifier que c'est un fichier de sauvegarde RCH
-                    if (!data.version || !data.scoresHistory) {
-                      Alert.alert('Erreur', 'Ce fichier ne semble pas être une sauvegarde RCH Suivi valide.');
-                      return;
+            // Vérifier si on est sur web
+            if (typeof window !== 'undefined' && window.document) {
+              const input = document.createElement('input');
+              input.type = 'file';
+              input.accept = '.json';
+              input.onchange = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                  const reader = new FileReader();
+                  reader.onload = (e) => {
+                    try {
+                      const data = JSON.parse(e.target.result);
+                      
+                      // Vérifier que c'est un fichier de sauvegarde RCH
+                      if (!data.version || !data.scoresHistory) {
+                        Alert.alert('Erreur', 'Ce fichier ne semble pas être une sauvegarde RCH Suivi valide.');
+                        return;
+                      }
+
+                      // Restaurer les données
+                      storage.set('scoresHistory', data.scoresHistory);
+                      storage.set('dailySells', data.dailySells);
+                      storage.set('dailySurvey', data.dailySurvey);
+                      storage.set('treatments', data.treatments);
+                      storage.set('ibdiskHistory', data.ibdiskHistory);
+                      storage.set('ibdiskLastUsed', data.ibdiskLastUsed);
+
+                      Alert.alert('Succès', 'Données importées avec succès ! L\'application va se recharger.');
+                      setTimeout(() => window.location.reload(), 1000);
+                    } catch (error) {
+                      console.error('Erreur import:', error);
+                      Alert.alert('Erreur', `Impossible d'importer les données: ${error.message}`);
                     }
-
-                    // Restaurer les données
-                    storage.set('scoresHistory', data.scoresHistory);
-                    storage.set('dailySells', data.dailySells);
-                    storage.set('dailySurvey', data.dailySurvey);
-                    storage.set('treatments', data.treatments);
-                    storage.set('ibdiskHistory', data.ibdiskHistory);
-                    storage.set('ibdiskLastUsed', data.ibdiskLastUsed);
-
-                    Alert.alert('Succès', 'Données importées avec succès ! L\'application va se recharger.');
-                    setTimeout(() => window.location.reload(), 1000);
-                  } catch (error) {
-                    console.error('Erreur import:', error);
-                    Alert.alert('Erreur', `Impossible d'importer les données: ${error.message}`);
-                  }
-                };
-                reader.readAsText(file);
-              }
-            };
-            input.click();
+                  };
+                  reader.readAsText(file);
+                }
+              };
+              input.click();
+            } else {
+              // Sur mobile natif, utiliser une approche différente
+              Alert.alert(
+                'Import non disponible',
+                'L\'import de fichiers n\'est pas disponible sur mobile natif. Utilisez la version web de l\'application pour importer vos données.',
+                [{ text: 'OK' }]
+              );
+            }
           }
         }
       ]
     );
+  };
+
+  // Import manuel via texte JSON
+  const handleManualImport = () => {
+    if (!importJsonText.trim()) {
+      Alert.alert('Erreur', 'Veuillez coller le contenu JSON de votre sauvegarde.');
+      return;
+    }
+
+    try {
+      const data = JSON.parse(importJsonText);
+      
+      // Vérifier que c'est un fichier de sauvegarde RCH
+      if (!data.version || !data.scoresHistory) {
+        Alert.alert('Erreur', 'Ce JSON ne semble pas être une sauvegarde RCH Suivi valide.');
+        return;
+      }
+
+      // Restaurer les données
+      storage.set('scoresHistory', data.scoresHistory);
+      storage.set('dailySells', data.dailySells);
+      storage.set('dailySurvey', data.dailySurvey);
+      storage.set('treatments', data.treatments);
+      storage.set('ibdiskHistory', data.ibdiskHistory);
+      storage.set('ibdiskLastUsed', data.ibdiskLastUsed);
+
+      Alert.alert('Succès', 'Données importées avec succès ! L\'application va se recharger.');
+      setShowManualImport(false);
+      setImportJsonText('');
+      setTimeout(() => {
+        if (typeof window !== 'undefined' && window.location) {
+          window.location.reload();
+        }
+      }, 1000);
+    } catch (error) {
+      console.error('Erreur import manuel:', error);
+      Alert.alert('Erreur', `JSON invalide: ${error.message}`);
+    }
   };
 
   return (
@@ -367,9 +417,56 @@ export default function SettingsScreen() {
             style={styles.backupButton}
             icon="upload"
           >
-            Importer des données
+            Importer (fichier)
           </PrimaryButton>
         </View>
+        
+        <View style={styles.backupButtons}>
+          <PrimaryButton 
+            mode="outlined" 
+            onPress={() => setShowManualImport(!showManualImport)} 
+            buttonColor="#059669"
+            style={styles.backupButton}
+            icon="text-box"
+          >
+            Importer (coller JSON)
+          </PrimaryButton>
+        </View>
+        
+        {showManualImport && (
+          <View style={styles.manualImportContainer}>
+            <AppText variant="bodyMedium" style={styles.manualImportLabel}>
+              Collez le contenu JSON de votre sauvegarde :
+            </AppText>
+            <TextInput
+              style={styles.jsonInput}
+              value={importJsonText}
+              onChangeText={setImportJsonText}
+              placeholder="Collez votre JSON ici..."
+              multiline
+              numberOfLines={8}
+              textAlignVertical="top"
+            />
+            <View style={styles.manualImportButtons}>
+              <SecondaryButton 
+                onPress={() => {
+                  setShowManualImport(false);
+                  setImportJsonText('');
+                }}
+                style={styles.cancelButton}
+              >
+                Annuler
+              </SecondaryButton>
+              <PrimaryButton 
+                onPress={handleManualImport}
+                buttonColor="#059669"
+                style={styles.importButton}
+              >
+                Importer
+              </PrimaryButton>
+            </View>
+          </View>
+        )}
       </AppCard>
 
       {/* Zone de danger */}
@@ -575,6 +672,41 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   backupButton: {
+    flex: 1,
+  },
+  // Styles pour l'import manuel
+  manualImportContainer: {
+    marginTop: 16,
+    padding: 16,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  manualImportLabel: {
+    color: '#374151',
+    marginBottom: 8,
+    fontWeight: '600',
+  },
+  jsonInput: {
+    backgroundColor: 'white',
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    borderRadius: 6,
+    padding: 12,
+    fontSize: 12,
+    fontFamily: 'monospace',
+    minHeight: 120,
+    marginBottom: 12,
+  },
+  manualImportButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  cancelButton: {
+    flex: 1,
+  },
+  importButton: {
     flex: 1,
   },
 });
