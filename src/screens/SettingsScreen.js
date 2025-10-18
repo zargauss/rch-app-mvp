@@ -183,68 +183,6 @@ export default function SettingsScreen() {
     }
   };
 
-  // Import des données
-  const handleImportData = () => {
-    Alert.alert(
-      'Importer des données',
-      'Cette action va remplacer toutes vos données actuelles par celles du fichier importé. Voulez-vous continuer ?',
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Importer',
-          style: 'destructive',
-          onPress: () => {
-            // Vérifier si on est sur web
-            if (typeof window !== 'undefined' && window.document) {
-              const input = document.createElement('input');
-              input.type = 'file';
-              input.accept = '.json';
-              input.onchange = (e) => {
-                const file = e.target.files[0];
-                if (file) {
-                  const reader = new FileReader();
-                  reader.onload = (e) => {
-                    try {
-                      const data = JSON.parse(e.target.result);
-                      
-                      // Vérifier que c'est un fichier de sauvegarde RCH
-                      if (!data.version || !data.scoresHistory) {
-                        Alert.alert('Erreur', 'Ce fichier ne semble pas être une sauvegarde RCH Suivi valide.');
-                        return;
-                      }
-
-                      // Restaurer les données
-                      storage.set('scoresHistory', data.scoresHistory);
-                      storage.set('dailySells', data.dailySells);
-                      storage.set('dailySurvey', data.dailySurvey);
-                      storage.set('treatments', data.treatments);
-                      storage.set('ibdiskHistory', data.ibdiskHistory);
-                      storage.set('ibdiskLastUsed', data.ibdiskLastUsed);
-
-                      Alert.alert('Succès', 'Données importées avec succès ! L\'application va se recharger.');
-                      setTimeout(() => window.location.reload(), 1000);
-                    } catch (error) {
-                      console.error('Erreur import:', error);
-                      Alert.alert('Erreur', `Impossible d'importer les données: ${error.message}`);
-                    }
-                  };
-                  reader.readAsText(file);
-                }
-              };
-              input.click();
-            } else {
-              // Sur mobile natif, utiliser une approche différente
-              Alert.alert(
-                'Import non disponible',
-                'L\'import de fichiers n\'est pas disponible sur mobile natif. Utilisez la version web de l\'application pour importer vos données.',
-                [{ text: 'OK' }]
-              );
-            }
-          }
-        }
-      ]
-    );
-  };
 
   // Import manuel via texte JSON
   const handleManualImport = () => {
@@ -413,24 +351,12 @@ export default function SettingsScreen() {
           
           <PrimaryButton 
             mode="outlined" 
-            onPress={handleImportData} 
-            buttonColor="#059669"
-            style={styles.backupButton}
-            icon="upload"
-          >
-            Importer (fichier)
-          </PrimaryButton>
-        </View>
-        
-        <View style={styles.backupButtons}>
-          <PrimaryButton 
-            mode="outlined" 
             onPress={() => setShowManualImport(!showManualImport)} 
             buttonColor="#059669"
             style={styles.backupButton}
             icon="text-box"
           >
-            Importer (coller JSON)
+            Importer des données
           </PrimaryButton>
         </View>
         
@@ -650,6 +576,7 @@ const styles = StyleSheet.create({
   },
   // Styles pour la sauvegarde
   backupCard: {
+    marginHorizontal: 16,
     marginBottom: 20,
     backgroundColor: '#F0FDF4',
     borderWidth: 1,
