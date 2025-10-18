@@ -529,16 +529,26 @@ export default function HomeScreen() {
                 Prise de traitement
               </PrimaryButton>
               
-              <PrimaryButton
-                mode="contained"
-                onPress={() => navigation.navigate('IBDiskQuestionnaire')}
-                style={styles.mainSecondaryAction}
-                icon="chart-box-outline"
-                buttonColor="#F39C12"
-                disabled={!ibdiskAvailable}
-              >
-                {ibdiskAvailable ? 'Votre quotidien' : `Disponible dans ${ibdiskDaysRemaining} jour${ibdiskDaysRemaining > 1 ? 's' : ''}`}
-              </PrimaryButton>
+            <PrimaryButton
+              mode="contained"
+              onPress={() => navigation.navigate('IBDiskQuestionnaire')}
+              style={styles.mainSecondaryAction}
+              icon="chart-box-outline"
+              buttonColor="#F39C12"
+              disabled={!ibdiskAvailable}
+            >
+              {ibdiskAvailable ? 'Votre quotidien' : `Disponible dans ${ibdiskDaysRemaining} jour${ibdiskDaysRemaining > 1 ? 's' : ''}`}
+            </PrimaryButton>
+
+            <PrimaryButton
+              mode="outlined"
+              onPress={() => navigation.navigate('AIChat')}
+              style={styles.mainSecondaryAction}
+              icon="robot"
+              buttonColor="#059669"
+            >
+              Assistant IA RCH
+            </PrimaryButton>
             </View>
           </AppCard>
         </View>

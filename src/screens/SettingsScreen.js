@@ -360,6 +360,18 @@ export default function SettingsScreen() {
           </PrimaryButton>
         </View>
         
+        <View style={styles.backupButtons}>
+          <PrimaryButton 
+            mode="outlined" 
+            onPress={() => navigation.navigate('AIConfig')} 
+            buttonColor="#059669"
+            style={styles.backupButton}
+            icon="cog"
+          >
+            Configuration IA
+          </PrimaryButton>
+        </View>
+        
         {showManualImport && (
           <View style={styles.manualImportContainer}>
             <AppText variant="bodyMedium" style={styles.manualImportLabel}>

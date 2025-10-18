@@ -13,6 +13,8 @@ import SettingsScreen from '../screens/SettingsScreen';
 import theme from '../theme/theme';
 import DailySurveyScreen from '../screens/DailySurveyScreen';
 import IBDiskQuestionnaireScreen from '../screens/IBDiskQuestionnaireScreen';
+import AIChatScreen from '../screens/AIChatScreen';
+import AIConfigScreen from '../screens/AIConfigScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -76,6 +78,8 @@ export default function AppNavigator() {
         <Stack.Screen name="Main" component={MainTabs} options={{ headerShown: false }} />
         <Stack.Screen name="DailySurvey" component={DailySurveyScreen} options={{ title: 'Bilan du jour' }} />
         <Stack.Screen name="IBDiskQuestionnaire" component={IBDiskQuestionnaireScreen} options={{ title: 'Votre quotidien' }} />
+        <Stack.Screen name="AIChat" component={AIChatScreen} options={{ title: 'Assistant IA RCH' }} />
+        <Stack.Screen name="AIConfig" component={AIConfigScreen} options={{ title: 'Configuration IA' }} />
       </Stack.Navigator>
     </NavigationContainer>
   );
