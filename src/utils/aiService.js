@@ -1,6 +1,8 @@
 // Service IA utilisant Google Gemini API
 // Documentation: https://ai.google.dev/docs
 
+import storage from './storage';
+
 const GOOGLE_AI_API_KEY = 'YOUR_API_KEY_HERE'; // À remplacer par votre clé API
 const GOOGLE_AI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
 
@@ -173,17 +175,11 @@ RÉPONSE:
 
 // Fonction pour configurer l'API key
 export const setGoogleAIAPIKey = (apiKey) => {
-  // En production, cette clé devrait être stockée de manière sécurisée
-  // Pour le développement, on peut la stocker dans le localStorage
-  if (typeof window !== 'undefined' && window.localStorage) {
-    window.localStorage.setItem('google_ai_api_key', apiKey);
-  }
+  storage.set('google_ai_api_key', apiKey);
 };
 
 // Fonction pour récupérer l'API key
 export const getGoogleAIAPIKey = () => {
-  if (typeof window !== 'undefined' && window.localStorage) {
-    return window.localStorage.getItem('google_ai_api_key') || GOOGLE_AI_API_KEY;
-  }
-  return GOOGLE_AI_API_KEY;
+  const savedKey = storage.getString('google_ai_api_key');
+  return savedKey || GOOGLE_AI_API_KEY;
 };

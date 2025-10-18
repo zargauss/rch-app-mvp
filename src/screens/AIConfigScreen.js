@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Alert, ScrollView } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { View, StyleSheet, ScrollView, TextInput as RNTextInput } from 'react-native';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useTheme } from 'react-native-paper';
 import AppCard from '../components/ui/AppCard';
 import AppText from '../components/ui/AppText';
-import AppTextInput from '../components/ui/AppTextInput';
 import PrimaryButton from '../components/ui/PrimaryButton';
-import { setGoogleAIAPIKey, getGoogleAIAPIKey } from '../utils/aiService';
+import storage from '../utils/storage';
 
 export default function AIConfigScreen() {
   const [apiKey, setApiKey] = useState('');
@@ -15,25 +14,29 @@ export default function AIConfigScreen() {
 
   // Charger la clé API au montage du composant
   React.useEffect(() => {
-    const savedKey = getGoogleAIAPIKey();
-    if (savedKey && savedKey !== 'YOUR_API_KEY_HERE') {
-      setApiKey(savedKey);
+    try {
+      const savedKey = storage.getString('google_ai_api_key');
+      if (savedKey && savedKey !== 'YOUR_API_KEY_HERE') {
+        setApiKey(savedKey);
+      }
+    } catch (error) {
+      console.error('Erreur chargement clé API:', error);
     }
   }, []);
 
-  const handleSaveAPIKey = async () => {
+  const handleSaveAPIKey = () => {
     if (!apiKey.trim()) {
-      Alert.alert('Erreur', 'Veuillez saisir votre clé API Google AI Studio');
+      alert('Veuillez saisir votre clé API Google AI Studio');
       return;
     }
 
     setIsLoading(true);
     try {
-      setGoogleAIAPIKey(apiKey.trim());
-      Alert.alert('Succès', 'Clé API sauvegardée avec succès !');
+      storage.set('google_ai_api_key', apiKey.trim());
+      alert('Clé API sauvegardée avec succès !');
     } catch (error) {
       console.error('Erreur sauvegarde API key:', error);
-      Alert.alert('Erreur', 'Impossible de sauvegarder la clé API');
+      alert('Impossible de sauvegarder la clé API');
     } finally {
       setIsLoading(false);
     }
@@ -41,13 +44,12 @@ export default function AIConfigScreen() {
 
   const handleTestAPI = async () => {
     if (!apiKey.trim()) {
-      Alert.alert('Erreur', 'Veuillez d\'abord saisir votre clé API');
+      alert('Veuillez d\'abord saisir votre clé API');
       return;
     }
 
     setIsLoading(true);
     try {
-      // Test simple de l'API
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey.trim()}`, {
         method: 'POST',
         headers: {
@@ -63,13 +65,13 @@ export default function AIConfigScreen() {
       });
 
       if (response.ok) {
-        Alert.alert('Succès', 'Connexion à l\'API Google AI réussie !');
+        alert('Connexion à l\'API Google AI réussie !');
       } else {
-        Alert.alert('Erreur', 'Clé API invalide ou problème de connexion');
+        alert('Clé API invalide ou problème de connexion');
       }
     } catch (error) {
       console.error('Erreur test API:', error);
-      Alert.alert('Erreur', 'Impossible de tester la connexion API');
+      alert('Impossible de tester la connexion API');
     } finally {
       setIsLoading(false);
     }
@@ -94,10 +96,7 @@ export default function AIConfigScreen() {
           </AppText>
         </View>
         <AppText variant="bodyMedium" style={styles.instructionText}>
-          1. Allez sur{' '}
-          <AppText variant="bodyMedium" style={styles.linkText}>
-            https://aistudio.google.com
-          </AppText>
+          1. Allez sur https://aistudio.google.com
         </AppText>
         <AppText variant="bodyMedium" style={styles.instructionText}>
           2. Connectez-vous avec votre compte Google
@@ -122,13 +121,16 @@ export default function AIConfigScreen() {
           </AppText>
         </View>
         
-        <AppTextInput
-          label="Clé API"
+        <AppText variant="bodyMedium" style={styles.label}>
+          Clé API
+        </AppText>
+        <RNTextInput
           value={apiKey}
           onChangeText={setApiKey}
           placeholder="Collez votre clé API ici..."
-          secureTextEntry={true}
-          style={styles.apiKeyInput}
+          style={styles.textInput}
+          secureTextEntry={false}
+          editable={!isLoading}
         />
         
         <View style={styles.buttonContainer}>
@@ -141,7 +143,7 @@ export default function AIConfigScreen() {
             style={styles.testButton}
             icon="test-tube"
           >
-            Tester la connexion
+            Tester
           </PrimaryButton>
           
           <PrimaryButton
@@ -220,10 +222,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     lineHeight: 20,
   },
-  linkText: {
-    color: '#059669',
-    fontWeight: '600',
-  },
   configCard: {
     marginHorizontal: 16,
     marginBottom: 16,
@@ -237,7 +235,18 @@ const styles = StyleSheet.create({
     color: '#059669',
     fontWeight: '600',
   },
-  apiKeyInput: {
+  label: {
+    marginBottom: 8,
+    color: '#374151',
+    fontWeight: '500',
+  },
+  textInput: {
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 14,
+    backgroundColor: 'white',
     marginBottom: 16,
   },
   buttonContainer: {
