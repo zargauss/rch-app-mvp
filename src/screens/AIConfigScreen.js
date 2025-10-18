@@ -9,9 +9,17 @@ import PrimaryButton from '../components/ui/PrimaryButton';
 import { setGoogleAIAPIKey, getGoogleAIAPIKey } from '../utils/aiService';
 
 export default function AIConfigScreen() {
-  const [apiKey, setApiKey] = useState(getGoogleAIAPIKey() || '');
+  const [apiKey, setApiKey] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const theme = useTheme();
+
+  // Charger la clé API au montage du composant
+  React.useEffect(() => {
+    const savedKey = getGoogleAIAPIKey();
+    if (savedKey && savedKey !== 'YOUR_API_KEY_HERE') {
+      setApiKey(savedKey);
+    }
+  }, []);
 
   const handleSaveAPIKey = async () => {
     if (!apiKey.trim()) {
