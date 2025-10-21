@@ -6,7 +6,7 @@ export const RSS_FEED_URL = 'https://www.afa.asso.fr/feed';
 // Fonction pour parser le XML RSS et extraire les articles
 export const parseRSSFeed = (xmlText) => {
   try {
-    // Parser simple pour extraire les articles du RSS
+    console.log('Parsing du flux RSS...');
     const items = [];
     
     // Extraire les balises <item>
@@ -16,9 +16,15 @@ export const parseRSSFeed = (xmlText) => {
     while ((match = itemRegex.exec(xmlText)) !== null && items.length < 3) {
       const itemContent = match[1];
       
-      // Extraire le titre
-      const titleMatch = itemContent.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>/);
-      const title = titleMatch ? titleMatch[1].trim() : '';
+      // Extraire le titre (gérer différents formats)
+      let title = '';
+      const titleMatch1 = itemContent.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>/);
+      const titleMatch2 = itemContent.match(/<title>(.*?)<\/title>/);
+      if (titleMatch1) {
+        title = titleMatch1[1].trim();
+      } else if (titleMatch2) {
+        title = titleMatch2[1].trim();
+      }
       
       // Extraire le lien
       const linkMatch = itemContent.match(/<link>(.*?)<\/link>/);
@@ -28,21 +34,29 @@ export const parseRSSFeed = (xmlText) => {
       const dateMatch = itemContent.match(/<pubDate>(.*?)<\/pubDate>/);
       const pubDate = dateMatch ? dateMatch[1].trim() : '';
       
-      // Extraire la description
-      const descMatch = itemContent.match(/<description><!\[CDATA\[(.*?)\]\]><\/description>/);
-      const description = descMatch ? descMatch[1].trim() : '';
+      // Extraire la description (gérer différents formats)
+      let description = '';
+      const descMatch1 = itemContent.match(/<description><!\[CDATA\[(.*?)\]\]><\/description>/);
+      const descMatch2 = itemContent.match(/<description>(.*?)<\/description>/);
+      if (descMatch1) {
+        description = descMatch1[1].trim();
+      } else if (descMatch2) {
+        description = descMatch2[1].trim();
+      }
       
       if (title && link) {
         items.push({
           title,
           link,
           pubDate,
-          description: description.substring(0, 150) + '...', // Limiter la description
+          description: description.substring(0, 150) + (description.length > 150 ? '...' : ''),
           formattedDate: formatRSSDate(pubDate)
         });
+        console.log(`Article trouvé: ${title}`);
       }
     }
     
+    console.log(`✅ ${items.length} articles parsés avec succès`);
     return items;
   } catch (error) {
     console.error('Erreur lors du parsing RSS:', error);
@@ -77,32 +91,55 @@ const formatRSSDate = (dateStr) => {
 // Fonction pour récupérer le flux RSS
 export const fetchRSSFeed = async () => {
   try {
-    // En mode web, utiliser un proxy CORS ou une approche alternative
+    // En mode web, essayer plusieurs proxies CORS
     if (typeof window !== 'undefined') {
-      // Option 1: Utiliser un proxy CORS public
-      const proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(RSS_FEED_URL);
+      console.log('Tentative de récupération du flux RSS AFA...');
       
-      try {
-        const response = await fetch(proxyUrl);
-        const data = await response.json();
-        
-        if (data.contents) {
-          return parseRSSFeed(data.contents);
-        }
-      } catch (proxyError) {
-        console.warn('Proxy CORS échoué, tentative avec un autre proxy:', proxyError.message);
-        
-        // Option 2: Essayer avec un autre proxy
-        const proxyUrl2 = 'https://cors-anywhere.herokuapp.com/' + RSS_FEED_URL;
+      // Liste de proxies CORS à essayer
+      const proxies = [
+        'https://api.allorigins.win/get?url=',
+        'https://corsproxy.io/?',
+        'https://api.codetabs.com/v1/proxy?quest=',
+        'https://thingproxy.freeboard.io/fetch/'
+      ];
+      
+      for (let i = 0; i < proxies.length; i++) {
         try {
-          const response2 = await fetch(proxyUrl2);
-          const xmlText = await response2.text();
-          return parseRSSFeed(xmlText);
-        } catch (proxyError2) {
-          console.warn('Tous les proxies ont échoué, utilisation des données de fallback');
-          return getMockRSSData();
+          console.log(`Tentative avec le proxy ${i + 1}/${proxies.length}...`);
+          const proxyUrl = proxies[i] + encodeURIComponent(RSS_FEED_URL);
+          
+          const response = await fetch(proxyUrl, {
+            method: 'GET',
+            headers: {
+              'Accept': 'application/json, text/plain, */*',
+            },
+            timeout: 10000 // 10 secondes timeout
+          });
+          
+          if (response.ok) {
+            let data;
+            if (proxies[i].includes('allorigins')) {
+              // Format allorigins
+              data = await response.json();
+              if (data.contents) {
+                console.log('✅ Flux RSS récupéré avec succès via allorigins');
+                return parseRSSFeed(data.contents);
+              }
+            } else {
+              // Format direct
+              const xmlText = await response.text();
+              console.log('✅ Flux RSS récupéré avec succès via proxy direct');
+              return parseRSSFeed(xmlText);
+            }
+          }
+        } catch (proxyError) {
+          console.warn(`❌ Proxy ${i + 1} échoué:`, proxyError.message);
+          continue; // Essayer le proxy suivant
         }
       }
+      
+      console.warn('⚠️ Tous les proxies ont échoué, utilisation des données de fallback');
+      return getMockRSSData();
     }
     
     // En mode React Native, utiliser une approche différente
