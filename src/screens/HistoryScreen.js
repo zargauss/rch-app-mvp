@@ -462,12 +462,9 @@ export default function HistoryScreen({ navigation }) {
             </AppText>
           </View>
         ) : (
-          <FlatList
-            data={stools.slice(0, 10)} // Limiter à 10 dernières
-            keyExtractor={(item) => item.id}
-            scrollEnabled={false}
-            renderItem={({ item }) => (
-              <View style={styles.stoolItem}>
+          <View>
+            {stools.slice(0, 10).map((item) => (
+              <View key={item.id} style={styles.stoolItem}>
                 <View style={styles.stoolMain}>
                   <View style={[styles.bristolBadge, { backgroundColor: getBristolColor(item.bristolScale) }]}>
                     <AppText variant="bodyLarge" style={styles.bristolNumber}>
@@ -505,8 +502,8 @@ export default function HistoryScreen({ navigation }) {
                   </View>
                 </View>
               </View>
-            )}
-          />
+            ))}
+          </View>
         )}
       </AppCard>
 
@@ -623,12 +620,9 @@ export default function HistoryScreen({ navigation }) {
             </AppText>
           </View>
         ) : (
-          <FlatList
-            data={treatments.slice(0, 20)} // Limiter à 20 derniers
-            keyExtractor={(item) => item.id}
-            scrollEnabled={false}
-            renderItem={({ item }) => (
-              <View style={styles.treatmentItem}>
+          <View>
+            {treatments.slice(0, 20).map((item) => (
+              <View key={item.id} style={styles.treatmentItem}>
                 <View style={styles.treatmentIcon}>
                   <MaterialCommunityIcons name="pill" size={24} color="#9B59B6" />
                 </View>
@@ -655,8 +649,8 @@ export default function HistoryScreen({ navigation }) {
                   </TouchableOpacity>
                 </View>
               </View>
-            )}
-          />
+            ))}
+          </View>
         )}
       </AppCard>
 
