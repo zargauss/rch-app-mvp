@@ -7,6 +7,7 @@ import AppCard from '../components/ui/AppCard';
 import PrimaryButton from '../components/ui/PrimaryButton';
 import SecondaryButton from '../components/ui/SecondaryButton';
 import { storage } from '../utils/storage';
+import designSystem from '../theme/designSystem';
 
 const IBDiskQuestionnaireScreen = () => {
   const navigation = useNavigation();

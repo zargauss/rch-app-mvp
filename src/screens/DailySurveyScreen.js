@@ -9,6 +9,7 @@ import storage from '../utils/storage';
 import { getSurveyDayKey } from '../utils/dayKey';
 import { useNavigation } from '@react-navigation/native';
 import calculateLichtigerScore from '../utils/scoreCalculator';
+import designSystem from '../theme/designSystem';
 
 function getTodayKey() {
   return getSurveyDayKey(new Date(), 0);

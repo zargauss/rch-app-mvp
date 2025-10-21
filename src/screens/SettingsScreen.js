@@ -7,8 +7,11 @@ import AppText from '../components/ui/AppText';
 import PrimaryButton from '../components/ui/PrimaryButton';
 import SecondaryButton from '../components/ui/SecondaryButton';
 import AppCard from '../components/ui/AppCard';
+import SettingsSection, { SettingsItem } from '../components/settings/SettingsSection';
+import Divider from '../components/ui/Divider';
 import { useTheme } from 'react-native-paper';
 import { injectTestData, clearTestData, generateScenarioData, generateIBDiskTestData } from '../utils/dataGenerator';
+import designSystem from '../theme/designSystem';
 
 export default function SettingsScreen() {
   const [isWiping, setIsWiping] = useState(false);
