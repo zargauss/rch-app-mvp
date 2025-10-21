@@ -33,7 +33,35 @@ const getRawXML = (responseText) => {
   }
 };
 
-export const RSS_FEED_URL = 'https://www.afa.asso.fr/feed';
+/**
+ * Décode les entités HTML dans une chaîne de caractères
+ * @param {string} str La chaîne contenant des entités HTML
+ * @returns {string} La chaîne avec les entités décodées
+ */
+const decodeHtmlEntities = (str) => {
+  if (!str) return str;
+  
+  // Créer un élément temporaire pour utiliser le décodage natif du navigateur
+  if (typeof window !== 'undefined' && window.document) {
+    const textarea = document.createElement('textarea');
+    textarea.innerHTML = str;
+    return textarea.value;
+  }
+  
+  // Fallback pour React Native ou autres environnements
+  return str
+    .replace(/&#8217;/g, "'")  // Apostrophe courbe
+    .replace(/&#8211;/g, "–")  // Tiret cadratin
+    .replace(/&#8212;/g, "—") // Tiret long
+    .replace(/&#8220;/g, """) // Guillemet ouvrant
+    .replace(/&#8221;/g, """) // Guillemet fermant
+    .replace(/&#8230;/g, "…") // Points de suspension
+    .replace(/&amp;/g, "&")   // Ampersand
+    .replace(/&lt;/g, "<")    // Moins que
+    .replace(/&gt;/g, ">")    // Plus que
+    .replace(/&quot;/g, '"')  // Guillemet
+    .replace(/&#39;/g, "'");  // Apostrophe droite
+};
 
 // Fonction pour parser le XML RSS et extraire les articles
 export const parseRSSFeed = (xmlText) => {
@@ -79,13 +107,13 @@ export const parseRSSFeed = (xmlText) => {
       
       if (title && link) {
         items.push({
-          title,
+          title: decodeHtmlEntities(title),
           link,
           pubDate,
-          description: description.substring(0, 150) + (description.length > 150 ? '...' : ''),
+          description: decodeHtmlEntities(description).substring(0, 150) + (description.length > 150 ? '...' : ''),
           formattedDate: formatRSSDate(pubDate)
         });
-        console.log(`Article trouvé: ${title}`);
+        console.log(`Article trouvé: ${decodeHtmlEntities(title)}`);
       }
     }
     
