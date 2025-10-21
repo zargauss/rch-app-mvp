@@ -710,10 +710,10 @@ export default function ExportScreen() {
           value={selectedPeriod}
           onValueChange={setSelectedPeriod}
           buttons={[
-            { value: 'complet', label: 'Complet' },
-            { value: '90', label: '90 jours' },
-            { value: '30', label: '30 jours' },
-            { value: '7', label: '7 jours' }
+            { value: 'complet', label: 'Tout' },
+            { value: '90', label: '90j' },
+            { value: '30', label: '30j' },
+            { value: '7', label: '7j' }
           ]}
           style={styles.segmentedButtons}
         />
