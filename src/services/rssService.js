@@ -53,8 +53,8 @@ const decodeHtmlEntities = (str) => {
     .replace(/&#8217;/g, "'")  // Apostrophe courbe
     .replace(/&#8211;/g, "–")  // Tiret cadratin
     .replace(/&#8212;/g, "—") // Tiret long
-    .replace(/&#8220;/g, """) // Guillemet ouvrant
-    .replace(/&#8221;/g, """) // Guillemet fermant
+    .replace(/&#8220;/g, '"') // Guillemet ouvrant
+    .replace(/&#8221;/g, '"') // Guillemet fermant
     .replace(/&#8230;/g, "…") // Points de suspension
     .replace(/&amp;/g, "&")   // Ampersand
     .replace(/&lt;/g, "<")    // Moins que
