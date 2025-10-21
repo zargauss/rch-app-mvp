@@ -7,14 +7,18 @@ export const RSS_FEED_URL = 'https://www.afa.asso.fr/feed';
 export const parseRSSFeed = (xmlText) => {
   try {
     console.log('Parsing du flux RSS...');
+    console.log('Contenu reçu (premiers 500 caractères):', xmlText.substring(0, 500));
+    
     const items = [];
     
-    // Extraire les balises <item>
+    // Essayer différentes méthodes de parsing
+    // Méthode 1: Recherche des balises <item>
     const itemRegex = /<item>([\s\S]*?)<\/item>/g;
     let match;
     
     while ((match = itemRegex.exec(xmlText)) !== null && items.length < 3) {
       const itemContent = match[1];
+      console.log('Item trouvé:', itemContent.substring(0, 200));
       
       // Extraire le titre (gérer différents formats)
       let title = '';
@@ -44,6 +48,9 @@ export const parseRSSFeed = (xmlText) => {
         description = descMatch2[1].trim();
       }
       
+      console.log(`Titre extrait: "${title}"`);
+      console.log(`Lien extrait: "${link}"`);
+      
       if (title && link) {
         items.push({
           title,
@@ -53,6 +60,51 @@ export const parseRSSFeed = (xmlText) => {
           formattedDate: formatRSSDate(pubDate)
         });
         console.log(`Article trouvé: ${title}`);
+      }
+    }
+    
+    // Si aucune balise <item> trouvée, essayer d'autres formats
+    if (items.length === 0) {
+      console.log('Aucune balise <item> trouvée, essai d\'autres formats...');
+      
+      // Méthode 2: Recherche directe de titres et liens
+      const titleRegex = /<title>(.*?)<\/title>/g;
+      const linkRegex = /<link>(.*?)<\/link>/g;
+      
+      const titles = [];
+      const links = [];
+      
+      let titleMatch;
+      while ((titleMatch = titleRegex.exec(xmlText)) !== null) {
+        const title = titleMatch[1].trim();
+        if (title && !title.toLowerCase().includes('rss') && !title.toLowerCase().includes('feed')) {
+          titles.push(title);
+        }
+      }
+      
+      let linkMatch;
+      while ((linkMatch = linkRegex.exec(xmlText)) !== null) {
+        const link = linkMatch[1].trim();
+        if (link && link.startsWith('http')) {
+          links.push(link);
+        }
+      }
+      
+      console.log(`Titres trouvés: ${titles.length}`, titles.slice(0, 3));
+      console.log(`Liens trouvés: ${links.length}`, links.slice(0, 3));
+      
+      // Combiner titres et liens
+      for (let i = 0; i < Math.min(titles.length, links.length, 3); i++) {
+        if (titles[i] && links[i]) {
+          items.push({
+            title: titles[i],
+            link: links[i],
+            pubDate: '',
+            description: '',
+            formattedDate: 'Récent'
+          });
+          console.log(`Article créé: ${titles[i]}`);
+        }
       }
     }
     
