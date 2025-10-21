@@ -139,20 +139,6 @@ export default function StatsScreen() {
       style={[styles.container, { backgroundColor: theme.colors.background }]}
       contentContainerStyle={styles.scrollContent}
     >
-      {/* En-tête */}
-      <View style={styles.header}>
-        <View style={styles.headerTop}>
-          <View style={styles.titleSection}>
-            <AppText variant="displayMedium" style={styles.title}>
-              Statistiques
-            </AppText>
-            <AppText variant="bodyMedium" style={styles.subtitle}>
-              Analysez l'évolution de votre santé
-            </AppText>
-          </View>
-        </View>
-      </View>
-
       {/* Sélecteur de type de données */}
       <View style={styles.dataTypeSection}>
         <SegmentedButtons
@@ -310,26 +296,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingBottom: 100,
-  },
-  header: {
-    paddingHorizontal: designSystem.spacing[4],
     paddingTop: designSystem.spacing[4],
-    paddingBottom: designSystem.spacing[6],
-  },
-  headerTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  titleSection: {
-    flex: 1,
-  },
-  title: {
-    color: designSystem.colors.text.primary,
-    marginBottom: designSystem.spacing[2],
-  },
-  subtitle: {
-    color: designSystem.colors.text.secondary,
   },
   dataTypeSection: {
     paddingHorizontal: designSystem.spacing[4],

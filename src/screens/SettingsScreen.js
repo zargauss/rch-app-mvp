@@ -226,27 +226,7 @@ export default function SettingsScreen() {
   };
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      {/* En-tête */}
-      <View style={styles.header}>
-        <View style={styles.headerTop}>
-          <View style={styles.titleSection}>
-            <View style={styles.titleWithIcon}>
-              <MaterialCommunityIcons name="cog" size={32} color="#2D3748" style={{ marginRight: 12 }} />
-              <AppText variant="displayMedium" style={styles.title}>
-                Paramètres
-              </AppText>
-            </View>
-            <AppText variant="bodyMedium" style={styles.subtitle}>
-              Configuration de l'application
-            </AppText>
-          </View>
-          <View style={styles.menuIcon}>
-            <MaterialCommunityIcons name="dots-horizontal" size={24} color="#718096" />
-          </View>
-        </View>
-      </View>
-      
+    <ScrollView style={[styles.container, { backgroundColor: theme.colors.background }]} contentContainerStyle={styles.scrollContent}>
       {/* Informations sur la période nocturne */}
       <AppCard style={styles.infoCard}>
         <View style={styles.infoHeader}>
