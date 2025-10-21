@@ -1,5 +1,5 @@
 ﻿import React, { useMemo, useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Linking } from 'react-native';
+import { View, StyleSheet, ScrollView, Linking, TouchableOpacity } from 'react-native';
 import { Text, Button, Portal, Modal, Card, Switch, TextInput } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import AppCard from '../components/ui/AppCard';
@@ -652,14 +652,14 @@ export default function HomeScreen() {
                   <AppText variant="bodySmall" style={styles.newsItemExcerpt}>
                     {article.description}
                   </AppText>
-                  <SecondaryButton 
+                  <TouchableOpacity 
                     onPress={() => openArticle(article.link)}
-                    variant="tertiary"
                     style={styles.articleButton}
-                    icon="open-in-new"
                   >
-                    Voir l'article complet
-                  </SecondaryButton>
+                    <AppText variant="bodySmall" color="primary" style={styles.articleButtonText}>
+                      Voir l'article complet →
+                    </AppText>
+                  </TouchableOpacity>
                 </View>
               ))}
             </View>
@@ -1042,6 +1042,12 @@ const styles = StyleSheet.create({
   articleButton: {
     marginTop: designSystem.spacing[3],
     alignSelf: 'flex-start',
+    paddingVertical: designSystem.spacing[2],
+    paddingHorizontal: designSystem.spacing[3],
+  },
+  articleButtonText: {
+    textDecorationLine: 'underline',
+    fontWeight: designSystem.typography.fontWeight.medium,
   },
   modalContainer: {
     margin: designSystem.spacing[5],
