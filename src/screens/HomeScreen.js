@@ -1,5 +1,5 @@
-﻿import React, { useMemo, useState } from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
+﻿import React, { useMemo, useState, useEffect } from 'react';
+import { View, StyleSheet, ScrollView, Linking } from 'react-native';
 import { Text, Button, Portal, Modal, Card, Switch, TextInput } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import AppCard from '../components/ui/AppCard';
@@ -17,6 +17,7 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { getSurveyDayKey } from '../utils/dayKey';
 import { useTheme } from 'react-native-paper';
 import designSystem from '../theme/designSystem';
+import { fetchRSSFeed } from '../services/rssService';
 
 export default function HomeScreen() {
   const navigation = useNavigation();
@@ -46,6 +47,10 @@ export default function HomeScreen() {
   // États pour IBDisk
   const [ibdiskAvailable, setIbdiskAvailable] = useState(true);
   const [ibdiskDaysRemaining, setIbdiskDaysRemaining] = useState(0);
+  
+  // États pour les actualités RSS
+  const [rssArticles, setRssArticles] = useState([]);
+  const [rssLoading, setRssLoading] = useState(true);
 
   const bristolDescriptions = useMemo(() => ({
     1: 'Type 1 — Noix dures séparées (constipation sévère)',
@@ -56,6 +61,38 @@ export default function HomeScreen() {
     6: 'Type 6 — Morceaux floconneux (diarrhée)',
     7: 'Type 7 — Aqueux, sans morceaux (diarrhée sévère)'
   }), []);
+
+  // Fonction pour charger les articles RSS
+  const loadRSSArticles = async () => {
+    try {
+      setRssLoading(true);
+      const articles = await fetchRSSFeed();
+      setRssArticles(articles);
+    } catch (error) {
+      console.error('Erreur lors du chargement des articles RSS:', error);
+      setRssArticles([]);
+    } finally {
+      setRssLoading(false);
+    }
+  };
+
+  // Fonction pour ouvrir un article dans le navigateur
+  const openArticle = async (url) => {
+    try {
+      const supported = await Linking.canOpenURL(url);
+      if (supported) {
+        await Linking.openURL(url);
+      } else {
+        setToastMessage('Impossible d\'ouvrir le lien');
+        setToastType('error');
+        setToastVisible(true);
+      }
+    } catch (error) {
+      setToastMessage('Erreur lors de l\'ouverture du lien');
+      setToastType('error');
+      setToastVisible(true);
+    }
+  };
 
   // Fonction pour vérifier la disponibilité d'IBDisk
   const checkIBDiskAvailability = () => {
@@ -160,6 +197,9 @@ export default function HomeScreen() {
       
       // Vérifier la disponibilité d'IBDisk
       checkIBDiskAvailability();
+      
+      // Charger les articles RSS
+      loadRSSArticles();
 
       // Compute yesterday score and persist to history if needed
       const today = new Date();
@@ -579,50 +619,60 @@ export default function HomeScreen() {
           <View style={styles.newsHeader}>
             <MaterialCommunityIcons name="newspaper" size={24} color={designSystem.colors.primary[500]} />
             <AppText variant="h4" style={styles.newsTitle}>
-              Actualités MICI
+              Actualités AFA
             </AppText>
           </View>
           <AppText variant="bodyMedium" style={styles.newsDescription}>
-            Découvrez les dernières actualités de l'association des patients atteints de MICI
+            Découvrez les dernières actualités de l'Association François Aupetit (AFA)
           </AppText>
-          <View style={styles.newsItems}>
-            <View style={styles.newsItem}>
-              <View style={styles.newsItemHeader}>
-                <AppText variant="label" style={styles.newsDate}>15 Jan 2025</AppText>
-                <View style={styles.newsBadge}>
-                  <AppText variant="caption" style={styles.newsBadgeText}>Nouveau</AppText>
-                </View>
-              </View>
-              <AppText variant="bodyMedium" style={styles.newsItemTitle}>
-                Nouveaux traitements biologiques approuvés en 2025
-              </AppText>
-              <AppText variant="bodySmall" style={styles.newsItemExcerpt}>
-                L'ANSM vient d'approuver plusieurs nouveaux traitements biologiques pour les MICI...
+          
+          {rssLoading ? (
+            <View style={styles.newsLoading}>
+              <AppText variant="bodyMedium" style={styles.newsLoadingText}>
+                Chargement des actualités...
               </AppText>
             </View>
-            
-            <View style={styles.newsItem}>
-              <View style={styles.newsItemHeader}>
-                <AppText variant="label" style={styles.newsDate}>10 Jan 2025</AppText>
-                <View style={styles.newsBadge}>
-                  <AppText variant="caption" style={styles.newsBadgeText}>Événement</AppText>
+          ) : rssArticles.length > 0 ? (
+            <View style={styles.newsItems}>
+              {rssArticles.map((article, index) => (
+                <View key={index} style={styles.newsItem}>
+                  <View style={styles.newsItemHeader}>
+                    <AppText variant="label" style={styles.newsDate}>
+                      {article.formattedDate}
+                    </AppText>
+                    <View style={styles.newsBadge}>
+                      <AppText variant="caption" style={styles.newsBadgeText}>
+                        {index === 0 ? 'Nouveau' : 'Actualité'}
+                      </AppText>
+                    </View>
+                  </View>
+                  <AppText variant="bodyMedium" style={styles.newsItemTitle}>
+                    {article.title}
+                  </AppText>
+                  <AppText variant="bodySmall" style={styles.newsItemExcerpt}>
+                    {article.description}
+                  </AppText>
+                  <SecondaryButton 
+                    onPress={() => openArticle(article.link)}
+                    variant="tertiary"
+                    style={styles.articleButton}
+                    icon="open-in-new"
+                  >
+                    Voir l'article complet
+                  </SecondaryButton>
                 </View>
-              </View>
-              <AppText variant="bodyMedium" style={styles.newsItemTitle}>
-                Journée mondiale des MICI - 19 mai 2025
-              </AppText>
-              <AppText variant="bodySmall" style={styles.newsItemExcerpt}>
-                Rejoignez-nous pour sensibiliser le public aux maladies inflammatoires chroniques...
+              ))}
+            </View>
+          ) : (
+            <View style={styles.newsError}>
+              <AppText variant="bodyMedium" style={styles.newsErrorText}>
+                Impossible de charger les actualités
               </AppText>
             </View>
-          </View>
+          )}
+          
           <PrimaryButton 
-            onPress={() => {
-              // TODO: Ouvrir le site de l'association ou une page dédiée
-              setToastMessage('Fonctionnalité à venir - Redirection vers le site de l\'association');
-              setToastType('info');
-              setToastVisible(true);
-            }}
+            onPress={() => openArticle('https://www.afa.asso.fr/')}
             variant="primary"
             outlined
             style={styles.newsButton}
@@ -973,6 +1023,25 @@ const styles = StyleSheet.create({
   newsButton: {
     width: '100%',
     borderRadius: designSystem.borderRadius.md,
+  },
+  newsLoading: {
+    paddingVertical: designSystem.spacing[6],
+    alignItems: 'center',
+  },
+  newsLoadingText: {
+    color: designSystem.colors.text.secondary,
+    fontStyle: 'italic',
+  },
+  newsError: {
+    paddingVertical: designSystem.spacing[6],
+    alignItems: 'center',
+  },
+  newsErrorText: {
+    color: designSystem.colors.status.danger,
+  },
+  articleButton: {
+    marginTop: designSystem.spacing[3],
+    alignSelf: 'flex-start',
   },
   modalContainer: {
     margin: designSystem.spacing[5],
