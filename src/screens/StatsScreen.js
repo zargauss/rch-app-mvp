@@ -10,8 +10,10 @@ import TrendChart from '../components/charts/TrendChart';
 import TrendIndicator from '../components/charts/TrendIndicator';
 import ScoreDistribution from '../components/charts/ScoreDistribution';
 import KeyInsights from '../components/charts/KeyInsights';
+import EmptyState from '../components/ui/EmptyState';
 import { useTheme } from 'react-native-paper';
 import { useFocusEffect } from '@react-navigation/native';
+import designSystem from '../theme/designSystem';
 
 export default function StatsScreen() {
   const [scores, setScores] = useState([]);
@@ -290,17 +292,12 @@ export default function StatsScreen() {
           )}
         </>
       ) : (
-        <View style={styles.noDataContainer}>
-          <AppText variant="headlineLarge" style={styles.noDataTitle}>
-            Aucune donnée disponible
-          </AppText>
-          <AppText variant="bodyMedium" style={styles.noDataText}>
-            Enregistrez des selles et complétez vos bilans pour voir l'évolution de votre santé.
-          </AppText>
-          <AppText variant="bodySmall" style={styles.noDataHint}>
-            Conseil : Utilisez le Mode Développeur dans les Paramètres pour générer des données de test.
-          </AppText>
-        </View>
+        <EmptyState
+          icon="chart-line-variant"
+          title="Aucune donnée disponible"
+          description="Enregistrez des selles et complétez vos bilans pour voir l'évolution de votre santé. Conseil : Utilisez le Mode Développeur dans les Paramètres pour générer des données de test."
+          variant="default"
+        />
       )}
     </ScrollView>
   );
@@ -309,14 +306,15 @@ export default function StatsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: designSystem.colors.background.primary,
   },
   scrollContent: {
-    paddingBottom: 100, // Espace pour éviter que le contenu soit coupé
+    paddingBottom: 100,
   },
   header: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 24,
+    paddingHorizontal: designSystem.spacing[4],
+    paddingTop: designSystem.spacing[4],
+    paddingBottom: designSystem.spacing[6],
   },
   headerTop: {
     flexDirection: 'row',
@@ -327,89 +325,52 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    color: '#2D3748',
-    marginBottom: 6,
-    fontWeight: '700',
+    color: designSystem.colors.text.primary,
+    marginBottom: designSystem.spacing[2],
   },
   subtitle: {
-    color: '#718096',
-    fontWeight: '400',
+    color: designSystem.colors.text.secondary,
   },
   dataTypeSection: {
-    paddingHorizontal: 20,
-    marginBottom: 16,
+    paddingHorizontal: designSystem.spacing[4],
+    marginBottom: designSystem.spacing[4],
   },
   periodSection: {
-    paddingHorizontal: 20,
-    marginBottom: 24,
+    paddingHorizontal: designSystem.spacing[4],
+    marginBottom: designSystem.spacing[6],
   },
   sectionTitle: {
-    color: '#2D3748',
-    marginBottom: 12,
-    fontWeight: '700',
+    color: designSystem.colors.text.primary,
+    marginBottom: designSystem.spacing[3],
   },
   statsGrid: {
-    paddingHorizontal: 20,
-    gap: 16,
-    marginBottom: 24,
+    paddingHorizontal: designSystem.spacing[4],
+    gap: designSystem.spacing[4],
+    marginBottom: designSystem.spacing[6],
   },
   chartCard: {
-    marginHorizontal: 20,
-    marginBottom: 24,
-    padding: 20,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    elevation: 4,
+    marginHorizontal: designSystem.spacing[4],
+    marginBottom: designSystem.spacing[6],
   },
   chartTitle: {
-    color: '#2D3748',
-    marginBottom: 16,
-    fontWeight: '700',
+    color: designSystem.colors.text.primary,
+    marginBottom: designSystem.spacing[4],
   },
   nativeChartPlaceholder: {
     height: 250,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F8FAFB',
-    borderRadius: 8,
-    padding: 24,
+    backgroundColor: designSystem.colors.background.secondary,
+    borderRadius: designSystem.borderRadius.base,
+    padding: designSystem.spacing[6],
   },
   placeholderText: {
-    color: '#475569',
+    color: designSystem.colors.text.secondary,
     textAlign: 'center',
-    marginBottom: 8,
-    fontWeight: '600',
+    marginBottom: designSystem.spacing[2],
   },
   placeholderSubtext: {
-    color: '#94A3B8',
+    color: designSystem.colors.text.tertiary,
     textAlign: 'center',
-  },
-  noDataContainer: {
-    marginHorizontal: 20,
-    marginTop: 40,
-    padding: 40,
-    alignItems: 'center',
-  },
-  noDataTitle: {
-    color: '#2D3748',
-    marginBottom: 12,
-    fontWeight: '700',
-    textAlign: 'center',
-  },
-  noDataText: {
-    color: '#64748B',
-    textAlign: 'center',
-    marginBottom: 16,
-    lineHeight: 22,
-  },
-  noDataHint: {
-    color: '#94A3B8',
-    textAlign: 'center',
-    fontStyle: 'italic',
   },
 });
