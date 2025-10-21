@@ -578,11 +578,11 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   backupButtons: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     gap: 12,
   },
   backupButton: {
-    flex: 1,
+    width: '100%',
   },
   // Styles pour l'import manuel
   manualImportContainer: {
