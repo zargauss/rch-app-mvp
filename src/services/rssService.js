@@ -1,6 +1,8 @@
 // Service pour récupérer les actualités RSS de l'AFA (Association François Aupetit)
 // https://www.afa.asso.fr/feed
 
+export const RSS_FEED_URL = 'https://www.afa.asso.fr/feed';
+
 /**
  * Prétraite la réponse d'un proxy pour extraire le XML brut.
  * Gère les réponses directes et les réponses encodées en Base64 (Data URI).
