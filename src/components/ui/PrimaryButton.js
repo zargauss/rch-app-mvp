@@ -1,13 +1,169 @@
 import React from 'react';
-import { Button, useTheme } from 'react-native-paper';
+import { TouchableOpacity, StyleSheet, ActivityIndicator, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import AppText from './AppText';
+import designSystem from '../../theme/designSystem';
 
-export default function PrimaryButton({ children, style, ...props }) {
-  const theme = useTheme();
+const { colors, spacing, borderRadius, shadows, gradients, layout } = designSystem;
+
+export default function PrimaryButton({
+  children,
+  onPress,
+  disabled = false,
+  loading = false,
+  icon,
+  iconPosition = 'left',
+  variant = 'primary',
+  size = 'medium',
+  style,
+  ...props
+}) {
+  const variantConfig = {
+    primary: {
+      gradient: gradients.primary,
+      textColor: 'inverse',
+    },
+    secondary: {
+      gradient: gradients.secondary,
+      textColor: 'inverse',
+    },
+    success: {
+      gradient: gradients.excellent,
+      textColor: 'inverse',
+    },
+    warning: {
+      gradient: gradients.warning,
+      textColor: 'inverse',
+    },
+    danger: {
+      gradient: gradients.danger,
+      textColor: 'inverse',
+    },
+    info: {
+      gradient: gradients.info,
+      textColor: 'inverse',
+    },
+  };
+
+  const sizeConfig = {
+    small: {
+      height: 40,
+      paddingHorizontal: spacing[4],
+      fontSize: 'bodySmall',
+      iconSize: 18,
+    },
+    medium: {
+      height: layout.buttonHeight,
+      paddingHorizontal: spacing[5],
+      fontSize: 'body',
+      iconSize: 20,
+    },
+    large: {
+      height: 56,
+      paddingHorizontal: spacing[6],
+      fontSize: 'bodyLarge',
+      iconSize: 24,
+    },
+  };
+
+  const config = variantConfig[variant];
+  const sizeStyle = sizeConfig[size];
+
+  const buttonStyle = [
+    styles.button,
+    {
+      height: sizeStyle.height,
+      paddingHorizontal: sizeStyle.paddingHorizontal,
+    },
+    disabled && styles.disabled,
+    style,
+  ];
+
+  const content = (
+    <>
+      {loading ? (
+        <ActivityIndicator color={colors.text.inverse} size="small" />
+      ) : (
+        <View style={styles.content}>
+          {icon && iconPosition === 'left' && (
+            <MaterialCommunityIcons
+              name={icon}
+              size={sizeStyle.iconSize}
+              color={colors.text.inverse}
+              style={styles.iconLeft}
+            />
+          )}
+          <AppText
+            variant={sizeStyle.fontSize}
+            color={config.textColor}
+            weight="semiBold"
+            numberOfLines={1}
+          >
+            {children}
+          </AppText>
+          {icon && iconPosition === 'right' && (
+            <MaterialCommunityIcons
+              name={icon}
+              size={sizeStyle.iconSize}
+              color={colors.text.inverse}
+              style={styles.iconRight}
+            />
+          )}
+        </View>
+      )}
+    </>
+  );
+
+  if (disabled) {
+    return (
+      <View style={[buttonStyle, styles.disabledContainer]}>
+        {content}
+      </View>
+    );
+  }
+
   return (
-    <Button mode="contained" style={style} buttonColor={theme.colors.primary} textColor="#FFFFFF" uppercase {...props}>
-      {children}
-    </Button>
+    <TouchableOpacity
+      onPress={onPress}
+      disabled={disabled || loading}
+      activeOpacity={0.8}
+      {...props}
+    >
+      <LinearGradient
+        colors={config.gradient}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={buttonStyle}
+      >
+        {content}
+      </LinearGradient>
+    </TouchableOpacity>
   );
 }
 
-
+const styles = StyleSheet.create({
+  button: {
+    borderRadius: borderRadius.base,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...shadows.sm,
+  },
+  content: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconLeft: {
+    marginRight: spacing[2],
+  },
+  iconRight: {
+    marginLeft: spacing[2],
+  },
+  disabled: {
+    opacity: 0.5,
+  },
+  disabledContainer: {
+    backgroundColor: colors.neutral[300],
+  },
+});
