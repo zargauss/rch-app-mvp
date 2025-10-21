@@ -4,6 +4,8 @@
 export const RSS_FEED_URL = 'https://www.afa.asso.fr/feed';
 
 // Fonction pour parser le XML RSS et extraire les articles
+// Fonction de parsing RSS (non utilisée en mode web pour éviter les erreurs CORS)
+/*
 export const parseRSSFeed = (xmlText) => {
   try {
     // Parser simple pour extraire les articles du RSS
@@ -49,6 +51,7 @@ export const parseRSSFeed = (xmlText) => {
     return [];
   }
 };
+*/
 
 // Fonction pour formater la date RSS
 const formatRSSDate = (dateStr) => {
@@ -77,23 +80,10 @@ const formatRSSDate = (dateStr) => {
 // Fonction pour récupérer le flux RSS
 export const fetchRSSFeed = async () => {
   try {
-    // En mode web, utiliser fetch directement
+    // En mode web, utiliser directement les données de fallback pour éviter les erreurs CORS
     if (typeof window !== 'undefined') {
-      // Essayer de récupérer le flux RSS
-      const response = await fetch(RSS_FEED_URL, {
-        mode: 'cors',
-        headers: {
-          'Accept': 'application/rss+xml, application/xml, text/xml',
-        }
-      });
-      
-      if (response.ok) {
-        const xmlText = await response.text();
-        return parseRSSFeed(xmlText);
-      } else {
-        console.warn('Impossible de récupérer le flux RSS, utilisation des données de fallback');
-        return getMockRSSData();
-      }
+      console.log('Mode web détecté - utilisation des données de fallback pour éviter les erreurs CORS');
+      return getMockRSSData();
     }
     
     // En mode React Native, utiliser une approche différente
