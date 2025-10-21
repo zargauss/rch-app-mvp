@@ -11,9 +11,13 @@ import PrimaryButton from '../components/ui/PrimaryButton';
 import SecondaryButton from '../components/ui/SecondaryButton';
 import SegmentedControl from '../components/ui/SegmentedControl';
 import DateTimeInput, { isValidDate, isValidTime } from '../components/ui/DateTimeInput';
+import EmptyState from '../components/ui/EmptyState';
+import StoolListItem from '../components/history/StoolListItem';
+import TreatmentListItem from '../components/history/TreatmentListItem';
 import { useTheme } from 'react-native-paper';
 import Slider from '@react-native-community/slider';
 import IBDiskChart from '../components/charts/IBDiskChart';
+import designSystem from '../theme/designSystem';
 
 export default function HistoryScreen({ navigation }) {
   const [scores, setScores] = useState([]);
