@@ -54,11 +54,11 @@ function MainTabs() {
         },
         tabBarIcon: ({ color, focused }) => {
           let iconName = 'home';
-          if (route.name === 'Accueil') iconName = focused ? 'home' : 'home-outline';
-          if (route.name === 'Historique') iconName = focused ? 'chart-timeline-variant' : 'chart-timeline-variant-shimmer';
-          if (route.name === 'Statistiques') iconName = focused ? 'chart-line' : 'chart-line-variant';
-          if (route.name === 'Export') iconName = focused ? 'file-pdf-box' : 'file-document-outline';
-          if (route.name === 'Paramètres') iconName = focused ? 'cog' : 'cog-outline';
+          if (route.name === 'Accueil') iconName = 'home';
+          if (route.name === 'Historique') iconName = 'clock-outline';
+          if (route.name === 'Statistiques') iconName = 'chart-line';
+          if (route.name === 'Export') iconName = 'file-pdf-box';
+          if (route.name === 'Paramètres') iconName = 'cog';
           return <MaterialCommunityIcons name={iconName} size={26} color={color} />;
         }
       })}

@@ -692,8 +692,6 @@ export default function ExportScreen() {
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <AppText variant="title" style={styles.title}>Export pour Médecin</AppText>
-      
       <AppCard style={styles.infoCard}>
         <View style={styles.infoTitleContainer}>
           <MaterialCommunityIcons name="file-document-outline" size={24} color="#4A90E2" />
