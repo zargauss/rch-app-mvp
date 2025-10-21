@@ -648,14 +648,15 @@ export default function HomeScreen() {
             </View>
 
               <View style={styles.modalActions}>
-                <SecondaryButton 
+                <PrimaryButton 
                   onPress={hideModal} 
                   style={styles.cancelButton}
                   variant="neutral"
                   size="medium"
+                  outlined
                 >
                   Annuler
-                </SecondaryButton>
+                </PrimaryButton>
                 <PrimaryButton 
                   onPress={handleSave} 
                   style={styles.saveButton}
@@ -729,14 +730,15 @@ export default function HomeScreen() {
               </Card.Content>
 
               <View style={styles.modalActions}>
-                <SecondaryButton
+                <PrimaryButton
                   onPress={hideTreatmentModal}
                   style={styles.cancelButton}
                   variant="neutral"
                   size="medium"
+                  outlined
                 >
                   Annuler
-                </SecondaryButton>
+                </PrimaryButton>
                 <PrimaryButton
                   onPress={saveTreatment}
                   style={styles.saveButton}

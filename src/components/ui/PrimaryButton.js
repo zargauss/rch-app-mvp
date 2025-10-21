@@ -16,33 +16,52 @@ export default function PrimaryButton({
   iconPosition = 'left',
   variant = 'primary',
   size = 'medium',
+  outlined = false,
   style,
   ...props
 }) {
   const variantConfig = {
     primary: {
       gradient: gradients.primary,
-      textColor: 'inverse',
+      textColor: outlined ? 'info' : 'inverse',
+      borderColor: colors.primary[500],
+      iconColor: colors.primary[500],
     },
     secondary: {
       gradient: gradients.secondary,
-      textColor: 'inverse',
+      textColor: outlined ? 'success' : 'inverse',
+      borderColor: colors.secondary[500],
+      iconColor: colors.secondary[500],
     },
     success: {
       gradient: gradients.excellent,
-      textColor: 'inverse',
+      textColor: outlined ? 'success' : 'inverse',
+      borderColor: colors.health.excellent.main,
+      iconColor: colors.health.excellent.main,
     },
     warning: {
       gradient: gradients.warning,
-      textColor: 'inverse',
+      textColor: outlined ? 'warning' : 'inverse',
+      borderColor: colors.health.moderate.main,
+      iconColor: colors.health.moderate.main,
     },
     danger: {
       gradient: gradients.danger,
-      textColor: 'inverse',
+      textColor: outlined ? 'danger' : 'inverse',
+      borderColor: colors.health.danger.main,
+      iconColor: colors.health.danger.main,
     },
     info: {
       gradient: gradients.info,
-      textColor: 'inverse',
+      textColor: outlined ? 'info' : 'inverse',
+      borderColor: colors.primary[500],
+      iconColor: colors.primary[500],
+    },
+    neutral: {
+      gradient: [colors.neutral[300], colors.neutral[400]],
+      textColor: outlined ? 'secondary' : 'inverse',
+      borderColor: colors.border.dark,
+      iconColor: colors.text.secondary,
     },
   };
 
@@ -76,21 +95,28 @@ export default function PrimaryButton({
       height: sizeStyle.height,
       paddingHorizontal: sizeStyle.paddingHorizontal,
     },
+    outlined && {
+      backgroundColor: colors.background.tertiary,
+      borderWidth: 1.5,
+      borderColor: config.borderColor,
+    },
     disabled && styles.disabled,
     style,
   ];
 
+  const iconColor = outlined ? config.iconColor : colors.text.inverse;
+
   const content = (
     <>
       {loading ? (
-        <ActivityIndicator color={colors.text.inverse} size="small" />
+        <ActivityIndicator color={iconColor} size="small" />
       ) : (
         <View style={styles.content}>
           {icon && iconPosition === 'left' && (
             <MaterialCommunityIcons
               name={icon}
               size={sizeStyle.iconSize}
-              color={colors.text.inverse}
+              color={iconColor}
               style={styles.iconLeft}
             />
           )}
@@ -106,7 +132,7 @@ export default function PrimaryButton({
             <MaterialCommunityIcons
               name={icon}
               size={sizeStyle.iconSize}
-              color={colors.text.inverse}
+              color={iconColor}
               style={styles.iconRight}
             />
           )}
@@ -120,6 +146,20 @@ export default function PrimaryButton({
       <View style={[buttonStyle, styles.disabledContainer]}>
         {content}
       </View>
+    );
+  }
+
+  if (outlined) {
+    return (
+      <TouchableOpacity
+        onPress={onPress}
+        disabled={disabled || loading}
+        activeOpacity={0.7}
+        style={buttonStyle}
+        {...props}
+      >
+        {content}
+      </TouchableOpacity>
     );
   }
 
