@@ -254,10 +254,9 @@ export default function SettingsScreen() {
         
         <View style={styles.scenarioButtons}>
           <PrimaryButton 
-            mode="contained" 
             onPress={() => handleGenerateTestData('realiste')} 
             disabled={isGenerating}
-            buttonColor="#10B981"
+            variant="success"
             style={styles.scenarioButton}
             icon={isGenerating ? "timer-sand" : "chart-bar"}
           >
@@ -265,10 +264,10 @@ export default function SettingsScreen() {
           </PrimaryButton>
           
           <PrimaryButton 
-            mode="outlined" 
             onPress={() => handleGenerateTestData('remission')} 
             disabled={isGenerating}
-            buttonColor="#10B981"
+            variant="success"
+            outlined
             style={styles.scenarioButton}
             icon="trending-up"
           >
@@ -276,10 +275,10 @@ export default function SettingsScreen() {
           </PrimaryButton>
           
           <PrimaryButton 
-            mode="outlined" 
             onPress={() => handleGenerateTestData('poussee')} 
             disabled={isGenerating}
-            buttonColor="#F59E0B"
+            variant="warning"
+            outlined
             style={styles.scenarioButton}
             icon="trending-down"
           >
@@ -287,10 +286,10 @@ export default function SettingsScreen() {
           </PrimaryButton>
           
           <PrimaryButton 
-            mode="outlined" 
             onPress={() => handleGenerateTestData('stable')} 
             disabled={isGenerating}
-            buttonColor="#6366F1"
+            variant="primary"
+            outlined
             style={styles.scenarioButton}
             icon="minus"
           >
@@ -298,9 +297,9 @@ export default function SettingsScreen() {
           </PrimaryButton>
           
           <PrimaryButton 
-            mode="outlined" 
             onPress={handleGenerateIBDiskData} 
-            buttonColor="#F39C12"
+            variant="warning"
+            outlined
             style={styles.scenarioButton}
             icon="chart-box-outline"
           >
@@ -323,9 +322,8 @@ export default function SettingsScreen() {
         
         <View style={styles.backupButtons}>
           <PrimaryButton 
-            mode="contained" 
             onPress={handleExportData} 
-            buttonColor="#059669"
+            variant="secondary"
             style={styles.backupButton}
             icon="download"
           >
@@ -333,9 +331,9 @@ export default function SettingsScreen() {
           </PrimaryButton>
           
           <PrimaryButton 
-            mode="outlined" 
             onPress={() => setShowManualImport(!showManualImport)} 
-            buttonColor="#059669"
+            variant="secondary"
+            outlined
             style={styles.backupButton}
             icon="text-box"
           >
@@ -358,21 +356,23 @@ export default function SettingsScreen() {
               textAlignVertical="top"
             />
             <View style={styles.manualImportButtons}>
-              <SecondaryButton 
+              <PrimaryButton 
+                onPress={handleManualImport}
+                variant="secondary"
+                style={styles.importButton}
+              >
+                Importer
+              </PrimaryButton>
+              <PrimaryButton 
                 onPress={() => {
                   setShowManualImport(false);
                   setImportJsonText('');
                 }}
+                variant="neutral"
+                outlined
                 style={styles.cancelButton}
               >
                 Annuler
-              </SecondaryButton>
-              <PrimaryButton 
-                onPress={handleManualImport}
-                buttonColor="#059669"
-                style={styles.importButton}
-              >
-                Importer
               </PrimaryButton>
             </View>
           </View>
@@ -391,10 +391,9 @@ export default function SettingsScreen() {
           Cette action supprimera définitivement toutes vos données : selles, bilans quotidiens et historique des scores.
         </AppText>
         <PrimaryButton 
-          mode="contained" 
           onPress={handleWipeData} 
           disabled={isWiping}
-          buttonColor="#FF6B6B"
+          variant="danger"
           style={styles.wipeButton}
           icon="delete-forever"
         >
@@ -403,9 +402,9 @@ export default function SettingsScreen() {
         
         {/* Bouton de debug temporaire */}
         <PrimaryButton 
-          mode="outlined" 
           onPress={handleManualClear}
-          buttonColor="#4A90E2"
+          variant="info"
+          outlined
           style={styles.debugButton}
           icon="broom"
         >
