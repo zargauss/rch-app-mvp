@@ -651,14 +651,14 @@ export default function HomeScreen() {
                 <SecondaryButton 
                   onPress={hideModal} 
                   style={styles.cancelButton}
-                  labelStyle={styles.buttonLabel}
+                  variant="neutral"
                 >
                   Annuler
                 </SecondaryButton>
                 <PrimaryButton 
                   onPress={handleSave} 
                   style={styles.saveButton}
-                  labelStyle={styles.buttonLabel}
+                  variant="primary"
                 >
                   OK
                 </PrimaryButton>
@@ -958,14 +958,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: designSystem.spacing[1],
   },
   cancelButton: {
-    flex: 0.4,
-    borderRadius: designSystem.borderRadius.md,
-    height: 52,
+    flex: 1,
   },
   saveButton: {
-    flex: 0.6,
-    borderRadius: designSystem.borderRadius.md,
-    height: 52,
+    flex: 1,
   },
   treatmentInput: {
     marginTop: designSystem.spacing[2],
@@ -981,10 +977,5 @@ const styles = StyleSheet.create({
   suggestionButtonLabel: {
     color: designSystem.colors.secondary[500],
     fontSize: designSystem.typography.fontSize.sm,
-  },
-  buttonLabel: {
-    fontSize: designSystem.typography.fontSize.base,
-    fontWeight: designSystem.typography.fontWeight.semiBold,
-    letterSpacing: 0,
   },
 });
