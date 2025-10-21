@@ -574,17 +574,63 @@ export default function HomeScreen() {
         </View>
 
 
-        {/* Message d'encouragement */}
-        {dailyCount > 0 && (
-          <AppCard style={styles.encouragementCard}>
-            <View style={styles.encouragementContent}>
-              <AppText style={styles.encouragementIcon}>💪</AppText>
-              <AppText variant="bodyLarge" style={styles.encouragementText}>
-                Excellent ! Vous suivez bien votre santé. Continuez comme ça !
+        {/* Actualités de l'association MICI */}
+        <AppCard style={styles.newsCard}>
+          <View style={styles.newsHeader}>
+            <MaterialCommunityIcons name="newspaper" size={24} color={designSystem.colors.primary[500]} />
+            <AppText variant="h4" style={styles.newsTitle}>
+              Actualités MICI
+            </AppText>
+          </View>
+          <AppText variant="bodyMedium" style={styles.newsDescription}>
+            Découvrez les dernières actualités de l'association des patients atteints de MICI
+          </AppText>
+          <View style={styles.newsItems}>
+            <View style={styles.newsItem}>
+              <View style={styles.newsItemHeader}>
+                <AppText variant="label" style={styles.newsDate}>15 Jan 2025</AppText>
+                <View style={styles.newsBadge}>
+                  <AppText variant="caption" style={styles.newsBadgeText}>Nouveau</AppText>
+                </View>
+              </View>
+              <AppText variant="bodyMedium" style={styles.newsItemTitle}>
+                Nouveaux traitements biologiques approuvés en 2025
+              </AppText>
+              <AppText variant="bodySmall" style={styles.newsItemExcerpt}>
+                L'ANSM vient d'approuver plusieurs nouveaux traitements biologiques pour les MICI...
               </AppText>
             </View>
-          </AppCard>
-        )}
+            
+            <View style={styles.newsItem}>
+              <View style={styles.newsItemHeader}>
+                <AppText variant="label" style={styles.newsDate}>10 Jan 2025</AppText>
+                <View style={styles.newsBadge}>
+                  <AppText variant="caption" style={styles.newsBadgeText}>Événement</AppText>
+                </View>
+              </View>
+              <AppText variant="bodyMedium" style={styles.newsItemTitle}>
+                Journée mondiale des MICI - 19 mai 2025
+              </AppText>
+              <AppText variant="bodySmall" style={styles.newsItemExcerpt}>
+                Rejoignez-nous pour sensibiliser le public aux maladies inflammatoires chroniques...
+              </AppText>
+            </View>
+          </View>
+          <PrimaryButton 
+            onPress={() => {
+              // TODO: Ouvrir le site de l'association ou une page dédiée
+              setToastMessage('Fonctionnalité à venir - Redirection vers le site de l\'association');
+              setToastType('info');
+              setToastVisible(true);
+            }}
+            variant="primary"
+            outlined
+            style={styles.newsButton}
+            icon="open-in-new"
+          >
+            Voir toutes les actualités
+          </PrimaryButton>
+        </AppCard>
       </ScrollView>
 
       {/* Bouton d'action flottant */}
@@ -869,24 +915,64 @@ const styles = StyleSheet.create({
     borderRadius: designSystem.borderRadius.base,
     paddingVertical: designSystem.spacing[1],
   },
-  encouragementCard: {
-    backgroundColor: designSystem.colors.health.excellent.light,
+  newsCard: {
+    backgroundColor: designSystem.colors.background.tertiary,
     borderWidth: 1,
-    borderColor: designSystem.colors.health.excellent.main,
+    borderColor: designSystem.colors.border.light,
     ...designSystem.shadows.base,
   },
-  encouragementContent: {
+  newsHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: designSystem.spacing[5],
+    marginBottom: designSystem.spacing[3],
   },
-  encouragementIcon: {
-    fontSize: 28,
-    marginRight: designSystem.spacing[4],
+  newsTitle: {
+    marginLeft: designSystem.spacing[3],
+    color: designSystem.colors.text.primary,
   },
-  encouragementText: {
-    flex: 1,
-    color: designSystem.colors.health.excellent.dark,
+  newsDescription: {
+    color: designSystem.colors.text.secondary,
+    marginBottom: designSystem.spacing[5],
+  },
+  newsItems: {
+    marginBottom: designSystem.spacing[5],
+  },
+  newsItem: {
+    paddingVertical: designSystem.spacing[4],
+    borderBottomWidth: 1,
+    borderBottomColor: designSystem.colors.border.light,
+  },
+  newsItemHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: designSystem.spacing[2],
+  },
+  newsDate: {
+    color: designSystem.colors.text.tertiary,
+  },
+  newsBadge: {
+    backgroundColor: designSystem.colors.primary[100],
+    paddingHorizontal: designSystem.spacing[2],
+    paddingVertical: designSystem.spacing[1],
+    borderRadius: designSystem.borderRadius.sm,
+  },
+  newsBadgeText: {
+    color: designSystem.colors.primary[700],
+    fontWeight: designSystem.typography.fontWeight.medium,
+  },
+  newsItemTitle: {
+    color: designSystem.colors.text.primary,
+    fontWeight: designSystem.typography.fontWeight.semiBold,
+    marginBottom: designSystem.spacing[1],
+  },
+  newsItemExcerpt: {
+    color: designSystem.colors.text.secondary,
+    lineHeight: designSystem.typography.fontSize.sm * 1.4,
+  },
+  newsButton: {
+    width: '100%',
+    borderRadius: designSystem.borderRadius.md,
   },
   modalContainer: {
     margin: designSystem.spacing[5],
