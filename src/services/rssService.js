@@ -79,16 +79,28 @@ export const fetchRSSFeed = async () => {
   try {
     // En mode web, utiliser fetch directement
     if (typeof window !== 'undefined') {
-      const response = await fetch(RSS_FEED_URL);
-      const xmlText = await response.text();
-      return parseRSSFeed(xmlText);
+      // Essayer de récupérer le flux RSS
+      const response = await fetch(RSS_FEED_URL, {
+        mode: 'cors',
+        headers: {
+          'Accept': 'application/rss+xml, application/xml, text/xml',
+        }
+      });
+      
+      if (response.ok) {
+        const xmlText = await response.text();
+        return parseRSSFeed(xmlText);
+      } else {
+        console.warn('Impossible de récupérer le flux RSS, utilisation des données de fallback');
+        return getMockRSSData();
+      }
     }
     
     // En mode React Native, utiliser une approche différente
     // Pour l'instant, retourner des données de test
     return getMockRSSData();
   } catch (error) {
-    console.error('Erreur lors de la récupération du RSS:', error);
+    console.warn('Erreur lors de la récupération du RSS, utilisation des données de fallback:', error.message);
     return getMockRSSData();
   }
 };

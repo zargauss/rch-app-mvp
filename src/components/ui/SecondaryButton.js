@@ -39,6 +39,11 @@ export default function SecondaryButton({
       textColor: 'secondary',
       iconColor: colors.text.secondary,
     },
+    tertiary: {
+      borderColor: colors.tertiary[500],
+      textColor: 'tertiary',
+      iconColor: colors.tertiary[500],
+    },
   };
 
   const sizeConfig = {
