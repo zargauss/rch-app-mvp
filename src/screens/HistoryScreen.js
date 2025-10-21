@@ -784,6 +784,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingBottom: 100,
+    paddingTop: designSystem.spacing[4],
   },
   header: {
     paddingHorizontal: 20,
