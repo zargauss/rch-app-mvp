@@ -1,24 +1,53 @@
 // Service pour récupérer les actualités RSS de l'AFA (Association François Aupetit)
 // https://www.afa.asso.fr/feed
 
+/**
+ * Prétraite la réponse d'un proxy pour extraire le XML brut.
+ * Gère les réponses directes et les réponses encodées en Base64 (Data URI).
+ * @param {string} responseText La réponse textuelle de la requête fetch.
+ * @returns {string} Le contenu XML brut, prêt à être parsé.
+ */
+const getRawXML = (responseText) => {
+  const base64Prefix = 'data:application/rss+xml; charset=UTF-8;base64,';
+
+  // Vérifie si la réponse commence par le préfixe Data URI
+  if (responseText.trim().startsWith(base64Prefix)) {
+    console.log("✔ Réponse de type Data URI détectée. Décodage Base64 en cours...");
+    
+    // 1. Extrait la partie encodée en Base64
+    const base64Data = responseText.trim().substring(base64Prefix.length);
+    
+    try {
+      // 2. Décode la chaîne Base64 pour obtenir le XML brut
+      const decodedXML = atob(base64Data);
+      console.log("✔ Décodage Base64 réussi.");
+      return decodedXML;
+    } catch (e) {
+      console.error("✖ Erreur lors du décodage Base64:", e);
+      throw new Error("Le décodage Base64 a échoué.");
+    }
+  } else {
+    // Si pas de préfixe, on considère que c'est déjà du XML brut
+    console.log("✔ Réponse XML brute détectée. Aucun décodage nécessaire.");
+    return responseText;
+  }
+};
+
 export const RSS_FEED_URL = 'https://www.afa.asso.fr/feed';
 
 // Fonction pour parser le XML RSS et extraire les articles
 export const parseRSSFeed = (xmlText) => {
   try {
     console.log('Parsing du flux RSS...');
-    console.log('Contenu reçu (premiers 500 caractères):', xmlText.substring(0, 500));
     
     const items = [];
     
-    // Essayer différentes méthodes de parsing
-    // Méthode 1: Recherche des balises <item>
+    // Recherche des balises <item>
     const itemRegex = /<item>([\s\S]*?)<\/item>/g;
     let match;
     
     while ((match = itemRegex.exec(xmlText)) !== null && items.length < 3) {
       const itemContent = match[1];
-      console.log('Item trouvé:', itemContent.substring(0, 200));
       
       // Extraire le titre (gérer différents formats)
       let title = '';
@@ -48,9 +77,6 @@ export const parseRSSFeed = (xmlText) => {
         description = descMatch2[1].trim();
       }
       
-      console.log(`Titre extrait: "${title}"`);
-      console.log(`Lien extrait: "${link}"`);
-      
       if (title && link) {
         items.push({
           title,
@@ -60,51 +86,6 @@ export const parseRSSFeed = (xmlText) => {
           formattedDate: formatRSSDate(pubDate)
         });
         console.log(`Article trouvé: ${title}`);
-      }
-    }
-    
-    // Si aucune balise <item> trouvée, essayer d'autres formats
-    if (items.length === 0) {
-      console.log('Aucune balise <item> trouvée, essai d\'autres formats...');
-      
-      // Méthode 2: Recherche directe de titres et liens
-      const titleRegex = /<title>(.*?)<\/title>/g;
-      const linkRegex = /<link>(.*?)<\/link>/g;
-      
-      const titles = [];
-      const links = [];
-      
-      let titleMatch;
-      while ((titleMatch = titleRegex.exec(xmlText)) !== null) {
-        const title = titleMatch[1].trim();
-        if (title && !title.toLowerCase().includes('rss') && !title.toLowerCase().includes('feed')) {
-          titles.push(title);
-        }
-      }
-      
-      let linkMatch;
-      while ((linkMatch = linkRegex.exec(xmlText)) !== null) {
-        const link = linkMatch[1].trim();
-        if (link && link.startsWith('http')) {
-          links.push(link);
-        }
-      }
-      
-      console.log(`Titres trouvés: ${titles.length}`, titles.slice(0, 3));
-      console.log(`Liens trouvés: ${links.length}`, links.slice(0, 3));
-      
-      // Combiner titres et liens
-      for (let i = 0; i < Math.min(titles.length, links.length, 3); i++) {
-        if (titles[i] && links[i]) {
-          items.push({
-            title: titles[i],
-            link: links[i],
-            pubDate: '',
-            description: '',
-            formattedDate: 'Récent'
-          });
-          console.log(`Article créé: ${titles[i]}`);
-        }
       }
     }
     
@@ -147,9 +128,10 @@ export const fetchRSSFeed = async () => {
     if (typeof window !== 'undefined') {
       console.log('Tentative de récupération du flux RSS AFA...');
       
-      // Liste de proxies CORS à essayer
+      // Liste de proxies CORS à essayer (avec endpoint /raw en priorité)
       const proxies = [
-        'https://api.allorigins.win/get?url=',
+        'https://api.allorigins.win/raw?url=', // Endpoint /raw pour éviter l'encodage Base64
+        'https://api.allorigins.win/get?url=', // Fallback vers /get
         'https://corsproxy.io/?',
         'https://api.codetabs.com/v1/proxy?quest=',
         'https://thingproxy.freeboard.io/fetch/'
@@ -169,19 +151,23 @@ export const fetchRSSFeed = async () => {
           });
           
           if (response.ok) {
-            let data;
-            if (proxies[i].includes('allorigins')) {
-              // Format allorigins
-              data = await response.json();
-              if (data.contents) {
-                console.log('✅ Flux RSS récupéré avec succès via allorigins');
-                return parseRSSFeed(data.contents);
-              }
+            const responseText = await response.text();
+            
+            // Étape cruciale : prétraiter la réponse pour décoder Base64 si nécessaire
+            const rawXML = getRawXML(responseText);
+            
+            // Log pour vérifier le XML décodé
+            console.log("Contenu XML après traitement:", rawXML.substring(0, 500));
+            
+            // Passez maintenant le XML propre à la fonction de parsing
+            const articles = parseRSSFeed(rawXML);
+            
+            if (articles.length > 0) {
+              console.log(`✅ ${articles.length} articles récupérés avec succès via proxy ${i + 1}`);
+              return articles;
             } else {
-              // Format direct
-              const xmlText = await response.text();
-              console.log('✅ Flux RSS récupéré avec succès via proxy direct');
-              return parseRSSFeed(xmlText);
+              console.warn(`⚠️ Proxy ${i + 1} a réussi mais aucun article trouvé, essai du proxy suivant...`);
+              continue;
             }
           }
         } catch (proxyError) {
