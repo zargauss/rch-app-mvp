@@ -649,6 +649,14 @@ export default function HomeScreen() {
 
               <View style={styles.modalActions}>
                 <PrimaryButton 
+                  onPress={handleSave} 
+                  style={styles.saveButton}
+                  variant="primary"
+                  size="medium"
+                >
+                  Enregistrer
+                </PrimaryButton>
+                <PrimaryButton 
                   onPress={hideModal} 
                   style={styles.cancelButton}
                   variant="neutral"
@@ -656,14 +664,6 @@ export default function HomeScreen() {
                   outlined
                 >
                   Annuler
-                </PrimaryButton>
-                <PrimaryButton 
-                  onPress={handleSave} 
-                  style={styles.saveButton}
-                  variant="primary"
-                  size="medium"
-                >
-                  OK
                 </PrimaryButton>
               </View>
             </ScrollView>
@@ -731,6 +731,14 @@ export default function HomeScreen() {
 
               <View style={styles.modalActions}>
                 <PrimaryButton
+                  onPress={saveTreatment}
+                  style={styles.saveButton}
+                  variant="primary"
+                  size="medium"
+                >
+                  Enregistrer
+                </PrimaryButton>
+                <PrimaryButton
                   onPress={hideTreatmentModal}
                   style={styles.cancelButton}
                   variant="neutral"
@@ -738,14 +746,6 @@ export default function HomeScreen() {
                   outlined
                 >
                   Annuler
-                </PrimaryButton>
-                <PrimaryButton
-                  onPress={saveTreatment}
-                  style={styles.saveButton}
-                  variant="primary"
-                  size="medium"
-                >
-                  OK
                 </PrimaryButton>
               </View>
             </ScrollView>
@@ -956,19 +956,16 @@ const styles = StyleSheet.create({
     borderRadius: designSystem.borderRadius.md,
   },
   modalActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: 'column',
     gap: designSystem.spacing[3],
     marginTop: designSystem.spacing[6],
     marginBottom: designSystem.spacing[4],
   },
   cancelButton: {
-    flex: 1,
-    minWidth: 0,
+    width: '100%',
   },
   saveButton: {
-    flex: 1,
-    minWidth: 0,
+    width: '100%',
   },
   treatmentInput: {
     marginTop: designSystem.spacing[2],
