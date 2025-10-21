@@ -1037,7 +1037,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   newsErrorText: {
-    color: designSystem.colors.status.danger,
+    color: designSystem.colors.health.danger.main,
   },
   articleButton: {
     marginTop: designSystem.spacing[3],
