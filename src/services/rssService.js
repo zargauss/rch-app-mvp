@@ -4,8 +4,6 @@
 export const RSS_FEED_URL = 'https://www.afa.asso.fr/feed';
 
 // Fonction pour parser le XML RSS et extraire les articles
-// Fonction de parsing RSS (non utilisée en mode web pour éviter les erreurs CORS)
-/*
 export const parseRSSFeed = (xmlText) => {
   try {
     // Parser simple pour extraire les articles du RSS
@@ -51,7 +49,6 @@ export const parseRSSFeed = (xmlText) => {
     return [];
   }
 };
-*/
 
 // Fonction pour formater la date RSS
 const formatRSSDate = (dateStr) => {
@@ -80,10 +77,32 @@ const formatRSSDate = (dateStr) => {
 // Fonction pour récupérer le flux RSS
 export const fetchRSSFeed = async () => {
   try {
-    // En mode web, utiliser directement les données de fallback pour éviter les erreurs CORS
+    // En mode web, utiliser un proxy CORS ou une approche alternative
     if (typeof window !== 'undefined') {
-      console.log('Mode web détecté - utilisation des données de fallback pour éviter les erreurs CORS');
-      return getMockRSSData();
+      // Option 1: Utiliser un proxy CORS public
+      const proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(RSS_FEED_URL);
+      
+      try {
+        const response = await fetch(proxyUrl);
+        const data = await response.json();
+        
+        if (data.contents) {
+          return parseRSSFeed(data.contents);
+        }
+      } catch (proxyError) {
+        console.warn('Proxy CORS échoué, tentative avec un autre proxy:', proxyError.message);
+        
+        // Option 2: Essayer avec un autre proxy
+        const proxyUrl2 = 'https://cors-anywhere.herokuapp.com/' + RSS_FEED_URL;
+        try {
+          const response2 = await fetch(proxyUrl2);
+          const xmlText = await response2.text();
+          return parseRSSFeed(xmlText);
+        } catch (proxyError2) {
+          console.warn('Tous les proxies ont échoué, utilisation des données de fallback');
+          return getMockRSSData();
+        }
+      }
     }
     
     // En mode React Native, utiliser une approche différente
