@@ -652,6 +652,7 @@ export default function HomeScreen() {
                   onPress={hideModal} 
                   style={styles.cancelButton}
                   variant="neutral"
+                  size="medium"
                 >
                   Annuler
                 </SecondaryButton>
@@ -659,6 +660,7 @@ export default function HomeScreen() {
                   onPress={handleSave} 
                   style={styles.saveButton}
                   variant="primary"
+                  size="medium"
                 >
                   OK
                 </PrimaryButton>
@@ -731,6 +733,7 @@ export default function HomeScreen() {
                   onPress={hideTreatmentModal}
                   style={styles.cancelButton}
                   variant="neutral"
+                  size="medium"
                 >
                   Annuler
                 </SecondaryButton>
@@ -738,6 +741,7 @@ export default function HomeScreen() {
                   onPress={saveTreatment}
                   style={styles.saveButton}
                   variant="primary"
+                  size="medium"
                 >
                   OK
                 </PrimaryButton>
@@ -955,13 +959,14 @@ const styles = StyleSheet.create({
     gap: designSystem.spacing[3],
     marginTop: designSystem.spacing[6],
     marginBottom: designSystem.spacing[4],
-    paddingHorizontal: designSystem.spacing[1],
   },
   cancelButton: {
     flex: 1,
+    minWidth: 0,
   },
   saveButton: {
     flex: 1,
+    minWidth: 0,
   },
   treatmentInput: {
     marginTop: designSystem.spacing[2],
