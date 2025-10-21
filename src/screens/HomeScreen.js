@@ -727,22 +727,17 @@ export default function HomeScreen() {
               </Card.Content>
 
               <View style={styles.modalActions}>
-                <Button
-                  mode="text"
+                <SecondaryButton
                   onPress={hideTreatmentModal}
-                  textColor="#64748B"
                   style={styles.cancelButton}
-                  labelStyle={{ fontSize: 16, fontWeight: '600' }}
+                  variant="neutral"
                 >
                   Annuler
-                </Button>
+                </SecondaryButton>
                 <PrimaryButton
-                  mode="contained"
                   onPress={saveTreatment}
-                  buttonColor="#9B59B6"
                   style={styles.saveButton}
-                  labelStyle={{ fontSize: 16, fontWeight: '700' }}
-                  contentStyle={{ height: 48 }}
+                  variant="primary"
                 >
                   OK
                 </PrimaryButton>
@@ -963,12 +958,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: designSystem.spacing[1],
   },
   cancelButton: {
-    flex: 1,
+    flex: 0.4,
     borderRadius: designSystem.borderRadius.md,
     height: 52,
   },
   saveButton: {
-    flex: 1,
+    flex: 0.6,
     borderRadius: designSystem.borderRadius.md,
     height: 52,
   },
