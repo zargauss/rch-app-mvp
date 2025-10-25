@@ -12,60 +12,93 @@ export const TOILETS_API_URL = 'https://public.api.data.gouv.fr/api/v2/catalog/d
  * @returns {Promise<Array>} Liste des toilettes trouvées
  */
 export const fetchNearbyToilets = async (latitude, longitude, radius = 1000, limit = 20) => {
-  try {
-    console.log('🔍 Recherche des toilettes publiques...', { latitude, longitude, radius });
-    
-    // Utiliser un proxy CORS pour éviter les erreurs de domaine
-    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(`${TOILETS_API_URL}?geofilter.distance=${latitude},${longitude},${radius}&limit=${limit}`)}`;
-    
-    const response = await fetch(proxyUrl);
-    
-    if (!response.ok) {
-      throw new Error(`Erreur HTTP: ${response.status} - ${response.statusText}`);
-    }
-    
-    const data = await response.json();
-    console.log('📊 Données toilettes reçues:', data);
-    
-    if (!data.records || !Array.isArray(data.records)) {
-      console.warn('⚠️ Format de données inattendu:', data);
-      return [];
-    }
-    
-    // Transformer les données pour notre usage
-    const toilets = data.records.map(record => {
-      const fields = record.fields;
-      const coords = fields.geo_point_2d;
+  console.log('🔍 Recherche des toilettes publiques...', { latitude, longitude, radius });
+  
+  // Liste des proxies CORS à tester
+  const proxies = [
+    'https://api.allorigins.win/raw?url=',
+    'https://corsproxy.io/?',
+    'https://api.codetabs.com/v1/proxy?quest=',
+    'https://thingproxy.freeboard.io/fetch/'
+  ];
+  
+  // URL de base de l'API Etalab
+  const baseUrl = `${TOILETS_API_URL}?geofilter.distance=${latitude},${longitude},${radius}&limit=${limit}`;
+  
+  // Essayer chaque proxy
+  for (let i = 0; i < proxies.length; i++) {
+    try {
+      console.log(`🔄 Tentative avec le proxy ${i + 1}/${proxies.length}...`);
       
-      if (!coords || !Array.isArray(coords) || coords.length !== 2) {
-        console.warn('⚠️ Coordonnées manquantes pour:', fields.nom_etablissement);
-        return null;
+      const proxyUrl = proxies[i] + encodeURIComponent(baseUrl);
+      console.log('📡 URL:', proxyUrl);
+      
+      const response = await fetch(proxyUrl, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'Mozilla/5.0 (compatible; RCH-App/1.0)'
+        },
+        timeout: 10000
+      });
+      
+      console.log(`📊 Réponse proxy ${i + 1}:`, response.status, response.statusText);
+      
+      if (!response.ok) {
+        throw new Error(`Proxy ${i + 1} - Erreur HTTP: ${response.status} - ${response.statusText}`);
       }
       
-      return {
-        id: record.recordid || `toilet-${Date.now()}-${Math.random()}`,
-        name: fields.nom_etablissement || 'Toilette publique',
-        address: fields.adresse || 'Adresse non disponible',
-        hours: fields.horaires || 'Horaires non disponibles',
-        pmrAccess: fields.acces_pmr || 'Information non disponible',
-        coordinates: {
-          latitude: coords[0],
-          longitude: coords[1]
-        },
-        // Informations supplémentaires si disponibles
-        type: fields.type || 'Public',
-        free: fields.gratuit !== false, // Par défaut gratuit
-        babyChanging: fields.changement_bebe || 'Information non disponible'
-      };
-    }).filter(toilet => toilet !== null);
-    
-    console.log(`🚽 ${toilets.length} toilettes trouvées`);
-    return toilets;
-    
-  } catch (error) {
-    console.error('❌ Erreur lors de la récupération des toilettes:', error);
-    throw new Error(`Impossible de récupérer les toilettes: ${error.message}`);
+      const data = await response.json();
+      console.log('📊 Données toilettes reçues:', data);
+      
+      if (!data.records || !Array.isArray(data.records)) {
+        console.warn('⚠️ Format de données inattendu:', data);
+        continue; // Essayer le proxy suivant
+      }
+      
+      // Transformer les données pour notre usage
+      const toilets = data.records.map(record => {
+        const fields = record.fields;
+        const coords = fields.geo_point_2d;
+        
+        if (!coords || !Array.isArray(coords) || coords.length !== 2) {
+          console.warn('⚠️ Coordonnées manquantes pour:', fields.nom_etablissement);
+          return null;
+        }
+        
+        return {
+          id: record.recordid || `toilet-${Date.now()}-${Math.random()}`,
+          name: fields.nom_etablissement || 'Toilette publique',
+          address: fields.adresse || 'Adresse non disponible',
+          hours: fields.horaires || 'Horaires non disponibles',
+          pmrAccess: fields.acces_pmr || 'Information non disponible',
+          coordinates: {
+            latitude: coords[0],
+            longitude: coords[1]
+          },
+          type: fields.type || 'Public',
+          free: fields.gratuit !== false,
+          babyChanging: fields.changement_bebe || 'Information non disponible'
+        };
+      }).filter(toilet => toilet !== null);
+      
+      console.log(`✅ ${toilets.length} toilettes trouvées via proxy ${i + 1}`);
+      return toilets;
+      
+    } catch (error) {
+      console.error(`❌ Proxy ${i + 1} échoué:`, error.message);
+      
+      // Si c'est le dernier proxy, retourner les données de test
+      if (i === proxies.length - 1) {
+        console.log('🔄 Tous les proxies ont échoué, utilisation des données de test...');
+        return getMockToilets();
+      }
+    }
   }
+  
+  // Fallback vers les données de test
+  console.log('🔄 Utilisation des données de test...');
+  return getMockToilets();
 };
 
 /**

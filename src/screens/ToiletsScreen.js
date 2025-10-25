@@ -13,12 +13,11 @@ import { Text, Card, Portal, Modal, Button, ActivityIndicator } from 'react-nati
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import * as Location from 'expo-location';
 
-// Suppression temporaire de MapComponent pour éviter les erreurs WebView
-
 import AppCard from '../components/ui/AppCard';
 import AppText from '../components/ui/AppText';
 import PrimaryButton from '../components/ui/PrimaryButton';
 import Toast from '../components/ui/Toast';
+import SimpleMapComponent from '../components/SimpleMapComponent';
 import designSystem from '../theme/designSystem';
 
 import {
@@ -236,29 +235,37 @@ export default function ToiletsScreen() {
         </AppCard>
       </View>
 
-      {/* Carte temporairement désactivée - Affichage des toilettes en liste */}
+      {/* Carte interactive */}
       <View style={styles.mapContainer}>
-        <AppCard style={styles.mapPlaceholder}>
-          <View style={styles.mapPlaceholderContent}>
-            <MaterialCommunityIcons 
-              name="map" 
-              size={48} 
-              color={designSystem.colors.text.secondary} 
-            />
-            <AppText variant="h6" style={styles.mapPlaceholderTitle}>
-              Carte des toilettes
-            </AppText>
-            <AppText variant="bodyMedium" style={styles.mapPlaceholderText}>
-              {userLocation 
-                ? `Position détectée: ${userLocation.latitude.toFixed(4)}, ${userLocation.longitude.toFixed(4)}`
-                : 'Position non disponible'
-              }
-            </AppText>
-            <AppText variant="bodySmall" style={styles.mapPlaceholderSubtext}>
-              Les toilettes sont affichées dans la liste ci-dessous
-            </AppText>
-          </View>
-        </AppCard>
+        {userLocation && toilets.length > 0 ? (
+          <SimpleMapComponent
+            userLocation={userLocation}
+            toilets={toilets}
+            onToiletSelect={handleToiletSelect}
+          />
+        ) : (
+          <AppCard style={styles.mapPlaceholder}>
+            <View style={styles.mapPlaceholderContent}>
+              <MaterialCommunityIcons 
+                name="map" 
+                size={48} 
+                color={designSystem.colors.text.secondary} 
+              />
+              <AppText variant="h6" style={styles.mapPlaceholderTitle}>
+                Carte des toilettes
+              </AppText>
+              <AppText variant="bodyMedium" style={styles.mapPlaceholderText}>
+                {userLocation 
+                  ? `Position détectée: ${userLocation.latitude.toFixed(4)}, ${userLocation.longitude.toFixed(4)}`
+                  : 'Position non disponible'
+                }
+              </AppText>
+              <AppText variant="bodySmall" style={styles.mapPlaceholderSubtext}>
+                {toiletsLoading ? 'Chargement des toilettes...' : 'Les toilettes seront affichées sur la carte'}
+              </AppText>
+            </View>
+          </AppCard>
+        )}
       </View>
 
       {/* Liste des toilettes */}
