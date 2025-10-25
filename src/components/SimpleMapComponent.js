@@ -51,6 +51,8 @@ const SimpleMapComponent = ({
       window.mapInstance.remove();
     }
 
+    console.log('🗺️ Création de la carte Leaflet avec:', { userLocation, toiletsCount: toilets.length });
+
     // Créer la carte
     const map = window.L.map(mapRef.current).setView(
       [userLocation.latitude, userLocation.longitude], 
@@ -74,8 +76,12 @@ const SimpleMapComponent = ({
       .addTo(map)
       .bindPopup('Votre position');
 
+    console.log('✅ Marqueur utilisateur ajouté');
+
     // Marqueurs toilettes
     toilets.forEach((toilet, index) => {
+      console.log(`🚽 Ajout marqueur toilette ${index + 1}:`, toilet.name, toilet.latitude, toilet.longitude);
+      
       const toiletIcon = window.L.divIcon({
         className: 'toilet-marker',
         html: `<div style="background: #FF3B30; width: 16px; height: 16px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>`,
@@ -91,7 +97,8 @@ const SimpleMapComponent = ({
         <div style="padding: 10px; min-width: 200px;">
           <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #333;">${toilet.name}</h3>
           <p style="margin: 0 0 8px 0; font-size: 14px; color: #666;">${toilet.address}</p>
-          <p style="margin: 0 0 12px 0; font-size: 12px; color: #888;">${toilet.openingHours}</p>
+          <p style="margin: 0 0 8px 0; font-size: 12px; color: #888;">🕒 ${toilet.openingHours}</p>
+          <p style="margin: 0 0 12px 0; font-size: 12px; color: #888;">♿ ${toilet.pmrAccess}</p>
           <button 
             onclick="navigateToToilet(${index})"
             style="
@@ -114,6 +121,7 @@ const SimpleMapComponent = ({
 
       // Gérer le clic sur le marqueur
       marker.on('click', () => {
+        console.log('🚽 Toilette sélectionnée:', toilet.name);
         if (onToiletSelect) {
           onToiletSelect(toilet);
         }
@@ -123,12 +131,14 @@ const SimpleMapComponent = ({
     // Fonction globale pour la navigation
     window.navigateToToilet = (toiletIndex) => {
       const toilet = toilets[toiletIndex];
+      console.log('🧭 Navigation vers toilette:', toilet.name);
       if (onNavigate) {
         onNavigate(toilet);
       }
     };
 
     window.mapInstance = map;
+    console.log('✅ Carte Leaflet créée avec succès');
   };
 
   useEffect(() => {
@@ -204,7 +214,11 @@ const SimpleMapComponent = ({
 
           // Marqueurs toilettes
           const toilets = ${JSON.stringify(toilets)};
+          console.log('🚽 Toilettes à afficher:', toilets.length);
+          
           toilets.forEach((toilet, index) => {
+            console.log('🚽 Ajout marqueur toilette:', toilet.name, toilet.latitude, toilet.longitude);
+            
             const toiletIcon = L.divIcon({
               className: 'toilet-marker',
               html: '<div style="background: #FF3B30; width: 16px; height: 16px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>',
@@ -219,7 +233,8 @@ const SimpleMapComponent = ({
               <div style="padding: 10px; min-width: 200px;">
                 <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #333;">\${toilet.name}</h3>
                 <p style="margin: 0 0 8px 0; font-size: 14px; color: #666;">\${toilet.address}</p>
-                <p style="margin: 0 0 12px 0; font-size: 12px; color: #888;">\${toilet.openingHours}</p>
+                <p style="margin: 0 0 8px 0; font-size: 12px; color: #888;">🕒 \${toilet.openingHours}</p>
+                <p style="margin: 0 0 12px 0; font-size: 12px; color: #888;">♿ \${toilet.pmrAccess}</p>
                 <button 
                   onclick="navigateToToilet(\${index})"
                   style="background: #007AFF; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-size: 14px; cursor: pointer; width: 100%;"
@@ -232,6 +247,7 @@ const SimpleMapComponent = ({
             marker.bindPopup(popupContent);
 
             marker.on('click', () => {
+              console.log('🚽 Toilette sélectionnée:', toilet.name);
               window.ReactNativeWebView.postMessage(JSON.stringify({
                 type: 'toiletSelect',
                 toilet: toilet

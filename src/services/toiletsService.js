@@ -51,12 +51,10 @@ export const fetchNearbyToilets = async (latitude, longitude, radius = 1000, lim
         id: `realistic-toilet-${i}`,
         name: toiletType.name,
         address: `${streetNumber} ${streetName}, ${getCityFromCoordinates(toiletLat, toiletLon)}`,
-        hours: toiletType.hours,
+        openingHours: toiletType.hours,
         pmrAccess: toiletType.pmrAccess,
-        coordinates: {
-          latitude: toiletLat,
-          longitude: toiletLon
-        },
+        latitude: toiletLat,
+        longitude: toiletLon,
         type: toiletType.type,
         free: true,
         babyChanging: toiletType.babyChanging,
