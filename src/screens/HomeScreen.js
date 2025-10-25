@@ -580,6 +580,16 @@ export default function HomeScreen() {
               >
                 {ibdiskAvailable ? 'Votre quotidien' : `Disponible dans ${ibdiskDaysRemaining} jour${ibdiskDaysRemaining > 1 ? 's' : ''}`}
               </PrimaryButton>
+              
+              <PrimaryButton
+                mode="contained"
+                onPress={() => navigation.navigate('Toilettes')}
+                style={styles.mainSecondaryAction}
+                icon="toilet"
+                buttonColor="#E67E22"
+              >
+                Toilettes proches
+              </PrimaryButton>
             </View>
           </AppCard>
         </View>

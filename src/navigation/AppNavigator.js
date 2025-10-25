@@ -10,6 +10,7 @@ import HistoryScreen from '../screens/HistoryScreen';
 import StatsScreen from '../screens/StatsScreen';
 import ExportScreen from '../screens/ExportScreen';
 import SettingsScreen from '../screens/SettingsScreen';
+import ToiletsScreen from '../screens/ToiletsScreen';
 import DailySurveyScreen from '../screens/DailySurveyScreen';
 import IBDiskQuestionnaireScreen from '../screens/IBDiskQuestionnaireScreen';
 import designSystem from '../theme/designSystem';
@@ -55,6 +56,7 @@ function MainTabs() {
         tabBarIcon: ({ color, focused }) => {
           let iconName = 'home';
           if (route.name === 'Accueil') iconName = 'home';
+          if (route.name === 'Toilettes') iconName = 'toilet';
           if (route.name === 'Historique') iconName = 'clock-outline';
           if (route.name === 'Statistiques') iconName = 'chart-line';
           if (route.name === 'Export') iconName = 'file-pdf-box';
@@ -64,6 +66,7 @@ function MainTabs() {
       })}
     >
       <Tab.Screen name="Accueil" component={HomeScreen} />
+      <Tab.Screen name="Toilettes" component={ToiletsScreen} />
       <Tab.Screen name="Historique" component={HistoryScreen} />
       <Tab.Screen name="Statistiques" component={StatsScreen} />
       <Tab.Screen name="Export" component={ExportScreen} />
