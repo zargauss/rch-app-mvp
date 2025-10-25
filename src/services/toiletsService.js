@@ -12,53 +12,17 @@ export const TOILETS_API_URL = 'https://public.api.data.gouv.fr/api/v2/catalog/d
  * @returns {Promise<Array>} Liste des toilettes trouvées
  */
 export const fetchNearbyToilets = async (latitude, longitude, radius = 1000, limit = 25) => {
-  console.log('🔍 Recherche des toilettes publiques via API Etalab...', { latitude, longitude, radius });
+  console.log('🔍 Recherche des toilettes publiques via API Overpass...', { latitude, longitude, radius });
   
   try {
-    // Essayer d'abord l'API Etalab directement
-    const directUrl = `${TOILETS_API_URL}?geofilter.distance=${latitude},${longitude},${radius}&limit=${limit}`;
-    console.log('🌐 Tentative API directe:', directUrl);
-    
-    const directResponse = await fetch(directUrl);
-    if (directResponse.ok) {
-      const data = await directResponse.json();
-      console.log('✅ API directe réussie:', data);
-      return parseEtalabResponse(data);
-    }
-    
-    console.log('⚠️ API directe échouée, essai avec proxies CORS...');
-    
-    // Essayer avec différents proxies CORS
-    const proxies = [
-      `https://api.allorigins.win/raw?url=${encodeURIComponent(directUrl)}`,
-      `https://corsproxy.io/?${encodeURIComponent(directUrl)}`,
-      `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(directUrl)}`,
-      `https://thingproxy.freeboard.io/fetch/${encodeURIComponent(directUrl)}`
-    ];
-    
-    for (const proxyUrl of proxies) {
-      try {
-        console.log('🔄 Essai proxy:', proxyUrl);
-        const response = await fetch(proxyUrl);
-        
-        if (response.ok) {
-          const data = await response.json();
-          console.log('✅ Proxy réussi:', data);
-          return parseEtalabResponse(data);
-        }
-      } catch (proxyError) {
-        console.log('❌ Proxy échoué:', proxyError.message);
-        continue;
-      }
-    }
-    
-    // Si tous les proxies échouent, essayer une API alternative
-    console.log('🔄 Tentative avec API alternative...');
-    return await fetchAlternativeAPI(latitude, longitude, radius, limit);
+    // Utiliser directement l'API Overpass d'OpenStreetMap (plus fiable)
+    console.log('🔄 Tentative avec API Overpass OpenStreetMap...');
+    return await fetchOverpassAPI(latitude, longitude, radius, limit);
     
   } catch (error) {
     console.error('❌ Erreur lors de la récupération des toilettes:', error);
-    throw error;
+    console.log('🔄 Utilisation des données de test en fallback...');
+    return getMockToilets();
   }
 };
 
@@ -90,9 +54,9 @@ const parseEtalabResponse = (data) => {
   return toilets;
 };
 
-// API alternative si Etalab ne fonctionne pas
-const fetchAlternativeAPI = async (latitude, longitude, radius, limit) => {
-  console.log('🔄 Tentative avec API alternative OpenStreetMap...');
+// Fonction principale pour récupérer les toilettes via Overpass
+const fetchOverpassAPI = async (latitude, longitude, radius, limit) => {
+  console.log('🔄 Tentative avec API Overpass OpenStreetMap...');
   
   // Utiliser l'API Overpass d'OpenStreetMap pour les toilettes
   const overpassQuery = `
@@ -106,52 +70,86 @@ const fetchAlternativeAPI = async (latitude, longitude, radius, limit) => {
   `;
   
   const overpassUrl = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(overpassQuery)}`;
+  console.log('🌐 URL Overpass:', overpassUrl);
   
   try {
     const response = await fetch(overpassUrl);
+    console.log('📡 Réponse Overpass:', response.status, response.statusText);
+    
     if (response.ok) {
       const data = await response.json();
+      console.log('📊 Données reçues:', data);
       return parseOverpassResponse(data, latitude, longitude);
+    } else {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
   } catch (error) {
     console.log('❌ API Overpass échouée:', error.message);
+    throw error;
   }
-  
-  // En dernier recours, utiliser des données de test réalistes
-  console.log('🔄 Utilisation de données de test réalistes...');
-  return getMockToilets();
 };
 
 // Parser la réponse Overpass
 const parseOverpassResponse = (data, userLat, userLon) => {
+  console.log('🔍 Parsing des données Overpass:', data);
+  
   if (!data.elements || !Array.isArray(data.elements)) {
-    throw new Error('Format de réponse Overpass invalide');
+    console.log('⚠️ Aucun élément trouvé dans la réponse Overpass');
+    return [];
   }
   
   const toilets = data.elements.map((element, index) => {
     const lat = element.lat || element.center?.lat;
     const lon = element.lon || element.center?.lon;
     
-    if (!lat || !lon) return null;
+    if (!lat || !lon) {
+      console.log(`⚠️ Élément ${index} sans coordonnées:`, element);
+      return null;
+    }
     
-    return {
+    const tags = element.tags || {};
+    
+    const toilet = {
       id: element.id || `osm-toilet-${index}`,
-      name: element.tags?.name || 'Toilettes publiques',
-      address: element.tags?.['addr:street'] ? 
-        `${element.tags['addr:housenumber'] || ''} ${element.tags['addr:street']}`.trim() : 
-        'Adresse non disponible',
-      openingHours: element.tags?.opening_hours || 'Horaires non disponibles',
-      pmrAccess: element.tags?.wheelchair === 'yes' ? 'Accessible PMR' : 'Information non disponible',
+      name: tags.name || tags.brand || 'Toilettes publiques',
+      address: buildAddress(tags),
+      openingHours: tags.opening_hours || 'Horaires non disponibles',
+      pmrAccess: tags.wheelchair === 'yes' ? 'Accessible PMR' : 
+                 tags.wheelchair === 'no' ? 'Non accessible PMR' : 'Information non disponible',
       latitude: lat,
       longitude: lon,
-      type: 'Public',
-      free: element.tags?.fee !== 'yes',
-      babyChanging: element.tags?.changing_table === 'yes' ? 'Table à langer disponible' : 'Non disponible'
+      type: tags.operator || 'Public',
+      free: tags.fee !== 'yes',
+      babyChanging: tags.changing_table === 'yes' ? 'Table à langer disponible' : 
+                    tags.changing_table === 'no' ? 'Non disponible' : 'Information non disponible'
     };
+    
+    console.log(`✅ Toilette ${index + 1} parsée:`, toilet.name, `${lat}, ${lon}`);
+    return toilet;
   }).filter(toilet => toilet !== null).slice(0, 25);
   
   console.log(`✅ ${toilets.length} toilettes parsées depuis Overpass`);
   return toilets;
+};
+
+// Construire une adresse à partir des tags OSM
+const buildAddress = (tags) => {
+  const parts = [];
+  
+  if (tags['addr:housenumber']) parts.push(tags['addr:housenumber']);
+  if (tags['addr:street']) parts.push(tags['addr:street']);
+  if (tags['addr:city']) parts.push(tags['addr:city']);
+  if (tags['addr:postcode']) parts.push(tags['addr:postcode']);
+  
+  if (parts.length > 0) {
+    return parts.join(' ');
+  }
+  
+  // Fallback avec d'autres tags
+  if (tags['addr:full']) return tags['addr:full'];
+  if (tags.address) return tags.address;
+  
+  return 'Adresse non disponible';
 };
 
 /**
