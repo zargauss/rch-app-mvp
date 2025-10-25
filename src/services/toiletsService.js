@@ -28,17 +28,22 @@ export const fetchNearbyToilets = async (latitude, longitude, radius = 1000, lim
       { name: 'Toilettes de centre commercial', type: 'Commercial', hours: '9h-21h', pmrAccess: 'Accessible PMR', babyChanging: 'Table à langer disponible' }
     ];
     
-    // Générer des positions autour de l'utilisateur
+    // Générer des positions autour de l'utilisateur de manière plus réaliste
     for (let i = 0; i < count; i++) {
-      const angle = (i / count) * 2 * Math.PI;
-      const distance = 100 + (i * 150); // Distance croissante
+      // Utiliser des angles aléatoires pour éviter les formes parfaites
+      const angle = Math.random() * 2 * Math.PI;
+      // Distance aléatoire entre 50m et 800m
+      const distance = 50 + Math.random() * 750;
+      
+      // Ajouter de la variation aléatoire pour plus de réalisme
+      const randomVariation = (Math.random() - 0.5) * 0.001; // ±0.0005 degrés
       
       // Conversion en coordonnées (approximation simple)
       const latOffset = (distance * Math.cos(angle)) / 111000; // 1 degré ≈ 111km
       const lonOffset = (distance * Math.sin(angle)) / (111000 * Math.cos(userLat * Math.PI / 180));
       
-      const toiletLat = userLat + latOffset;
-      const toiletLon = userLon + lonOffset;
+      const toiletLat = userLat + latOffset + randomVariation;
+      const toiletLon = userLon + lonOffset + randomVariation;
       
       const toiletType = toiletTypes[i % toiletTypes.length];
       

@@ -9,7 +9,7 @@ import {
   Platform,
   Dimensions
 } from 'react-native';
-import { Text, Card, Portal, Modal, Button, ActivityIndicator } from 'react-native-paper';
+import { Text, Card, ActivityIndicator } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import * as Location from 'expo-location';
 
@@ -42,7 +42,6 @@ export default function ToiletsScreen() {
   const [toiletsError, setToiletsError] = useState(null);
   
   // États pour l'interface
-  const [selectedToilet, setSelectedToilet] = useState(null);
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState('success');
@@ -109,7 +108,7 @@ export default function ToiletsScreen() {
         coords.latitude,
         coords.longitude,
         1000, // 1 km de rayon
-        20    // Maximum 20 résultats
+        25    // Maximum 25 résultats
       );
 
       // Trier par distance
@@ -182,9 +181,18 @@ export default function ToiletsScreen() {
     requestLocationPermission();
   }, []);
 
-  // Gérer la sélection d'une toilette depuis la carte
+  // Gérer la sélection d'une toilette depuis la carte (plus de modal)
   const handleToiletSelect = (toilet) => {
-    setSelectedToilet(toilet);
+    // Ne plus afficher de modal, la popup de la carte suffit
+    console.log('🚽 Toilette sélectionnée depuis la carte:', toilet.name);
+  };
+
+  // Gérer le mouvement de la carte pour recharger les toilettes
+  const handleMapMove = async (lat, lng, zoom) => {
+    console.log('🗺️ Mouvement de carte détecté:', { lat, lng, zoom });
+    
+    // Recharger les toilettes pour la nouvelle position (max 25 résultats)
+    await loadNearbyToilets({ latitude: lat, longitude: lng });
   };
 
   return (
@@ -243,6 +251,7 @@ export default function ToiletsScreen() {
             toilets={toilets}
             onToiletSelect={handleToiletSelect}
             onNavigate={openNavigation}
+            onMapMove={handleMapMove}
           />
         ) : (
           <AppCard style={styles.mapPlaceholder}>
@@ -371,92 +380,6 @@ export default function ToiletsScreen() {
         )}
       </ScrollView>
 
-      {/* Modal de détails d'une toilette */}
-      <Portal>
-        <Modal
-          visible={selectedToilet !== null}
-          onDismiss={() => setSelectedToilet(null)}
-          contentContainerStyle={styles.modalContainer}
-        >
-          {selectedToilet && (
-            <AppCard style={styles.modalCard}>
-              <View style={styles.modalHeader}>
-                <AppText variant="h5" style={styles.modalTitle}>
-                  {selectedToilet.name}
-                </AppText>
-                <TouchableOpacity
-                  onPress={() => setSelectedToilet(null)}
-                  style={styles.closeButton}
-                >
-                  <MaterialCommunityIcons 
-                    name="close" 
-                    size={24} 
-                    color={designSystem.colors.text.secondary} 
-                  />
-                </TouchableOpacity>
-              </View>
-              
-              <View style={styles.modalContent}>
-                <View style={styles.modalDetail}>
-                  <MaterialCommunityIcons 
-                    name="map-marker" 
-                    size={20} 
-                    color={designSystem.colors.primary[500]} 
-                  />
-                  <AppText variant="bodyMedium" style={styles.modalDetailText}>
-                    {selectedToilet.address}
-                  </AppText>
-                </View>
-                
-                <View style={styles.modalDetail}>
-                  <MaterialCommunityIcons 
-                    name="clock-outline" 
-                    size={20} 
-                    color={designSystem.colors.primary[500]} 
-                  />
-                  <AppText variant="bodyMedium" style={styles.modalDetailText}>
-                    {selectedToilet.openingHours}
-                  </AppText>
-                </View>
-                
-                <View style={styles.modalDetail}>
-                  <MaterialCommunityIcons 
-                    name="wheelchair-accessibility" 
-                    size={20} 
-                    color={designSystem.colors.primary[500]} 
-                  />
-                  <AppText variant="bodyMedium" style={styles.modalDetailText}>
-                    {selectedToilet.pmrAccess}
-                  </AppText>
-                </View>
-                
-                <View style={styles.modalDetail}>
-                  <MaterialCommunityIcons 
-                    name="ruler" 
-                    size={20} 
-                    color={designSystem.colors.primary[500]} 
-                  />
-                  <AppText variant="bodyMedium" style={styles.modalDetailText}>
-                    Distance: {formatDistance(selectedToilet.distance)}
-                  </AppText>
-                </View>
-              </View>
-              
-              <PrimaryButton
-                onPress={() => {
-                  openNavigation(selectedToilet);
-                  setSelectedToilet(null);
-                }}
-                variant="primary"
-                style={styles.modalNavigationButton}
-                icon="navigation"
-              >
-                Guide moi vers mon trône
-              </PrimaryButton>
-            </AppCard>
-          )}
-        </Modal>
-      </Portal>
 
       {/* Toast de notification */}
       <Toast
@@ -637,46 +560,6 @@ const styles = StyleSheet.create({
     color: designSystem.colors.text.secondary,
   },
   navigationButton: {
-    borderRadius: designSystem.borderRadius.md,
-  },
-  modalContainer: {
-    margin: designSystem.spacing[4],
-    maxHeight: '80%',
-  },
-  modalCard: {
-    backgroundColor: designSystem.colors.background.tertiary,
-    borderWidth: 1,
-    borderColor: designSystem.colors.border.light,
-    ...designSystem.shadows.xl,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: designSystem.spacing[4],
-  },
-  modalTitle: {
-    color: designSystem.colors.text.primary,
-    fontWeight: designSystem.typography.fontWeight.semiBold,
-    flex: 1,
-  },
-  closeButton: {
-    padding: designSystem.spacing[1],
-  },
-  modalContent: {
-    marginBottom: designSystem.spacing[6],
-  },
-  modalDetail: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: designSystem.spacing[3],
-  },
-  modalDetailText: {
-    marginLeft: designSystem.spacing[3],
-    color: designSystem.colors.text.secondary,
-    flex: 1,
-  },
-  modalNavigationButton: {
     borderRadius: designSystem.borderRadius.md,
   },
 });

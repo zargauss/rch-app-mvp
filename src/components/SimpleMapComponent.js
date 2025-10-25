@@ -8,10 +8,13 @@ const SimpleMapComponent = ({
   userLocation, 
   toilets, 
   onToiletSelect, 
-  onNavigate 
+  onNavigate,
+  onMapMove
 }) => {
   const mapRef = useRef(null);
   const leafletLoaded = useRef(false);
+  const lastCenter = useRef(null);
+  const lastZoom = useRef(null);
 
   // Fonction pour charger Leaflet.js dynamiquement
   const loadLeaflet = () => {
@@ -136,6 +139,27 @@ const SimpleMapComponent = ({
         onNavigate(toilet);
       }
     };
+
+    // Détecter les changements de position et zoom
+    map.on('moveend', () => {
+      const center = map.getCenter();
+      const zoom = map.getZoom();
+      
+      // Vérifier si la position ou le zoom ont changé significativement
+      if (!lastCenter.current || 
+          Math.abs(center.lat - lastCenter.current.lat) > 0.001 ||
+          Math.abs(center.lng - lastCenter.current.lng) > 0.001 ||
+          Math.abs(zoom - lastZoom.current) > 1) {
+        
+        console.log('🗺️ Mouvement de carte détecté:', { center, zoom });
+        lastCenter.current = { lat: center.lat, lng: center.lng };
+        lastZoom.current = zoom;
+        
+        if (onMapMove) {
+          onMapMove(center.lat, center.lng, zoom);
+        }
+      }
+    });
 
     window.mapInstance = map;
     console.log('✅ Carte Leaflet créée avec succès');
@@ -263,6 +287,32 @@ const SimpleMapComponent = ({
               toilet: toilet
             }));
           }
+
+          // Détecter les changements de position et zoom
+          let lastCenter = null;
+          let lastZoom = null;
+          
+          map.on('moveend', () => {
+            const center = map.getCenter();
+            const zoom = map.getZoom();
+            
+            // Vérifier si la position ou le zoom ont changé significativement
+            if (!lastCenter || 
+                Math.abs(center.lat - lastCenter.lat) > 0.001 ||
+                Math.abs(center.lng - lastCenter.lng) > 0.001 ||
+                Math.abs(zoom - lastZoom) > 1) {
+              
+              console.log('🗺️ Mouvement de carte détecté:', { center, zoom });
+              lastCenter = { lat: center.lat, lng: center.lng };
+              lastZoom = zoom;
+              
+              window.ReactNativeWebView.postMessage(JSON.stringify({
+                type: 'mapMove',
+                center: { lat: center.lat, lng: center.lng },
+                zoom: zoom
+              }));
+            }
+          });
         </script>
       </body>
       </html>
@@ -277,6 +327,8 @@ const SimpleMapComponent = ({
         onToiletSelect(data.toilet);
       } else if (data.type === 'navigate' && onNavigate) {
         onNavigate(data.toilet);
+      } else if (data.type === 'mapMove' && onMapMove) {
+        onMapMove(data.center.lat, data.center.lng, data.zoom);
       }
     } catch (error) {
       console.error('Erreur parsing message WebView:', error);
