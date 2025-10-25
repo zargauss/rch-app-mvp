@@ -13,58 +13,62 @@ export default function SimpleMapComponent({ userLocation, toilets, onToiletSele
     
     console.log('🗺️ Génération de la carte HTML avec:', { userLat, userLon, toiletsCount: toilets.length });
     
-    const toiletsMarkers = toilets.map((toilet, index) => `
-      L.marker([${toilet.coordinates.latitude}, ${toilet.coordinates.longitude}])
-        .addTo(map)
-        .bindPopup(\`
-          <div style="font-family: Arial, sans-serif; max-width: 250px;">
-            <h3 style="margin: 0 0 8px 0; color: #333; font-size: 16px;">${toilet.name}</h3>
-            <p style="margin: 4px 0; color: #666; font-size: 14px;">📍 ${toilet.address}</p>
-            <p style="margin: 4px 0; color: #666; font-size: 12px;">🕒 ${toilet.hours}</p>
-            <p style="margin: 4px 0; color: #666; font-size: 12px;">♿ ${toilet.pmrAccess}</p>
-            <button 
-              onclick="window.ReactNativeWebView.postMessage(JSON.stringify({
-                type: 'navigate',
-                toilet: {
-                  name: '${toilet.name.replace(/'/g, "\\'")}',
-                  lat: ${toilet.coordinates.latitude},
-                  lon: ${toilet.coordinates.longitude}
-                }
-              }))"
-              style="
-                background: #007AFF; 
-                color: white; 
-                border: none; 
-                padding: 8px 16px; 
-                border-radius: 6px; 
-                font-size: 14px; 
-                cursor: pointer; 
-                margin-top: 8px;
-                width: 100%;
-              "
-            >
-              Guide moi vers mon trône
-            </button>
-          </div>
-        \`)
-        .on('click', function() {
-          window.ReactNativeWebView.postMessage(JSON.stringify({
-            type: 'toiletSelect',
-            toilet: {
-              id: '${toilet.id}',
-              name: '${toilet.name.replace(/'/g, "\\'")}',
-              address: '${toilet.address.replace(/'/g, "\\'")}',
-              hours: '${toilet.hours.replace(/'/g, "\\'")}',
-              pmrAccess: '${toilet.pmrAccess.replace(/'/g, "\\'")}',
-              coordinates: {
-                latitude: ${toilet.coordinates.latitude},
-                longitude: ${toilet.coordinates.longitude}
-              },
-              distance: ${toilet.distance || 0}
-            }
-          }));
-        });
-    `).join('\n');
+    const toiletsMarkers = toilets.map((toilet, index) => {
+      const popupContent = `
+        <div style="font-family: Arial, sans-serif; max-width: 250px;">
+          <h3 style="margin: 0 0 8px 0; color: #333; font-size: 16px;">${toilet.name}</h3>
+          <p style="margin: 4px 0; color: #666; font-size: 14px;">📍 ${toilet.address}</p>
+          <p style="margin: 4px 0; color: #666; font-size: 12px;">🕒 ${toilet.hours}</p>
+          <p style="margin: 4px 0; color: #666; font-size: 12px;">♿ ${toilet.pmrAccess}</p>
+          <button 
+            onclick="window.ReactNativeWebView.postMessage(JSON.stringify({
+              type: 'navigate',
+              toilet: {
+                name: '${toilet.name.replace(/'/g, "\\'")}',
+                lat: ${toilet.coordinates.latitude},
+                lon: ${toilet.coordinates.longitude}
+              }
+            }))"
+            style="
+              background: #007AFF; 
+              color: white; 
+              border: none; 
+              padding: 8px 16px; 
+              border-radius: 6px; 
+              font-size: 14px; 
+              cursor: pointer; 
+              margin-top: 8px;
+              width: 100%;
+            "
+          >
+            Guide moi vers mon trône
+          </button>
+        </div>
+      `;
+      
+      return `
+        L.marker([${toilet.coordinates.latitude}, ${toilet.coordinates.longitude}])
+          .addTo(map)
+          .bindPopup('${popupContent.replace(/'/g, "\\'")}')
+          .on('click', function() {
+            window.ReactNativeWebView.postMessage(JSON.stringify({
+              type: 'toiletSelect',
+              toilet: {
+                id: '${toilet.id}',
+                name: '${toilet.name.replace(/'/g, "\\'")}',
+                address: '${toilet.address.replace(/'/g, "\\'")}',
+                hours: '${toilet.hours.replace(/'/g, "\\'")}',
+                pmrAccess: '${toilet.pmrAccess.replace(/'/g, "\\'")}',
+                coordinates: {
+                  latitude: ${toilet.coordinates.latitude},
+                  longitude: ${toilet.coordinates.longitude}
+                },
+                distance: ${toilet.distance || 0}
+              }
+            }));
+          });
+      `;
+    }).join('\n');
 
     return `
       <!DOCTYPE html>
@@ -168,7 +172,7 @@ export default function SimpleMapComponent({ userLocation, toilets, onToiletSele
         onToiletSelect(data.toilet);
       } else if (data.type === 'navigate') {
         // Ouvrir la navigation
-        const url = \`https://www.google.com/maps/dir/\${${userLat}},\${${userLon}}/\${data.toilet.lat},\${data.toilet.lon}\`;
+        const url = `https://www.google.com/maps/dir/${userLat},${userLon}/${data.toilet.lat},${data.toilet.lon}`;
         window.open(url, '_blank');
       }
     } catch (error) {
