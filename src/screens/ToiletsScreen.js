@@ -144,8 +144,8 @@ export default function ToiletsScreen() {
       const url = generateNavigationUrl(
         userLocation.latitude,
         userLocation.longitude,
-        toilet.coordinates.latitude,
-        toilet.coordinates.longitude
+        toilet.latitude,
+        toilet.longitude
       );
 
       const supported = await Linking.canOpenURL(url);
@@ -242,6 +242,7 @@ export default function ToiletsScreen() {
             userLocation={userLocation}
             toilets={toilets}
             onToiletSelect={handleToiletSelect}
+            onNavigate={openNavigation}
           />
         ) : (
           <AppCard style={styles.mapPlaceholder}>
@@ -340,7 +341,7 @@ export default function ToiletsScreen() {
                       color={designSystem.colors.text.secondary} 
                     />
                     <AppText variant="bodySmall" style={styles.detailText}>
-                      {toilet.hours}
+                      {toilet.openingHours}
                     </AppText>
                   </View>
                   
@@ -414,7 +415,7 @@ export default function ToiletsScreen() {
                     color={designSystem.colors.primary[500]} 
                   />
                   <AppText variant="bodyMedium" style={styles.modalDetailText}>
-                    {selectedToilet.hours}
+                    {selectedToilet.openingHours}
                   </AppText>
                 </View>
                 
