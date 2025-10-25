@@ -11,7 +11,9 @@ export default function SimpleMapComponent({ userLocation, toilets, onToiletSele
     const userLat = userLocation?.latitude || 48.8566;
     const userLon = userLocation?.longitude || 2.3522;
     
-    const toiletsMarkers = toilets.map(toilet => `
+    console.log('🗺️ Génération de la carte HTML avec:', { userLat, userLon, toiletsCount: toilets.length });
+    
+    const toiletsMarkers = toilets.map((toilet, index) => `
       L.marker([${toilet.coordinates.latitude}, ${toilet.coordinates.longitude}])
         .addTo(map)
         .bindPopup(\`
@@ -24,7 +26,7 @@ export default function SimpleMapComponent({ userLocation, toilets, onToiletSele
               onclick="window.ReactNativeWebView.postMessage(JSON.stringify({
                 type: 'navigate',
                 toilet: {
-                  name: '${toilet.name}',
+                  name: '${toilet.name.replace(/'/g, "\\'")}',
                   lat: ${toilet.coordinates.latitude},
                   lon: ${toilet.coordinates.longitude}
                 }
@@ -50,10 +52,10 @@ export default function SimpleMapComponent({ userLocation, toilets, onToiletSele
             type: 'toiletSelect',
             toilet: {
               id: '${toilet.id}',
-              name: '${toilet.name}',
-              address: '${toilet.address}',
-              hours: '${toilet.hours}',
-              pmrAccess: '${toilet.pmrAccess}',
+              name: '${toilet.name.replace(/'/g, "\\'")}',
+              address: '${toilet.address.replace(/'/g, "\\'")}',
+              hours: '${toilet.hours.replace(/'/g, "\\'")}',
+              pmrAccess: '${toilet.pmrAccess.replace(/'/g, "\\'")}',
               coordinates: {
                 latitude: ${toilet.coordinates.latitude},
                 longitude: ${toilet.coordinates.longitude}
@@ -77,49 +79,80 @@ export default function SimpleMapComponent({ userLocation, toilets, onToiletSele
             margin: 0;
             padding: 0;
             font-family: Arial, sans-serif;
+            background: #f0f0f0;
           }
           #map {
             width: 100%;
             height: 100vh;
+            background: #e0e0e0;
           }
           .leaflet-popup-content {
             margin: 8px 12px;
             line-height: 1.4;
           }
+          .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+          }
         </style>
       </head>
       <body>
-        <div id="map"></div>
+        <div id="map">
+          <div class="loading">Chargement de la carte...</div>
+        </div>
         
         <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
         <script>
-          // Initialiser la carte
-          const map = L.map('map').setView([${userLat}, ${userLon}], 15);
+          console.log('🗺️ Initialisation de la carte Leaflet...');
           
-          // Ajouter les tuiles OpenStreetMap
-          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors',
-            maxZoom: 19
-          }).addTo(map);
-          
-          // Marqueur de l'utilisateur
-          const userIcon = L.divIcon({
-            className: 'user-marker',
-            html: '<div style="background: #007AFF; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>',
-            iconSize: [20, 20],
-            iconAnchor: [10, 10]
-          });
-          
-          L.marker([${userLat}, ${userLon}], { icon: userIcon })
-            .addTo(map)
-            .bindPopup('<b>Votre position</b><br>Vous êtes ici')
-            .openPopup();
-          
-          // Marqueurs des toilettes
-          ${toiletsMarkers}
-          
-          // Centrer la carte sur l'utilisateur
-          map.setView([${userLat}, ${userLon}], 15);
+          try {
+            // Initialiser la carte
+            const map = L.map('map').setView([${userLat}, ${userLon}], 15);
+            console.log('✅ Carte Leaflet initialisée');
+            
+            // Ajouter les tuiles OpenStreetMap
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+              attribution: '© OpenStreetMap contributors',
+              maxZoom: 19
+            }).addTo(map);
+            console.log('✅ Tuiles OpenStreetMap ajoutées');
+            
+            // Marqueur de l'utilisateur
+            const userIcon = L.divIcon({
+              className: 'user-marker',
+              html: '<div style="background: #007AFF; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>',
+              iconSize: [20, 20],
+              iconAnchor: [10, 10]
+            });
+            
+            L.marker([${userLat}, ${userLon}], { icon: userIcon })
+              .addTo(map)
+              .bindPopup('<b>Votre position</b><br>Vous êtes ici')
+              .openPopup();
+            console.log('✅ Marqueur utilisateur ajouté');
+            
+            // Marqueurs des toilettes
+            ${toiletsMarkers}
+            console.log('✅ Marqueurs toilettes ajoutés');
+            
+            // Centrer la carte sur l'utilisateur
+            map.setView([${userLat}, ${userLon}], 15);
+            console.log('✅ Carte centrée sur l\'utilisateur');
+            
+            // Masquer le loading
+            document.querySelector('.loading').style.display = 'none';
+            
+          } catch (error) {
+            console.error('❌ Erreur lors de l\'initialisation de la carte:', error);
+            document.querySelector('.loading').innerHTML = 'Erreur lors du chargement de la carte: ' + error.message;
+          }
         </script>
       </body>
       </html>
@@ -129,6 +162,7 @@ export default function SimpleMapComponent({ userLocation, toilets, onToiletSele
   const handleMessage = (event) => {
     try {
       const data = JSON.parse(event.nativeEvent.data);
+      console.log('📨 Message reçu du WebView:', data);
       
       if (data.type === 'toiletSelect' && onToiletSelect) {
         onToiletSelect(data.toilet);
@@ -138,9 +172,11 @@ export default function SimpleMapComponent({ userLocation, toilets, onToiletSele
         window.open(url, '_blank');
       }
     } catch (error) {
-      console.error('Erreur parsing message WebView:', error);
+      console.error('❌ Erreur parsing message WebView:', error);
     }
   };
+
+  console.log('🗺️ Rendu SimpleMapComponent avec:', { userLocation, toiletsCount: toilets.length });
 
   return (
     <View style={styles.container}>
@@ -156,6 +192,8 @@ export default function SimpleMapComponent({ userLocation, toilets, onToiletSele
         originWhitelist={['*']}
         allowsInlineMediaPlayback={true}
         mediaPlaybackRequiresUserAction={false}
+        onError={(error) => console.error('❌ Erreur WebView:', error)}
+        onLoadEnd={() => console.log('✅ WebView chargée')}
       />
     </View>
   );

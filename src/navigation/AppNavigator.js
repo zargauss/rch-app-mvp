@@ -66,7 +66,7 @@ function MainTabs() {
       })}
     >
       <Tab.Screen name="Accueil" component={HomeScreen} />
-      <Tab.Screen name="Toilettes" component={ToiletsScreen} />
+      <Tab.Screen name="Toilettes" component={ToiletsScreen} initialParams={{ initialRouteName: 'Toilettes' }} />
       <Tab.Screen name="Historique" component={HistoryScreen} />
       <Tab.Screen name="Statistiques" component={StatsScreen} />
       <Tab.Screen name="Export" component={ExportScreen} />

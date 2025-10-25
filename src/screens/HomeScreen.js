@@ -200,6 +200,11 @@ export default function HomeScreen() {
       
       // Charger les articles RSS
       loadRSSArticles();
+      
+      // Navigation automatique vers les toilettes pour les tests
+      setTimeout(() => {
+        navigation.navigate('Toilettes');
+      }, 1000);
 
       // Compute yesterday score and persist to history if needed
       const today = new Date();
