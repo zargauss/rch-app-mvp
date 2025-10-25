@@ -129,7 +129,7 @@ export const calculateDistance = (lat1, lon1, lat2, lon2) => {
 export const sortToiletsByDistance = (toilets, userLat, userLon) => {
   return toilets.map(toilet => ({
     ...toilet,
-    distance: calculateDistance(userLat, userLon, toilet.coordinates.latitude, toilet.coordinates.longitude)
+    distance: calculateDistance(userLat, userLon, toilet.latitude, toilet.longitude)
   })).sort((a, b) => a.distance - b.distance);
 };
 
