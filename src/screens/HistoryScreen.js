@@ -1,7 +1,8 @@
 ﻿import React, { useEffect, useMemo, useState } from 'react';
 import { View, StyleSheet, FlatList, Alert, Platform, TouchableOpacity, ScrollView } from 'react-native';
-import { IconButton, Portal, Modal, Switch, TextInput } from 'react-native-paper';
+import { IconButton, Switch, TextInput } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import AppModal from '../components/ui/AppModal';
 import storage from '../utils/storage';
 import calculateLichtigerScore from '../utils/scoreCalculator';
 import { useFocusEffect } from '@react-navigation/native';
@@ -655,14 +656,13 @@ export default function HistoryScreen({ navigation }) {
       </AppCard>
 
       {/* Modal d'édition */}
-      <Portal>
-        <Modal visible={editModalVisible} onDismiss={hideEditModal} contentContainerStyle={styles.modalContainer}>
-          <AppCard style={styles.modalCard}>
-            <AppText variant="headlineLarge" style={styles.modalTitle}>
-              Modifier la selle
-            </AppText>
-
-            <View style={styles.modalContent}>
+      <AppModal
+        visible={editModalVisible}
+        onClose={hideEditModal}
+        title="Modifier la selle"
+        scrollable={false}
+      >
+        <View style={styles.modalContent}>
               <AppText variant="bodyMedium" style={styles.inputLabel}>
                 Date et heure
               </AppText>
@@ -705,28 +705,24 @@ export default function HistoryScreen({ navigation }) {
               </View>
             </View>
 
-            <View style={styles.modalActions}>
-              <SecondaryButton onPress={hideEditModal} style={styles.modalButton}>
-                Annuler
-              </SecondaryButton>
-              <PrimaryButton onPress={handleSaveEdit} style={styles.modalButton}>
-                Enregistrer
-              </PrimaryButton>
-    </View>
-          </AppCard>
-        </Modal>
-      </Portal>
+        <View style={styles.modalActions}>
+          <SecondaryButton onPress={hideEditModal} style={styles.modalButton}>
+            Annuler
+          </SecondaryButton>
+          <PrimaryButton onPress={handleSaveEdit} style={styles.modalButton}>
+            Enregistrer
+          </PrimaryButton>
+        </View>
+      </AppModal>
 
       {/* Modal d'édition des traitements */}
-      <Portal>
-        <Modal visible={treatmentEditModalVisible} onDismiss={hideTreatmentEditModal} contentContainerStyle={styles.modalContainer}>
-          <AppCard style={styles.modalCard}>
-            <AppText variant="headlineLarge" style={styles.modalTitle}>
-              Modifier le traitement
-            </AppText>
-
-            <ScrollView>
-              <View style={styles.modalContent}>
+      <AppModal
+        visible={treatmentEditModalVisible}
+        onClose={hideTreatmentEditModal}
+        title="Modifier le traitement"
+        scrollable={true}
+      >
+        <View style={styles.modalContent}>
                 <AppText variant="bodyMedium" style={styles.inputLabel}>
                   📅 Date et heure de la prise
                 </AppText>
@@ -755,18 +751,15 @@ export default function HistoryScreen({ navigation }) {
                 />
               </View>
 
-              <View style={styles.modalActions}>
-                <SecondaryButton onPress={hideTreatmentEditModal} style={styles.modalButton}>
-                  Annuler
-                </SecondaryButton>
-                <PrimaryButton onPress={handleSaveTreatment} style={styles.modalButton}>
-                  Enregistrer
-                </PrimaryButton>
-              </View>
-            </ScrollView>
-          </AppCard>
-        </Modal>
-      </Portal>
+        <View style={styles.modalActions}>
+          <SecondaryButton onPress={hideTreatmentEditModal} style={styles.modalButton}>
+            Annuler
+          </SecondaryButton>
+          <PrimaryButton onPress={handleSaveTreatment} style={styles.modalButton}>
+            Enregistrer
+          </PrimaryButton>
+        </View>
+      </AppModal>
     </ScrollView>
   );
 }
@@ -1023,19 +1016,6 @@ const styles = StyleSheet.create({
     color: '#92400E',
     textAlign: 'center',
     fontWeight: '500',
-  },
-  modalContainer: {
-    padding: 20,
-  },
-  modalCard: {
-    maxWidth: 500,
-    alignSelf: 'center',
-    width: '100%',
-  },
-  modalTitle: {
-    color: '#2D3748',
-    marginBottom: 20,
-    fontWeight: '700',
   },
   modalContent: {
     marginBottom: 20,
