@@ -9,7 +9,7 @@ import SecondaryButton from '../components/ui/SecondaryButton';
 import AppCard from '../components/ui/AppCard';
 import SettingsSection, { SettingsItem } from '../components/settings/SettingsSection';
 import Divider from '../components/ui/Divider';
-import DateTimeInput from '../components/ui/DateTimeInput';
+import TimeInput from '../components/ui/TimeInput';
 import { useTheme } from 'react-native-paper';
 import { injectTestData, clearTestData, generateScenarioData, generateIBDiskTestData } from '../utils/dataGenerator';
 import designSystem from '../theme/designSystem';
@@ -24,8 +24,8 @@ export default function SettingsScreen() {
   
   // États pour les notifications
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
-  const [reminder1Time, setReminder1Time] = useState(new Date(2025, 0, 1, 9, 0));
-  const [reminder2Time, setReminder2Time] = useState(new Date(2025, 0, 1, 20, 0));
+  const [reminder1Time, setReminder1Time] = useState('09:00');
+  const [reminder2Time, setReminder2Time] = useState('20:00');
 
   // Charger les paramètres de notification au démarrage
   useEffect(() => {
@@ -36,13 +36,15 @@ export default function SettingsScreen() {
     const settings = NotificationService.getNotificationSettings();
     setNotificationsEnabled(settings.enabled);
     
-    const r1Date = new Date();
-    r1Date.setHours(settings.surveyReminder1.hour, settings.surveyReminder1.minute, 0, 0);
-    setReminder1Time(r1Date);
+    // Formater l'heure au format HH:MM
+    const formatHour = (hour, minute) => {
+      const h = hour.toString().padStart(2, '0');
+      const m = minute.toString().padStart(2, '0');
+      return `${h}:${m}`;
+    };
     
-    const r2Date = new Date();
-    r2Date.setHours(settings.surveyReminder2.hour, settings.surveyReminder2.minute, 0, 0);
-    setReminder2Time(r2Date);
+    setReminder1Time(formatHour(settings.surveyReminder1.hour, settings.surveyReminder1.minute));
+    setReminder2Time(formatHour(settings.surveyReminder2.hour, settings.surveyReminder2.minute));
   };
 
   // Générer des données de test
@@ -143,30 +145,44 @@ export default function SettingsScreen() {
   };
 
   // Modifier l'heure du premier rappel
-  const handleReminder1Change = async (date) => {
-    setReminder1Time(date);
+  const handleReminder1Change = async (timeStr) => {
+    setReminder1Time(timeStr);
     
-    const settings = NotificationService.getNotificationSettings();
-    settings.surveyReminder1.hour = date.getHours();
-    settings.surveyReminder1.minute = date.getMinutes();
-    NotificationService.saveNotificationSettings(settings);
-    
-    if (notificationsEnabled) {
-      await NotificationService.scheduleSurveyReminder(1, date.getHours(), date.getMinutes());
+    // Valider le format HH:MM
+    if (timeStr.length === 5 && timeStr.includes(':')) {
+      const [hours, minutes] = timeStr.split(':').map(Number);
+      
+      if (!isNaN(hours) && !isNaN(minutes) && hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59) {
+        const settings = NotificationService.getNotificationSettings();
+        settings.surveyReminder1.hour = hours;
+        settings.surveyReminder1.minute = minutes;
+        NotificationService.saveNotificationSettings(settings);
+        
+        if (notificationsEnabled) {
+          await NotificationService.scheduleSurveyReminder(1, hours, minutes);
+        }
+      }
     }
   };
 
   // Modifier l'heure du second rappel
-  const handleReminder2Change = async (date) => {
-    setReminder2Time(date);
+  const handleReminder2Change = async (timeStr) => {
+    setReminder2Time(timeStr);
     
-    const settings = NotificationService.getNotificationSettings();
-    settings.surveyReminder2.hour = date.getHours();
-    settings.surveyReminder2.minute = date.getMinutes();
-    NotificationService.saveNotificationSettings(settings);
-    
-    if (notificationsEnabled) {
-      await NotificationService.scheduleSurveyReminder(2, date.getHours(), date.getMinutes());
+    // Valider le format HH:MM
+    if (timeStr.length === 5 && timeStr.includes(':')) {
+      const [hours, minutes] = timeStr.split(':').map(Number);
+      
+      if (!isNaN(hours) && !isNaN(minutes) && hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59) {
+        const settings = NotificationService.getNotificationSettings();
+        settings.surveyReminder2.hour = hours;
+        settings.surveyReminder2.minute = minutes;
+        NotificationService.saveNotificationSettings(settings);
+        
+        if (notificationsEnabled) {
+          await NotificationService.scheduleSurveyReminder(2, hours, minutes);
+        }
+      }
     }
   };
 
@@ -446,10 +462,9 @@ export default function SettingsScreen() {
               <AppText variant="bodySmall" style={styles.reminderDescription}>
                 "C'est le moment de compléter votre bilan du jour."
               </AppText>
-              <DateTimeInput
+              <TimeInput
                 value={reminder1Time}
                 onChange={handleReminder1Change}
-                mode="time"
                 label="Heure du premier rappel"
               />
             </View>
@@ -467,10 +482,9 @@ export default function SettingsScreen() {
               <AppText variant="bodySmall" style={styles.reminderDescription}>
                 "Vous avez oublié de compléter votre bilan."
               </AppText>
-              <DateTimeInput
+              <TimeInput
                 value={reminder2Time}
                 onChange={handleReminder2Change}
-                mode="time"
                 label="Heure du second rappel"
               />
             </View>
