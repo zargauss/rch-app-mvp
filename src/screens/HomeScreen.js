@@ -19,7 +19,7 @@ import { useTheme } from 'react-native-paper';
 import designSystem from '../theme/designSystem';
 import { fetchRSSFeed } from '../services/rssService';
 
-export default function HomeScreen() {
+export default function HomeScreen({ route }) {
   const navigation = useNavigation();
   const theme = useTheme();
   const [visible, setVisible] = useState(false);
@@ -182,6 +182,16 @@ export default function HomeScreen() {
 
     return stoolsScore + nocturnalScore + bloodScore;
   };
+
+  // Ouvrir automatiquement le modal de bilan si demandé par une notification
+  useEffect(() => {
+    if (route?.params?.openSurveyModal && !surveyCompleted) {
+      console.log('🔔 Ouverture automatique du modal de bilan suite à une notification');
+      setVisible(true);
+      // Réinitialiser le paramètre pour éviter une réouverture lors du prochain focus
+      navigation.setParams({ openSurveyModal: false });
+    }
+  }, [route?.params?.openSurveyModal, surveyCompleted]);
 
   useFocusEffect(
     React.useCallback(() => {

@@ -1,5 +1,5 @@
-﻿import React, { useState } from 'react';
-import { View, StyleSheet, Alert, ScrollView, Platform, TextInput } from 'react-native';
+﻿import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, Alert, ScrollView, Platform, TextInput, Switch } from 'react-native';
 import { Text, Button } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import storage from '../utils/storage';
@@ -9,9 +9,11 @@ import SecondaryButton from '../components/ui/SecondaryButton';
 import AppCard from '../components/ui/AppCard';
 import SettingsSection, { SettingsItem } from '../components/settings/SettingsSection';
 import Divider from '../components/ui/Divider';
+import DateTimeInput from '../components/ui/DateTimeInput';
 import { useTheme } from 'react-native-paper';
 import { injectTestData, clearTestData, generateScenarioData, generateIBDiskTestData } from '../utils/dataGenerator';
 import designSystem from '../theme/designSystem';
+import * as NotificationService from '../services/notificationService';
 
 export default function SettingsScreen() {
   const [isWiping, setIsWiping] = useState(false);
@@ -19,6 +21,29 @@ export default function SettingsScreen() {
   const [importJsonText, setImportJsonText] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const theme = useTheme();
+  
+  // États pour les notifications
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const [reminder1Time, setReminder1Time] = useState(new Date(2025, 0, 1, 9, 0));
+  const [reminder2Time, setReminder2Time] = useState(new Date(2025, 0, 1, 20, 0));
+
+  // Charger les paramètres de notification au démarrage
+  useEffect(() => {
+    loadNotificationSettings();
+  }, []);
+
+  const loadNotificationSettings = () => {
+    const settings = NotificationService.getNotificationSettings();
+    setNotificationsEnabled(settings.enabled);
+    
+    const r1Date = new Date();
+    r1Date.setHours(settings.surveyReminder1.hour, settings.surveyReminder1.minute, 0, 0);
+    setReminder1Time(r1Date);
+    
+    const r2Date = new Date();
+    r2Date.setHours(settings.surveyReminder2.hour, settings.surveyReminder2.minute, 0, 0);
+    setReminder2Time(r2Date);
+  };
 
   // Générer des données de test
   const handleGenerateTestData = (scenario) => {
@@ -82,6 +107,66 @@ export default function SettingsScreen() {
     } catch (error) {
       console.error('❌ Erreur génération IBDisk:', error);
       alert(`❌ Erreur: Impossible de générer les questionnaires: ${error.message}`);
+    }
+  };
+
+  // Tester les notifications
+  const handleTestNotification = async () => {
+    try {
+      await NotificationService.sendTestNotification();
+      Alert.alert('Succès', 'Notification de test envoyée ! Vous devriez la recevoir dans quelques secondes.');
+    } catch (error) {
+      Alert.alert('Erreur', `Impossible d'envoyer la notification de test: ${error.message}`);
+    }
+  };
+
+  // Activer/désactiver les notifications
+  const handleToggleNotifications = async (value) => {
+    try {
+      if (value) {
+        const success = await NotificationService.enableNotifications();
+        if (success) {
+          setNotificationsEnabled(true);
+          Alert.alert('Succès', 'Les notifications ont été activées. Vous recevrez des rappels pour compléter votre bilan quotidien.');
+        } else {
+          Alert.alert('Erreur', 'Impossible d\'activer les notifications. Veuillez autoriser les notifications dans les paramètres de votre appareil.');
+        }
+      } else {
+        await NotificationService.disableNotifications();
+        setNotificationsEnabled(false);
+        Alert.alert('Succès', 'Les notifications ont été désactivées.');
+      }
+    } catch (error) {
+      console.error('Erreur toggle notifications:', error);
+      Alert.alert('Erreur', `Impossible de modifier les notifications: ${error.message}`);
+    }
+  };
+
+  // Modifier l'heure du premier rappel
+  const handleReminder1Change = async (date) => {
+    setReminder1Time(date);
+    
+    const settings = NotificationService.getNotificationSettings();
+    settings.surveyReminder1.hour = date.getHours();
+    settings.surveyReminder1.minute = date.getMinutes();
+    NotificationService.saveNotificationSettings(settings);
+    
+    if (notificationsEnabled) {
+      await NotificationService.scheduleSurveyReminder(1, date.getHours(), date.getMinutes());
+    }
+  };
+
+  // Modifier l'heure du second rappel
+  const handleReminder2Change = async (date) => {
+    setReminder2Time(date);
+    
+    const settings = NotificationService.getNotificationSettings();
+    settings.surveyReminder2.hour = date.getHours();
+    settings.surveyReminder2.minute = date.getMinutes();
+    NotificationService.saveNotificationSettings(settings);
+    
+    if (notificationsEnabled) {
+      await NotificationService.scheduleSurveyReminder(2, date.getHours(), date.getMinutes());
     }
   };
 
@@ -305,7 +390,92 @@ export default function SettingsScreen() {
           >
             IBDisk (3 questionnaires)
           </PrimaryButton>
+          
+          <PrimaryButton 
+            onPress={handleTestNotification} 
+            variant="info"
+            outlined
+            style={styles.scenarioButton}
+            icon="bell-ring"
+          >
+            Test Notification
+          </PrimaryButton>
         </View>
+      </AppCard>
+
+      {/* Notifications */}
+      <AppCard style={styles.notificationCard}>
+        <View style={styles.notificationHeader}>
+          <MaterialCommunityIcons name="bell-outline" size={24} color="#6366F1" style={{ marginRight: 12 }} />
+          <AppText variant="headlineLarge" style={styles.notificationTitle}>
+            Notifications
+          </AppText>
+        </View>
+        <AppText variant="bodyMedium" style={styles.notificationDescription}>
+          Recevez des rappels quotidiens pour compléter votre bilan si vous ne l'avez pas encore fait.
+        </AppText>
+        
+        {/* Activation des notifications */}
+        <View style={styles.settingRow}>
+          <View style={styles.settingLabelContainer}>
+            <MaterialCommunityIcons name="bell-check" size={20} color="#6366F1" />
+            <AppText variant="bodyMedium" style={styles.settingLabel}>
+              Activer les notifications
+            </AppText>
+          </View>
+          <Switch
+            value={notificationsEnabled}
+            onValueChange={handleToggleNotifications}
+            trackColor={{ false: '#CBD5E1', true: '#A5B4FC' }}
+            thumbColor={notificationsEnabled ? '#6366F1' : '#F1F5F9'}
+          />
+        </View>
+        
+        {notificationsEnabled && (
+          <>
+            <View style={styles.divider} />
+            
+            {/* Premier rappel */}
+            <View style={styles.reminderSection}>
+              <View style={styles.reminderHeader}>
+                <MaterialCommunityIcons name="clock-time-four-outline" size={20} color="#6366F1" />
+                <AppText variant="bodyLarge" style={styles.reminderTitle}>
+                  Premier rappel
+                </AppText>
+              </View>
+              <AppText variant="bodySmall" style={styles.reminderDescription}>
+                "C'est le moment de compléter votre bilan du jour."
+              </AppText>
+              <DateTimeInput
+                value={reminder1Time}
+                onChange={handleReminder1Change}
+                mode="time"
+                label="Heure du premier rappel"
+              />
+            </View>
+            
+            <View style={styles.divider} />
+            
+            {/* Second rappel */}
+            <View style={styles.reminderSection}>
+              <View style={styles.reminderHeader}>
+                <MaterialCommunityIcons name="clock-time-eight-outline" size={20} color="#6366F1" />
+                <AppText variant="bodyLarge" style={styles.reminderTitle}>
+                  Deuxième rappel
+                </AppText>
+              </View>
+              <AppText variant="bodySmall" style={styles.reminderDescription}>
+                "Vous avez oublié de compléter votre bilan."
+              </AppText>
+              <DateTimeInput
+                value={reminder2Time}
+                onChange={handleReminder2Change}
+                mode="time"
+                label="Heure du second rappel"
+              />
+            </View>
+          </>
+        )}
       </AppCard>
 
       {/* Sauvegarde des données */}
@@ -618,5 +788,73 @@ const styles = StyleSheet.create({
   },
   importButton: {
     flex: 1,
+  },
+  // Styles pour les notifications
+  notificationCard: {
+    marginHorizontal: 20,
+    marginBottom: 24,
+    padding: 24,
+    backgroundColor: '#EEF2FF',
+    borderWidth: 1,
+    borderColor: '#C7D2FE',
+    shadowColor: '#6366F1',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  notificationHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  notificationTitle: {
+    color: '#4338CA',
+    fontWeight: '700',
+  },
+  notificationDescription: {
+    color: '#4F46E5',
+    marginBottom: 20,
+    lineHeight: 22,
+  },
+  settingRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  settingLabelContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flex: 1,
+  },
+  settingLabel: {
+    color: '#3730A3',
+    fontWeight: '600',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#C7D2FE',
+    marginVertical: 16,
+  },
+  reminderSection: {
+    marginTop: 8,
+  },
+  reminderHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  reminderTitle: {
+    color: '#4338CA',
+    fontWeight: '600',
+  },
+  reminderDescription: {
+    color: '#6366F1',
+    fontStyle: 'italic',
+    marginBottom: 12,
+    marginLeft: 28,
   },
 });
