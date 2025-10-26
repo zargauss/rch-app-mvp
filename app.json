@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "RCH Suivi - Suivi de la Rectocolite Hémorragique",
-    "slug": "rch-suivi",
+    "slug": "RCH_APP_MVP",
     "version": "1.2.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
