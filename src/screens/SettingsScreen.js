@@ -114,10 +114,12 @@ export default function SettingsScreen() {
 
   // Tester les notifications
   const handleTestNotification = async () => {
+    console.log('🎯 Bouton Test Notification cliqué');
     try {
       await NotificationService.sendTestNotification();
-      Alert.alert('Succès', 'Notification de test envoyée ! Vous devriez la recevoir dans quelques secondes.');
+      Alert.alert('Succès', 'Notification de test envoyée ! Vous devriez la recevoir dans 2 secondes.');
     } catch (error) {
+      console.error('❌ Erreur test notification:', error);
       Alert.alert('Erreur', `Impossible d'envoyer la notification de test: ${error.message}`);
     }
   };

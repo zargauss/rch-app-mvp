@@ -246,13 +246,34 @@ export async function scheduleAllReminders() {
  */
 export async function sendTestNotification() {
   try {
+    console.log('🧪 Début du test de notification...');
+    
+    // Vérifier la plateforme
+    console.log('📱 Plateforme:', Platform.OS);
+    
     const hasPermission = await requestNotificationPermissions();
+    console.log('🔐 Permission:', hasPermission);
     
     if (!hasPermission) {
-      throw new Error('Permission de notification refusée');
+      throw new Error('Permission de notification refusée. Veuillez autoriser les notifications dans les paramètres de votre appareil.');
     }
     
-    await Notifications.scheduleNotificationAsync({
+    // Sur web, les notifications ne fonctionnent pas de la même manière
+    if (Platform.OS === 'web') {
+      console.log('⚠️ Les notifications sur web sont limitées. Testez sur mobile pour une expérience complète.');
+      
+      // Essayer quand même d'envoyer une notification web
+      if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification('🧪 Notification de test', {
+          body: 'Vos notifications fonctionnent correctement !',
+          icon: '/favicon.png',
+        });
+        console.log('✅ Notification web native envoyée');
+        return true;
+      }
+    }
+    
+    const notificationId = await Notifications.scheduleNotificationAsync({
       content: {
         title: '🧪 Notification de test',
         body: 'Vos notifications fonctionnent correctement !',
@@ -260,11 +281,11 @@ export async function sendTestNotification() {
         sound: true,
       },
       trigger: {
-        seconds: 1,
+        seconds: 2,
       },
     });
     
-    console.log('✅ Notification de test envoyée');
+    console.log('✅ Notification de test planifiée avec ID:', notificationId);
     return true;
   } catch (error) {
     console.error('❌ Erreur lors de l\'envoi de la notification de test:', error);
