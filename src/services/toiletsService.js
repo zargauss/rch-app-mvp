@@ -113,8 +113,8 @@ const parseEtalabResponse = (data) => {
 const fetchOverpassAPI = async (latitude, longitude, radius, limit) => {
   console.log('🔄 Tentative avec API Overpass OpenStreetMap...');
   
-  // Utiliser un rayon raisonnable (1500m par défaut)
-  const searchRadius = Math.max(radius, 1500);
+  // Utiliser un rayon plus large pour avoir plus de chances de trouver des toilettes (3km minimum)
+  const searchRadius = Math.max(radius, 3000);
   
   // Requête Overpass QL correcte
   // [out:json] pour obtenir la réponse en JSON

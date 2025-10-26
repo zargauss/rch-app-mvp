@@ -104,8 +104,8 @@ export default function ToiletsScreen() {
       setToiletsLoading(true);
       setToiletsError(null);
 
-      // Utiliser le rayon personnalisé ou par défaut 1500m
-      const searchRadius = customRadius || 1500;
+      // Utiliser le rayon personnalisé ou par défaut 3000m (3km)
+      const searchRadius = customRadius || 3000;
 
       const nearbyToilets = await fetchNearbyToilets(
         coords.latitude,
@@ -129,10 +129,21 @@ export default function ToiletsScreen() {
 
     } catch (error) {
       console.error('❌ Erreur lors du chargement des toilettes:', error);
-      setToiletsError(error.message);
       
-      // Utiliser des données de test en cas d'erreur
-      setToilets(getMockToilets());
+      // Message d'erreur plus clair
+      const errorMsg = error.message.includes('Aucune toilette') 
+        ? `Aucune toilette publique trouvée dans un rayon de ${Math.round(searchRadius / 1000)}km. Essayez de dézoomer ou de vous déplacer vers une zone plus urbaine.`
+        : `Erreur lors de la recherche: ${error.message}`;
+      
+      setToiletsError(errorMsg);
+      
+      // Utiliser des données de test en cas d'erreur (à Paris)
+      const mockData = getMockToilets();
+      console.log('⚠️ Affichage de', mockData.length, 'toilettes de démonstration à Paris');
+      setToilets(mockData);
+      
+      // Afficher un toast informatif
+      showToast('Aucune toilette trouvée près de vous. Affichage d\'exemples à Paris.', 'info');
     } finally {
       setToiletsLoading(false);
     }
@@ -199,8 +210,8 @@ export default function ToiletsScreen() {
     
     // Calculer le rayon en fonction du niveau de zoom
     // Plus le zoom est faible (nombre petit), plus le rayon est grand
-    // Zoom 15 = ~1500m, Zoom 14 = ~3000m, Zoom 13 = ~6000m, etc.
-    const radiusFromZoom = Math.min(10000, Math.max(500, Math.pow(2, 16 - zoom) * 100));
+    // Zoom 15 = ~2500m, Zoom 14 = ~5000m, Zoom 13 = ~10000m, etc.
+    const radiusFromZoom = Math.min(15000, Math.max(1000, Math.pow(2, 16 - zoom) * 150));
     
     console.log(`📍 Rechargement des toilettes - Rayon: ${radiusFromZoom}m pour zoom ${zoom}`);
     
