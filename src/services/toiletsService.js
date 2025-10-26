@@ -113,39 +113,39 @@ const parseEtalabResponse = (data) => {
 const fetchOverpassAPI = async (latitude, longitude, radius, limit) => {
   console.log('🔄 Tentative avec API Overpass OpenStreetMap...');
   
-  // Augmenter le rayon de recherche pour avoir plus de résultats
-  const searchRadius = Math.max(radius, 2000); // Minimum 2km
+  // Utiliser un rayon raisonnable (1500m par défaut)
+  const searchRadius = Math.max(radius, 1500);
   
-  // Utiliser l'API Overpass d'OpenStreetMap pour les toilettes
-  // Recherche multiple: toilettes publiques + sanisettes + WC dans les lieux publics
+  // Requête Overpass QL correcte
+  // [out:json] pour obtenir la réponse en JSON
+  // ( ... ); pour chercher tous les types d'éléments
+  // out center; pour obtenir uniquement le centre des ways/relations (plus efficace)
   const overpassQuery = `
-    [out:json][timeout:30];
+    [out:json][timeout:25];
     (
       node["amenity"="toilets"](around:${searchRadius},${latitude},${longitude});
       way["amenity"="toilets"](around:${searchRadius},${latitude},${longitude});
       relation["amenity"="toilets"](around:${searchRadius},${latitude},${longitude});
-      node["amenity"="sanisette"](around:${searchRadius},${latitude},${longitude});
-      node["toilets"="yes"](around:${searchRadius},${latitude},${longitude});
-      node["toilets:wheelchair"="yes"](around:${searchRadius},${latitude},${longitude});
     );
-    out body center ${limit};
+    out center;
   `;
   
-  const overpassUrl = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(overpassQuery)}`;
-  console.log('🌐 URL Overpass:', overpassUrl);
   console.log('📍 Recherche avec rayon:', searchRadius, 'm');
+  console.log('🌐 Requête Overpass:', overpassQuery.trim());
   
   try {
-    console.log('🔄 Requête vers Overpass...');
+    console.log('🔄 Requête POST vers Overpass API...');
     
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 20000); // 20 secondes timeout
+    const timeoutId = setTimeout(() => controller.abort(), 20000);
     
-    const response = await fetch(overpassUrl, {
-      method: 'GET',
+    // IMPORTANT: Utiliser POST avec la requête en body (pas en query string)
+    const response = await fetch('https://overpass-api.de/api/interpreter', {
+      method: 'POST',
+      body: overpassQuery,
       headers: {
-        'Accept': 'application/json',
-        'User-Agent': 'RCH-App/1.0'
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'application/json'
       },
       signal: controller.signal
     });
@@ -153,25 +153,24 @@ const fetchOverpassAPI = async (latitude, longitude, radius, limit) => {
     clearTimeout(timeoutId);
     console.log('📡 Réponse Overpass:', response.status, response.statusText);
     
-    if (response.ok) {
-      const data = await response.json();
-      console.log('📊 Données reçues:', data);
-      console.log('📊 Nombre d\'éléments bruts:', data.elements ? data.elements.length : 0);
-      
-      const toilets = parseOverpassResponse(data, latitude, longitude);
-      console.log('✅ Toilettes parsées:', toilets.length);
-      
-      if (toilets.length > 0) {
-        return toilets;
-      } else {
-        console.log('⚠️ Aucune toilette trouvée dans un rayon de', searchRadius, 'm');
-        // Retourner les données de test si aucune toilette n'est trouvée
-        console.log('🔄 Utilisation des données de test...');
-        throw new Error('Aucune toilette trouvée dans la zone');
-      }
-    } else {
+    if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
+    
+    const data = await response.json();
+    console.log('📊 Données reçues d\'Overpass:', data);
+    console.log('📊 Nombre d\'éléments bruts:', data.elements ? data.elements.length : 0);
+    
+    if (!data.elements || data.elements.length === 0) {
+      console.log('⚠️ Aucune toilette trouvée dans un rayon de', searchRadius, 'm');
+      throw new Error('Aucune toilette trouvée dans la zone');
+    }
+    
+    const toilets = parseOverpassResponse(data, latitude, longitude);
+    console.log('✅', toilets.length, 'toilettes parsées avec succès');
+    
+    return toilets;
+    
   } catch (error) {
     console.log(`❌ API Overpass échouée:`, error.message);
     
@@ -185,7 +184,7 @@ const fetchOverpassAPI = async (latitude, longitude, radius, limit) => {
 
 // Parser la réponse Overpass
 const parseOverpassResponse = (data, userLat, userLon) => {
-  console.log('🔍 Parsing des données Overpass:', data);
+  console.log('🔍 Parsing des données Overpass...');
   
   if (!data.elements || !Array.isArray(data.elements)) {
     console.log('⚠️ Aucun élément trouvé dans la réponse Overpass');
@@ -193,37 +192,51 @@ const parseOverpassResponse = (data, userLat, userLon) => {
   }
   
   const toilets = data.elements.map((element, index) => {
-    const lat = element.lat || element.center?.lat;
-    const lon = element.lon || element.center?.lon;
+    // Les 'nodes' ont lat/lon directement
+    // Pour 'way' et 'relation' avec "out center;", on récupère le centre
+    const lat = element.type === 'node' ? element.lat : element.center?.lat;
+    const lon = element.type === 'node' ? element.lon : element.center?.lon;
     
     if (!lat || !lon) {
-      console.log(`⚠️ Élément ${index} sans coordonnées:`, element);
+      console.log(`⚠️ Élément ${index} (type: ${element.type}) sans coordonnées valides`);
       return null;
     }
     
     const tags = element.tags || {};
     
     const toilet = {
-      id: element.id || `osm-toilet-${index}`,
-      name: tags.name || tags.brand || 'Toilettes publiques',
+      id: element.id || `osm-${element.type}-${index}`,
+      name: tags.name || tags.brand || tags.operator || 'Toilettes publiques',
       address: buildAddress(tags),
-      openingHours: tags.opening_hours || 'Horaires non disponibles',
+      openingHours: tags.opening_hours || tags['opening_hours:covid19'] || 'Horaires non disponibles',
       pmrAccess: tags.wheelchair === 'yes' ? 'Accessible PMR' : 
-                 tags.wheelchair === 'no' ? 'Non accessible PMR' : 'Information non disponible',
+                 tags.wheelchair === 'no' ? 'Non accessible PMR' : 
+                 tags['toilets:wheelchair'] === 'yes' ? 'Accessible PMR' : 'Information non disponible',
       latitude: lat,
       longitude: lon,
-      type: tags.operator || 'Public',
-      free: tags.fee !== 'yes',
-      babyChanging: tags.changing_table === 'yes' ? 'Table à langer disponible' : 
+      type: tags.operator || tags.access || 'Public',
+      free: tags.fee === 'no' || !tags.fee,
+      babyChanging: tags.changing_table === 'yes' || tags['changing_table:count'] ? 'Table à langer disponible' : 
                     tags.changing_table === 'no' ? 'Non disponible' : 'Information non disponible'
     };
     
-    console.log(`✅ Toilette ${index + 1} parsée:`, toilet.name, `${lat}, ${lon}`);
+    console.log(`✓ Toilette ${index + 1}:`, toilet.name, `(${lat.toFixed(4)}, ${lon.toFixed(4)})`);
     return toilet;
-  }).filter(toilet => toilet !== null).slice(0, 25);
+  }).filter(toilet => toilet !== null);
   
-  console.log(`✅ ${toilets.length} toilettes parsées depuis Overpass`);
-  return toilets;
+  // Trier par distance de l'utilisateur
+  const toiletsWithDistance = toilets.map(toilet => ({
+    ...toilet,
+    distance: calculateDistance(userLat, userLon, toilet.latitude, toilet.longitude)
+  }));
+  
+  toiletsWithDistance.sort((a, b) => a.distance - b.distance);
+  
+  // Limiter à 25 résultats max
+  const limitedToilets = toiletsWithDistance.slice(0, 25);
+  
+  console.log(`✅ ${limitedToilets.length} toilettes parsées et triées par distance`);
+  return limitedToilets;
 };
 
 // Construire une adresse à partir des tags OSM
@@ -347,4 +360,5 @@ export const getMockToilets = () => {
       babyChanging: 'Table à langer disponible'
     }
   ];
+};
 };
