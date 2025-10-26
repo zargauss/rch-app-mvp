@@ -140,7 +140,9 @@ const SimpleMapComponent = ({
       }
     };
 
-    // Détecter les changements de position et zoom
+    // Détecter les changements de position et zoom avec debounce
+    let moveTimeout = null;
+    
     map.on('moveend', () => {
       const center = map.getCenter();
       const zoom = map.getZoom();
@@ -155,9 +157,14 @@ const SimpleMapComponent = ({
         lastCenter.current = { lat: center.lat, lng: center.lng };
         lastZoom.current = zoom;
         
-        if (onMapMove) {
-          onMapMove(center.lat, center.lng, zoom);
-        }
+        // Debounce: attendre 800ms après la fin du mouvement avant de recharger
+        if (moveTimeout) clearTimeout(moveTimeout);
+        
+        moveTimeout = setTimeout(() => {
+          if (onMapMove) {
+            onMapMove(center.lat, center.lng, zoom);
+          }
+        }, 800);
       }
     });
 

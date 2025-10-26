@@ -99,27 +99,33 @@ export default function ToiletsScreen() {
   };
 
   // Charger les toilettes proches
-  const loadNearbyToilets = async (coords) => {
+  const loadNearbyToilets = async (coords, customRadius = null) => {
     try {
       setToiletsLoading(true);
       setToiletsError(null);
 
+      // Utiliser le rayon personnalisé ou par défaut 1500m
+      const searchRadius = customRadius || 1500;
+
       const nearbyToilets = await fetchNearbyToilets(
         coords.latitude,
         coords.longitude,
-        1000, // 1 km de rayon
-        25    // Maximum 25 résultats
+        searchRadius,
+        50    // Maximum 50 résultats
       );
 
-      // Trier par distance
+      // Trier par distance du centre de la carte
       const sortedToilets = sortToiletsByDistance(
         nearbyToilets,
         coords.latitude,
         coords.longitude
       );
 
-      setToilets(sortedToilets);
-      console.log(`🚽 ${sortedToilets.length} toilettes chargées`);
+      // Limiter à 50 résultats maximum
+      const limitedToilets = sortedToilets.slice(0, 50);
+
+      setToilets(limitedToilets);
+      console.log(`🚽 ${limitedToilets.length} toilettes chargées (rayon: ${searchRadius}m)`);
 
     } catch (error) {
       console.error('❌ Erreur lors du chargement des toilettes:', error);
@@ -191,9 +197,15 @@ export default function ToiletsScreen() {
   const handleMapMove = async (lat, lng, zoom) => {
     console.log('🗺️ Mouvement de carte détecté:', { lat, lng, zoom });
     
-    // NE PAS recharger automatiquement pour permettre l'exploration
-    // L'utilisateur peut recharger manuellement si besoin
-    // await loadNearbyToilets({ latitude: lat, longitude: lng });
+    // Calculer le rayon en fonction du niveau de zoom
+    // Plus le zoom est faible (nombre petit), plus le rayon est grand
+    // Zoom 15 = ~1500m, Zoom 14 = ~3000m, Zoom 13 = ~6000m, etc.
+    const radiusFromZoom = Math.min(10000, Math.max(500, Math.pow(2, 16 - zoom) * 100));
+    
+    console.log(`📍 Rechargement des toilettes - Rayon: ${radiusFromZoom}m pour zoom ${zoom}`);
+    
+    // Recharger les toilettes pour la nouvelle position avec le rayon calculé
+    await loadNearbyToilets({ latitude: lat, longitude: lng }, radiusFromZoom);
   };
 
   return (

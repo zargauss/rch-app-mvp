@@ -232,8 +232,8 @@ const parseOverpassResponse = (data, userLat, userLon) => {
   
   toiletsWithDistance.sort((a, b) => a.distance - b.distance);
   
-  // Limiter à 25 résultats max
-  const limitedToilets = toiletsWithDistance.slice(0, 25);
+  // Limiter à 50 résultats max (sera aussi limité côté écran)
+  const limitedToilets = toiletsWithDistance.slice(0, 50);
   
   console.log(`✅ ${limitedToilets.length} toilettes parsées et triées par distance`);
   return limitedToilets;
