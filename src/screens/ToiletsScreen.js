@@ -132,31 +132,18 @@ export default function ToiletsScreen() {
     } catch (error) {
       console.error('❌ Erreur lors du chargement des toilettes:', error);
       
-      // Message d'erreur plus clair
+      // Message d'erreur simple et clair
       const errorMsg = error.message.includes('Aucune toilette') 
-        ? `Aucune toilette publique trouvée dans un rayon de ${Math.round(searchRadius / 1000)}km. Essayez de dézoomer ou de vous déplacer vers une zone plus urbaine.`
+        ? 'Pas de toilettes trouvées'
         : `Erreur lors de la recherche: ${error.message}`;
       
       setToiletsError(errorMsg);
       
-      // Utiliser des données de test en cas d'erreur (à Paris)
-      const mockData = getMockToilets();
-      console.log('⚠️ Affichage de', mockData.length, 'toilettes de démonstration à Paris');
-      
-      // Recalculer les distances par rapport à l'utilisateur pour les données de test aussi
-      if (userLocation) {
-        const mockWithDistances = sortToiletsByDistance(
-          mockData,
-          userLocation.latitude,
-          userLocation.longitude
-        );
-        setToilets(mockWithDistances);
-      } else {
-        setToilets(mockData);
-      }
+      // Ne pas afficher de données mockées, laisser la liste vide
+      setToilets([]);
       
       // Afficher un toast informatif
-      showToast('Aucune toilette trouvée près de vous. Affichage d\'exemples à Paris.', 'info');
+      showToast('Aucune toilette trouvée dans cette zone. Essayez de dézoomer ou de vous déplacer.', 'info');
     } finally {
       setToiletsLoading(false);
     }
