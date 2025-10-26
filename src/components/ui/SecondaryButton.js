@@ -40,9 +40,9 @@ export default function SecondaryButton({
       iconColor: colors.text.secondary,
     },
     tertiary: {
-      borderColor: colors.tertiary[500],
-      textColor: 'tertiary',
-      iconColor: colors.tertiary[500],
+      borderColor: colors.neutral[400],
+      textColor: 'secondary',
+      iconColor: colors.neutral[500],
     },
   };
 
