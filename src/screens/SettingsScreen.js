@@ -14,6 +14,7 @@ import { useTheme } from 'react-native-paper';
 import { injectTestData, clearTestData, generateScenarioData, generateIBDiskTestData } from '../utils/dataGenerator';
 import designSystem from '../theme/designSystem';
 import * as NotificationService from '../services/notificationService';
+import * as WebNotificationService from '../services/webNotificationService';
 
 export default function SettingsScreen() {
   const [isWiping, setIsWiping] = useState(false);
@@ -33,7 +34,9 @@ export default function SettingsScreen() {
   }, []);
 
   const loadNotificationSettings = () => {
-    const settings = NotificationService.getNotificationSettings();
+    // Utiliser le service approprié selon la plateforme
+    const service = Platform.OS === 'web' ? WebNotificationService : NotificationService;
+    const settings = service.getNotificationSettings();
     setNotificationsEnabled(settings.enabled);
     
     // Formater l'heure au format HH:MM
@@ -116,8 +119,10 @@ export default function SettingsScreen() {
   const handleTestNotification = async () => {
     console.log('🎯 Bouton Test Notification cliqué');
     try {
-      await NotificationService.sendTestNotification();
-      Alert.alert('Succès', 'Notification de test envoyée ! Vous devriez la recevoir dans 2 secondes.');
+      // Utiliser le service approprié selon la plateforme
+      const service = Platform.OS === 'web' ? WebNotificationService : NotificationService;
+      await service.sendTestNotification();
+      Alert.alert('Succès', 'Notification de test envoyée ! Vous devriez la voir apparaître.');
     } catch (error) {
       console.error('❌ Erreur test notification:', error);
       Alert.alert('Erreur', `Impossible d'envoyer la notification de test: ${error.message}`);
@@ -127,16 +132,19 @@ export default function SettingsScreen() {
   // Activer/désactiver les notifications
   const handleToggleNotifications = async (value) => {
     try {
+      // Utiliser le service approprié selon la plateforme
+      const service = Platform.OS === 'web' ? WebNotificationService : NotificationService;
+      
       if (value) {
-        const success = await NotificationService.enableNotifications();
+        const success = await service.enableNotifications();
         if (success) {
           setNotificationsEnabled(true);
           Alert.alert('Succès', 'Les notifications ont été activées. Vous recevrez des rappels pour compléter votre bilan quotidien.');
         } else {
-          Alert.alert('Erreur', 'Impossible d\'activer les notifications. Veuillez autoriser les notifications dans les paramètres de votre appareil.');
+          Alert.alert('Erreur', 'Impossible d\'activer les notifications. Veuillez autoriser les notifications dans les paramètres de votre navigateur/appareil.');
         }
       } else {
-        await NotificationService.disableNotifications();
+        await service.disableNotifications();
         setNotificationsEnabled(false);
         Alert.alert('Succès', 'Les notifications ont été désactivées.');
       }
@@ -155,13 +163,19 @@ export default function SettingsScreen() {
       const [hours, minutes] = timeStr.split(':').map(Number);
       
       if (!isNaN(hours) && !isNaN(minutes) && hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59) {
-        const settings = NotificationService.getNotificationSettings();
+        // Utiliser le service approprié selon la plateforme
+        const service = Platform.OS === 'web' ? WebNotificationService : NotificationService;
+        const settings = service.getNotificationSettings();
         settings.surveyReminder1.hour = hours;
         settings.surveyReminder1.minute = minutes;
-        NotificationService.saveNotificationSettings(settings);
+        service.saveNotificationSettings(settings);
         
         if (notificationsEnabled) {
-          await NotificationService.scheduleSurveyReminder(1, hours, minutes);
+          if (Platform.OS === 'web') {
+            WebNotificationService.scheduleAllReminders();
+          } else {
+            await NotificationService.scheduleSurveyReminder(1, hours, minutes);
+          }
         }
       }
     }
@@ -176,13 +190,19 @@ export default function SettingsScreen() {
       const [hours, minutes] = timeStr.split(':').map(Number);
       
       if (!isNaN(hours) && !isNaN(minutes) && hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59) {
-        const settings = NotificationService.getNotificationSettings();
+        // Utiliser le service approprié selon la plateforme
+        const service = Platform.OS === 'web' ? WebNotificationService : NotificationService;
+        const settings = service.getNotificationSettings();
         settings.surveyReminder2.hour = hours;
         settings.surveyReminder2.minute = minutes;
-        NotificationService.saveNotificationSettings(settings);
+        service.saveNotificationSettings(settings);
         
         if (notificationsEnabled) {
-          await NotificationService.scheduleSurveyReminder(2, hours, minutes);
+          if (Platform.OS === 'web') {
+            WebNotificationService.scheduleAllReminders();
+          } else {
+            await NotificationService.scheduleSurveyReminder(2, hours, minutes);
+          }
         }
       }
     }
