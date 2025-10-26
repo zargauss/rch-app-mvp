@@ -72,21 +72,60 @@ const fetchOverpassAPI = async (latitude, longitude, radius, limit) => {
   const overpassUrl = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(overpassQuery)}`;
   console.log('🌐 URL Overpass:', overpassUrl);
   
-  try {
-    const response = await fetch(overpassUrl);
-    console.log('📡 Réponse Overpass:', response.status, response.statusText);
-    
-    if (response.ok) {
-      const data = await response.json();
-      console.log('📊 Données reçues:', data);
-      return parseOverpassResponse(data, latitude, longitude);
-    } else {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+  // Essayer avec plusieurs retry en cas d'échec
+  const maxRetries = 3;
+  let lastError = null;
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`🔄 Tentative ${attempt}/${maxRetries}...`);
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 secondes timeout
+      
+      const response = await fetch(overpassUrl, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'RCH-App/1.0'
+        },
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+      console.log('📡 Réponse Overpass:', response.status, response.statusText);
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('📊 Données reçues:', data);
+        const toilets = parseOverpassResponse(data, latitude, longitude);
+        
+        if (toilets.length > 0) {
+          return toilets;
+        } else {
+          console.log('⚠️ Aucune toilette trouvée, retry...');
+          lastError = new Error('Aucune toilette trouvée');
+        }
+      } else {
+        lastError = new Error(`HTTP ${response.status}: ${response.statusText}`);
+        console.log(`❌ Erreur HTTP:`, lastError.message);
+      }
+    } catch (error) {
+      lastError = error;
+      console.log(`❌ Tentative ${attempt} échouée:`, error.message);
+      
+      if (error.name === 'AbortError') {
+        console.log('⏱️ Timeout de 15 secondes dépassé');
+      }
+      
+      // Attendre avant de réessayer
+      if (attempt < maxRetries) {
+        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+      }
     }
-  } catch (error) {
-    console.log('❌ API Overpass échouée:', error.message);
-    throw error;
   }
+  
+  throw lastError || new Error('API Overpass échouée après plusieurs tentatives');
 };
 
 // Parser la réponse Overpass
