@@ -191,8 +191,9 @@ export default function ToiletsScreen() {
   const handleMapMove = async (lat, lng, zoom) => {
     console.log('🗺️ Mouvement de carte détecté:', { lat, lng, zoom });
     
-    // Recharger les toilettes pour la nouvelle position (max 25 résultats)
-    await loadNearbyToilets({ latitude: lat, longitude: lng });
+    // NE PAS recharger automatiquement pour permettre l'exploration
+    // L'utilisateur peut recharger manuellement si besoin
+    // await loadNearbyToilets({ latitude: lat, longitude: lng });
   };
 
   return (

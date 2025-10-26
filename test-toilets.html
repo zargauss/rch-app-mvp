@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Toilettes</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        #map {
+            width: 100%;
+            height: 500px;
+            border: 1px solid #ccc;
+            margin-top: 20px;
+        }
+        #results {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 5px;
+        }
+        .log {
+            padding: 5px;
+            margin: 2px 0;
+            font-size: 12px;
+            font-family: monospace;
+        }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+    </style>
+</head>
+<body>
+    <h1>Test de la fonctionnalité Toilettes</h1>
+    <button onclick="testGeolocation()">1. Tester Géolocalisation</button>
+    <button onclick="testOverpassAPI()">2. Tester API Overpass</button>
+    <button onclick="testFullFeature()">3. Test Complet (Géoloc + API + Carte)</button>
+    
+    <div id="results">
+        <div id="logs"></div>
+    </div>
+    
+    <div id="map"></div>
+    
+    <script>
+        const logsDiv = document.getElementById('logs');
+        let map = null;
+        let userLocation = null;
+        
+        function log(message, type = 'info') {
+            console.log(message);
+            const logEl = document.createElement('div');
+            logEl.className = `log ${type}`;
+            logEl.textContent = message;
+            logsDiv.appendChild(logEl);
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+        }
+        
+        function clearLogs() {
+            logsDiv.innerHTML = '';
+        }
+        
+        async function testGeolocation() {
+            clearLogs();
+            log('🔍 Test de géolocalisation...', 'info');
+            
+            if (!navigator.geolocation) {
+                log('❌ Géolocalisation non supportée', 'error');
+                return null;
+            }
+            
+            try {
+                const position = await new Promise((resolve, reject) => {
+                    navigator.geolocation.getCurrentPosition(resolve, reject, {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 0
+                    });
+                });
+                
+                userLocation = {
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude
+                };
+                
+                log(`✅ Position obtenue: ${userLocation.latitude.toFixed(4)}, ${userLocation.longitude.toFixed(4)}`, 'success');
+                return userLocation;
+            } catch (error) {
+                log(`❌ Erreur géolocalisation: ${error.message}`, 'error');
+                // Utiliser Paris par défaut
+                userLocation = { latitude: 48.8566, longitude: 2.3522 };
+                log(`ℹ️ Position par défaut (Paris): ${userLocation.latitude}, ${userLocation.longitude}`, 'info');
+                return userLocation;
+            }
+        }
+        
+        async function testOverpassAPI() {
+            clearLogs();
+            log('🔍 Test de l\'API Overpass...', 'info');
+            
+            const lat = userLocation ? userLocation.latitude : 48.8566;
+            const lon = userLocation ? userLocation.longitude : 2.3522;
+            const radius = 1000;
+            
+            const overpassQuery = `
+                [out:json][timeout:25];
+                (
+                  node["amenity"="toilets"](around:${radius},${lat},${lon});
+                  way["amenity"="toilets"](around:${radius},${lat},${lon});
+                  relation["amenity"="toilets"](around:${radius},${lat},${lon});
+                );
+                out center;
+            `;
+            
+            const overpassUrl = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(overpassQuery)}`;
+            log(`🌐 URL: ${overpassUrl.substring(0, 100)}...`, 'info');
+            
+            try {
+                log('⏳ Requête en cours...', 'info');
+                const response = await fetch(overpassUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'User-Agent': 'RCH-App/1.0'
+                    }
+                });
+                
+                log(`📡 Réponse: ${response.status} ${response.statusText}`, response.ok ? 'success' : 'error');
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    log(`📊 Éléments trouvés: ${data.elements ? data.elements.length : 0}`, 'success');
+                    
+                    if (data.elements && data.elements.length > 0) {
+                        log(`✅ Première toilette: ${JSON.stringify(data.elements[0].tags || {})}`, 'success');
+                    }
+                    
+                    return data;
+                } else {
+                    log(`❌ Erreur HTTP: ${response.status}`, 'error');
+                    return null;
+                }
+            } catch (error) {
+                log(`❌ Erreur fetch: ${error.message}`, 'error');
+                return null;
+            }
+        }
+        
+        async function testFullFeature() {
+            clearLogs();
+            log('🚀 Test complet...', 'info');
+            
+            // 1. Géolocalisation
+            const location = await testGeolocation();
+            if (!location) return;
+            
+            // 2. API
+            log('---', 'info');
+            const data = await testOverpassAPI();
+            if (!data || !data.elements || data.elements.length === 0) {
+                log('⚠️ Aucune toilette trouvée', 'error');
+                return;
+            }
+            
+            // 3. Carte
+            log('---', 'info');
+            log('🗺️ Création de la carte...', 'info');
+            
+            if (map) {
+                map.remove();
+            }
+            
+            map = L.map('map').setView([location.latitude, location.longitude], 15);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+            
+            // Marqueur utilisateur
+            L.marker([location.latitude, location.longitude], {
+                icon: L.divIcon({
+                    className: 'user-marker',
+                    html: '<div style="background: #007AFF; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>',
+                    iconSize: [20, 20],
+                    iconAnchor: [10, 10]
+                })
+            }).addTo(map).bindPopup('Votre position').openPopup();
+            
+            // Marqueurs toilettes
+            let count = 0;
+            data.elements.forEach(element => {
+                const lat = element.lat || element.center?.lat;
+                const lon = element.lon || element.center?.lon;
+                
+                if (!lat || !lon) return;
+                
+                const tags = element.tags || {};
+                const name = tags.name || 'Toilettes publiques';
+                
+                L.marker([lat, lon], {
+                    icon: L.divIcon({
+                        className: 'toilet-marker',
+                        html: '<div style="background: #8B4513; width: 30px; height: 30px; border-radius: 50%; border: 2px solid white; display: flex; align-items: center; justify-content: center; color: white; font-size: 18px;">🚻</div>',
+                        iconSize: [30, 30],
+                        iconAnchor: [15, 15]
+                    })
+                }).addTo(map).bindPopup(`
+                    <strong>${name}</strong><br>
+                    ${tags['addr:street'] || 'Adresse non disponible'}<br>
+                    ${tags.opening_hours || 'Horaires non disponibles'}
+                `);
+                
+                count++;
+            });
+            
+            log(`✅ ${count} toilettes affichées sur la carte`, 'success');
+        }
+    </script>
+</body>
+</html>
+

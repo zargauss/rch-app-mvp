@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Test API Overpass</title>
+</head>
+<body>
+    <h1>Test API Overpass</h1>
+    <button onclick="testAPI()">Tester l'API</button>
+    <div id="results"></div>
+    
+    <script>
+        async function testAPI() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<p>⏳ Chargement...</p>';
+            
+            const latitude = 48.8566; // Paris
+            const longitude = 2.3522;
+            const radius = 1000;
+            
+            const overpassQuery = `
+                [out:json][timeout:25];
+                (
+                  node["amenity"="toilets"](around:${radius},${latitude},${longitude});
+                  way["amenity"="toilets"](around:${radius},${latitude},${longitude});
+                  relation["amenity"="toilets"](around:${radius},${latitude},${longitude});
+                );
+                out center;
+            `;
+            
+            const overpassUrl = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(overpassQuery)}`;
+            
+            console.log('🌐 URL:', overpassUrl);
+            
+            try {
+                const response = await fetch(overpassUrl);
+                console.log('📡 Statut:', response.status, response.statusText);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('📊 Données:', data);
+                    
+                    resultsDiv.innerHTML = `
+                        <p style="color: green;">✅ Succès !</p>
+                        <p>Nombre d'éléments trouvés: ${data.elements ? data.elements.length : 0}</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    resultsDiv.innerHTML = `
+                        <p style="color: red;">❌ Erreur HTTP ${response.status}</p>
+                        <p>${response.statusText}</p>
+                    `;
+                }
+            } catch (error) {
+                console.error('❌ Erreur:', error);
+                resultsDiv.innerHTML = `
+                    <p style="color: red;">❌ Erreur: ${error.message}</p>
+                    <pre>${error.stack}</pre>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>
+

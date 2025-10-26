@@ -166,10 +166,73 @@ const SimpleMapComponent = ({
   };
 
   useEffect(() => {
-    if (userLocation && toilets.length > 0) {
-      createLeafletMap();
+    if (Platform.OS === 'web' && userLocation && toilets.length > 0) {
+      // Ne recréer la carte que si elle n'existe pas encore
+      if (!window.mapInstance) {
+        createLeafletMap();
+      } else {
+        // Si la carte existe déjà, mettre à jour uniquement les marqueurs
+        updateMapMarkers();
+      }
     }
   }, [userLocation, toilets]);
+
+  // Fonction pour mettre à jour les marqueurs sans recréer la carte
+  const updateMapMarkers = () => {
+    if (!window.mapInstance || !window.L) return;
+
+    const map = window.mapInstance;
+
+    // Supprimer tous les marqueurs existants sauf l'utilisateur
+    map.eachLayer((layer) => {
+      if (layer instanceof window.L.Marker && layer !== window.userMarker) {
+        map.removeLayer(layer);
+      }
+    });
+
+    // Réajouter les marqueurs de toilettes
+    toilets.forEach((toilet, index) => {
+      const toiletIcon = window.L.divIcon({
+        className: 'toilet-marker',
+        html: '<div style="background: #8B4513; width: 30px; height: 30px; border-radius: 50%; border: 2px solid white; display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; box-shadow: 0 2px 6px rgba(0,0,0,0.3);">🚻</div>',
+        iconSize: [30, 30],
+        iconAnchor: [15, 15]
+      });
+
+      const marker = window.L.marker([toilet.latitude, toilet.longitude], { icon: toiletIcon })
+        .addTo(map);
+
+      const popupContent = `
+        <div style="min-width: 200px;">
+          <h3 style="margin: 0 0 8px 0; font-size: 16px; color: #333;">${toilet.name}</h3>
+          <p style="margin: 4px 0; font-size: 13px; color: #666;">📍 ${toilet.address}</p>
+          <p style="margin: 4px 0; font-size: 13px; color: #666;">🕒 ${toilet.openingHours}</p>
+          <p style="margin: 4px 0; font-size: 13px; color: #666;">♿ ${toilet.pmrAccess}</p>
+          <button 
+            onclick="window.navigateToToilet(${index})" 
+            style="
+              width: 100%; 
+              margin-top: 8px; 
+              padding: 10px; 
+              background: #007AFF; 
+              color: white; 
+              border: none; 
+              border-radius: 8px; 
+              font-size: 14px; 
+              font-weight: 600;
+              cursor: pointer;
+            "
+          >
+            📍 Guide moi vers mon trône
+          </button>
+        </div>
+      `;
+
+      marker.bindPopup(popupContent);
+    });
+
+    console.log('✅ Marqueurs mis à jour:', toilets.length, 'toilettes');
+  };
 
   // Pour le web, utiliser directement Leaflet
   if (Platform.OS === 'web') {
