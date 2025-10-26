@@ -706,12 +706,12 @@ export default function HistoryScreen({ navigation }) {
             </View>
 
         <View style={styles.modalActions}>
-          <SecondaryButton onPress={hideEditModal} style={styles.modalButton}>
-            Annuler
-          </SecondaryButton>
           <PrimaryButton onPress={handleSaveEdit} style={styles.modalButton}>
             Enregistrer
           </PrimaryButton>
+          <SecondaryButton onPress={hideEditModal} style={styles.modalButton}>
+            Annuler
+          </SecondaryButton>
         </View>
       </AppModal>
 
@@ -752,12 +752,12 @@ export default function HistoryScreen({ navigation }) {
               </View>
 
         <View style={styles.modalActions}>
-          <SecondaryButton onPress={hideTreatmentEditModal} style={styles.modalButton}>
-            Annuler
-          </SecondaryButton>
           <PrimaryButton onPress={handleSaveTreatment} style={styles.modalButton}>
             Enregistrer
           </PrimaryButton>
+          <SecondaryButton onPress={hideTreatmentEditModal} style={styles.modalButton}>
+            Annuler
+          </SecondaryButton>
         </View>
       </AppModal>
     </ScrollView>
@@ -1070,11 +1070,12 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   modalActions: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     gap: 12,
+    marginTop: 20,
   },
   modalButton: {
-    flex: 1,
+    width: '100%',
   },
   treatmentsCard: {
     marginHorizontal: 20,
