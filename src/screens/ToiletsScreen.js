@@ -114,18 +114,20 @@ export default function ToiletsScreen() {
         50    // Maximum 50 résultats
       );
 
-      // Trier par distance du centre de la carte
+      // IMPORTANT: Toujours trier par distance de la position de l'UTILISATEUR
+      // pas du centre de la carte de recherche
       const sortedToilets = sortToiletsByDistance(
         nearbyToilets,
-        coords.latitude,
-        coords.longitude
+        userLocation.latitude,
+        userLocation.longitude
       );
 
       // Limiter à 50 résultats maximum
       const limitedToilets = sortedToilets.slice(0, 50);
 
       setToilets(limitedToilets);
-      console.log(`🚽 ${limitedToilets.length} toilettes chargées (rayon: ${searchRadius}m)`);
+      console.log(`🚽 ${limitedToilets.length} toilettes chargées (rayon: ${searchRadius}m depuis ${coords.latitude.toFixed(4)}, ${coords.longitude.toFixed(4)})`);
+      console.log(`📍 Distances calculées depuis la position utilisateur: ${userLocation.latitude.toFixed(4)}, ${userLocation.longitude.toFixed(4)}`);
 
     } catch (error) {
       console.error('❌ Erreur lors du chargement des toilettes:', error);
@@ -140,7 +142,18 @@ export default function ToiletsScreen() {
       // Utiliser des données de test en cas d'erreur (à Paris)
       const mockData = getMockToilets();
       console.log('⚠️ Affichage de', mockData.length, 'toilettes de démonstration à Paris');
-      setToilets(mockData);
+      
+      // Recalculer les distances par rapport à l'utilisateur pour les données de test aussi
+      if (userLocation) {
+        const mockWithDistances = sortToiletsByDistance(
+          mockData,
+          userLocation.latitude,
+          userLocation.longitude
+        );
+        setToilets(mockWithDistances);
+      } else {
+        setToilets(mockData);
+      }
       
       // Afficher un toast informatif
       showToast('Aucune toilette trouvée près de vous. Affichage d\'exemples à Paris.', 'info');

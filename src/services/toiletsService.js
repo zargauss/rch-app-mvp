@@ -12,73 +12,19 @@ export const TOILETS_API_URL = 'https://public.api.data.gouv.fr/api/v2/catalog/d
  * @returns {Promise<Array>} Liste des toilettes trouvées
  */
 export const fetchNearbyToilets = async (latitude, longitude, radius = 1000, limit = 25) => {
-  console.log('🔍 Recherche des toilettes publiques...', { latitude, longitude, radius });
+  console.log('🔍 Recherche des toilettes publiques via OpenStreetMap...', { latitude, longitude, radius });
   
-  // Stratégie: essayer data.gouv.fr en premier (données françaises), puis Overpass, puis mock
-  
-  // 1. Essayer l'API publique data.gouv.fr avec recherche géolocalisée
   try {
-    console.log('🔄 Tentative 1: API data.gouv.fr (toilettes publiques)...');
-    
-    // Utiliser l'API OpenDataSoft qui agrège plusieurs sources
-    const dataGouvUrl = `https://data.opendatasoft.com/api/explore/v2.1/catalog/datasets/toilettes-publiques@datailedefrance/records?where=distance(geo_point_2d, geom'POINT(${longitude} ${latitude})', ${radius}m)&limit=${limit}`;
-    
-    console.log('🌐 URL data.gouv:', dataGouvUrl);
-    
-    try {
-      const response = await fetch(dataGouvUrl, {
-        headers: { 'Accept': 'application/json' }
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        console.log('📊 data.gouv.fr réponse:', data);
-        console.log('📊 Nombre de résultats:', data.results ? data.results.length : 0);
-        
-        if (data.results && data.results.length > 0) {
-          const toilets = data.results.map((record, index) => {
-            const coords = record.geo_point_2d || {};
-            return {
-              id: record.recordid || `toilet-${index}`,
-              name: record.nom || record.adresse || 'Toilette publique',
-              address: record.adresse || record.voie || 'Adresse non disponible',
-              openingHours: record.horaire || record.horaires || 'Horaires non disponibles',
-              pmrAccess: record.acces_pmr === 'Oui' || record.pmr === 'true' ? 'Accessible PMR' : 'Information non disponible',
-              latitude: coords.lat,
-              longitude: coords.lon,
-              type: record.type || 'Public',
-              free: record.acces === 'Gratuit' || record.gratuit !== 'non',
-              babyChanging: record.relais_bebe === 'Oui' ? 'Table à langer disponible' : 'Information non disponible'
-            };
-          }).filter(t => t.latitude && t.longitude);
-          
-          if (toilets.length > 0) {
-            console.log(`✅ ${toilets.length} toilettes trouvées via data.gouv.fr`);
-            return toilets;
-          }
-        }
-      } else {
-        console.log('⚠️ data.gouv.fr HTTP:', response.status);
-      }
-    } catch (error) {
-      console.log('⚠️ API data.gouv.fr échouée:', error.message);
-    }
-  } catch (error) {
-    console.log('⚠️ Erreur data.gouv.fr:', error.message);
-  }
-  
-  // 2. Essayer l'API Overpass d'OpenStreetMap
-  try {
-    console.log('🔄 Tentative 2: API Overpass OpenStreetMap...');
+    // Utiliser directement l'API Overpass d'OpenStreetMap
+    console.log('🔄 Recherche avec API Overpass...');
     return await fetchOverpassAPI(latitude, longitude, radius, limit);
   } catch (error) {
     console.log('⚠️ API Overpass échouée:', error.message);
+    
+    // Utiliser les données de test en dernier recours
+    console.error('❌ API échouée, utilisation des données de test...');
+    return getMockToilets();
   }
-  
-  // 3. Utiliser les données de test en dernier recours
-  console.error('❌ Toutes les API ont échoué');
-  console.log('🔄 Utilisation des données de test en fallback...');
-  return getMockToilets();
 };
 
 // Parser la réponse de l'API Etalab
