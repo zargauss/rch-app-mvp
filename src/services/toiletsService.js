@@ -12,18 +12,73 @@ export const TOILETS_API_URL = 'https://public.api.data.gouv.fr/api/v2/catalog/d
  * @returns {Promise<Array>} Liste des toilettes trouvées
  */
 export const fetchNearbyToilets = async (latitude, longitude, radius = 1000, limit = 25) => {
-  console.log('🔍 Recherche des toilettes publiques via API Overpass...', { latitude, longitude, radius });
+  console.log('🔍 Recherche des toilettes publiques...', { latitude, longitude, radius });
   
+  // Stratégie: essayer data.gouv.fr en premier (données françaises), puis Overpass, puis mock
+  
+  // 1. Essayer l'API publique data.gouv.fr avec recherche géolocalisée
   try {
-    // Utiliser directement l'API Overpass d'OpenStreetMap (plus fiable)
-    console.log('🔄 Tentative avec API Overpass OpenStreetMap...');
-    return await fetchOverpassAPI(latitude, longitude, radius, limit);
+    console.log('🔄 Tentative 1: API data.gouv.fr (toilettes publiques)...');
     
+    // Utiliser l'API OpenDataSoft qui agrège plusieurs sources
+    const dataGouvUrl = `https://data.opendatasoft.com/api/explore/v2.1/catalog/datasets/toilettes-publiques@datailedefrance/records?where=distance(geo_point_2d, geom'POINT(${longitude} ${latitude})', ${radius}m)&limit=${limit}`;
+    
+    console.log('🌐 URL data.gouv:', dataGouvUrl);
+    
+    try {
+      const response = await fetch(dataGouvUrl, {
+        headers: { 'Accept': 'application/json' }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('📊 data.gouv.fr réponse:', data);
+        console.log('📊 Nombre de résultats:', data.results ? data.results.length : 0);
+        
+        if (data.results && data.results.length > 0) {
+          const toilets = data.results.map((record, index) => {
+            const coords = record.geo_point_2d || {};
+            return {
+              id: record.recordid || `toilet-${index}`,
+              name: record.nom || record.adresse || 'Toilette publique',
+              address: record.adresse || record.voie || 'Adresse non disponible',
+              openingHours: record.horaire || record.horaires || 'Horaires non disponibles',
+              pmrAccess: record.acces_pmr === 'Oui' || record.pmr === 'true' ? 'Accessible PMR' : 'Information non disponible',
+              latitude: coords.lat,
+              longitude: coords.lon,
+              type: record.type || 'Public',
+              free: record.acces === 'Gratuit' || record.gratuit !== 'non',
+              babyChanging: record.relais_bebe === 'Oui' ? 'Table à langer disponible' : 'Information non disponible'
+            };
+          }).filter(t => t.latitude && t.longitude);
+          
+          if (toilets.length > 0) {
+            console.log(`✅ ${toilets.length} toilettes trouvées via data.gouv.fr`);
+            return toilets;
+          }
+        }
+      } else {
+        console.log('⚠️ data.gouv.fr HTTP:', response.status);
+      }
+    } catch (error) {
+      console.log('⚠️ API data.gouv.fr échouée:', error.message);
+    }
   } catch (error) {
-    console.error('❌ Erreur lors de la récupération des toilettes:', error);
-    console.log('🔄 Utilisation des données de test en fallback...');
-    return getMockToilets();
+    console.log('⚠️ Erreur data.gouv.fr:', error.message);
   }
+  
+  // 2. Essayer l'API Overpass d'OpenStreetMap
+  try {
+    console.log('🔄 Tentative 2: API Overpass OpenStreetMap...');
+    return await fetchOverpassAPI(latitude, longitude, radius, limit);
+  } catch (error) {
+    console.log('⚠️ API Overpass échouée:', error.message);
+  }
+  
+  // 3. Utiliser les données de test en dernier recours
+  console.error('❌ Toutes les API ont échoué');
+  console.log('🔄 Utilisation des données de test en fallback...');
+  return getMockToilets();
 };
 
 // Parser la réponse de l'API Etalab
@@ -58,74 +113,74 @@ const parseEtalabResponse = (data) => {
 const fetchOverpassAPI = async (latitude, longitude, radius, limit) => {
   console.log('🔄 Tentative avec API Overpass OpenStreetMap...');
   
+  // Augmenter le rayon de recherche pour avoir plus de résultats
+  const searchRadius = Math.max(radius, 2000); // Minimum 2km
+  
   // Utiliser l'API Overpass d'OpenStreetMap pour les toilettes
+  // Recherche multiple: toilettes publiques + sanisettes + WC dans les lieux publics
   const overpassQuery = `
-    [out:json][timeout:25];
+    [out:json][timeout:30];
     (
-      node["amenity"="toilets"](around:${radius},${latitude},${longitude});
-      way["amenity"="toilets"](around:${radius},${latitude},${longitude});
-      relation["amenity"="toilets"](around:${radius},${latitude},${longitude});
+      node["amenity"="toilets"](around:${searchRadius},${latitude},${longitude});
+      way["amenity"="toilets"](around:${searchRadius},${latitude},${longitude});
+      relation["amenity"="toilets"](around:${searchRadius},${latitude},${longitude});
+      node["amenity"="sanisette"](around:${searchRadius},${latitude},${longitude});
+      node["toilets"="yes"](around:${searchRadius},${latitude},${longitude});
+      node["toilets:wheelchair"="yes"](around:${searchRadius},${latitude},${longitude});
     );
-    out center;
+    out body center ${limit};
   `;
   
   const overpassUrl = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(overpassQuery)}`;
   console.log('🌐 URL Overpass:', overpassUrl);
+  console.log('📍 Recherche avec rayon:', searchRadius, 'm');
   
-  // Essayer avec plusieurs retry en cas d'échec
-  const maxRetries = 3;
-  let lastError = null;
-  
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      console.log(`🔄 Tentative ${attempt}/${maxRetries}...`);
+  try {
+    console.log('🔄 Requête vers Overpass...');
+    
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 20000); // 20 secondes timeout
+    
+    const response = await fetch(overpassUrl, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': 'RCH-App/1.0'
+      },
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
+    console.log('📡 Réponse Overpass:', response.status, response.statusText);
+    
+    if (response.ok) {
+      const data = await response.json();
+      console.log('📊 Données reçues:', data);
+      console.log('📊 Nombre d\'éléments bruts:', data.elements ? data.elements.length : 0);
       
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 secondes timeout
+      const toilets = parseOverpassResponse(data, latitude, longitude);
+      console.log('✅ Toilettes parsées:', toilets.length);
       
-      const response = await fetch(overpassUrl, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'User-Agent': 'RCH-App/1.0'
-        },
-        signal: controller.signal
-      });
-      
-      clearTimeout(timeoutId);
-      console.log('📡 Réponse Overpass:', response.status, response.statusText);
-      
-      if (response.ok) {
-        const data = await response.json();
-        console.log('📊 Données reçues:', data);
-        const toilets = parseOverpassResponse(data, latitude, longitude);
-        
-        if (toilets.length > 0) {
-          return toilets;
-        } else {
-          console.log('⚠️ Aucune toilette trouvée, retry...');
-          lastError = new Error('Aucune toilette trouvée');
-        }
+      if (toilets.length > 0) {
+        return toilets;
       } else {
-        lastError = new Error(`HTTP ${response.status}: ${response.statusText}`);
-        console.log(`❌ Erreur HTTP:`, lastError.message);
+        console.log('⚠️ Aucune toilette trouvée dans un rayon de', searchRadius, 'm');
+        // Retourner les données de test si aucune toilette n'est trouvée
+        console.log('🔄 Utilisation des données de test...');
+        throw new Error('Aucune toilette trouvée dans la zone');
       }
-    } catch (error) {
-      lastError = error;
-      console.log(`❌ Tentative ${attempt} échouée:`, error.message);
-      
-      if (error.name === 'AbortError') {
-        console.log('⏱️ Timeout de 15 secondes dépassé');
-      }
-      
-      // Attendre avant de réessayer
-      if (attempt < maxRetries) {
-        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
-      }
+    } else {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
+  } catch (error) {
+    console.log(`❌ API Overpass échouée:`, error.message);
+    
+    if (error.name === 'AbortError') {
+      console.log('⏱️ Timeout de 20 secondes dépassé');
+    }
+    
+    throw error;
   }
-  
-  throw lastError || new Error('API Overpass échouée après plusieurs tentatives');
 };
 
 // Parser la réponse Overpass
