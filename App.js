@@ -1,4 +1,5 @@
 ﻿import React, { useEffect, useRef } from 'react';
+import { Platform } from 'react-native';
 import 'react-native-gesture-handler';
 import { Provider as PaperProvider } from 'react-native-paper';
 import * as Notifications from 'expo-notifications';
@@ -12,6 +13,25 @@ export default function App() {
   const navigationRef = useRef(null);
   const notificationListener = useRef();
   const responseListener = useRef();
+
+  // Charger Inter depuis Google Fonts pour le web
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      const link = document.createElement('link');
+      link.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap';
+      link.rel = 'stylesheet';
+      document.head.appendChild(link);
+      
+      // Ajouter le style de base pour Inter
+      const style = document.createElement('style');
+      style.textContent = `
+        * {
+          font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+      `;
+      document.head.appendChild(style);
+    }
+  }, []);
 
   useEffect(() => {
     // Écouter les notifications reçues quand l'app est ouverte

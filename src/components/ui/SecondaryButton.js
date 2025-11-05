@@ -3,6 +3,7 @@ import { TouchableOpacity, StyleSheet, ActivityIndicator, View } from 'react-nat
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import AppText from './AppText';
 import designSystem from '../../theme/designSystem';
+import { buttonPressFeedback } from '../../utils/haptics';
 
 const { colors, spacing, borderRadius, layout } = designSystem;
 
@@ -18,6 +19,15 @@ export default function SecondaryButton({
   style,
   ...props
 }) {
+  const handlePress = (e) => {
+    if (!disabled && !loading) {
+      buttonPressFeedback();
+    }
+    if (onPress) {
+      onPress(e);
+    }
+  };
+
   const variantConfig = {
     primary: {
       borderColor: colors.primary[500],
@@ -118,7 +128,7 @@ export default function SecondaryButton({
 
   return (
     <TouchableOpacity
-      onPress={onPress}
+      onPress={handlePress}
       disabled={disabled || loading}
       activeOpacity={0.7}
       style={buttonStyle}

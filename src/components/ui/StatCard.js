@@ -18,10 +18,12 @@ export default function StatCard({
   
   const getColor = () => {
     switch (color) {
-      case 'success': return theme.colors.success;
+      case 'success': return '#16A34A'; // Vert pastel pour amélioration/minimum
       case 'warning': return theme.colors.warning;
-      case 'error': return theme.colors.error;
+      case 'error': return '#DC2626'; // Rouge pastel pour dégradation/maximum
       case 'info': return theme.colors.info;
+      case 'improvement': return '#16A34A'; // Vert pastel
+      case 'decline': return '#DC2626'; // Rouge pastel
       default: return theme.colors.primary;
     }
   };
@@ -50,7 +52,11 @@ export default function StatCard({
     <Card style={[styles.card, style]} elevation={0}>
       <Card.Content style={styles.content}>
         <View style={styles.header}>
-          <View style={[styles.iconContainer, { backgroundColor: getColor() + '15' }]}>
+          <View style={[styles.iconContainer, { 
+            backgroundColor: (color === 'success' || color === 'improvement') ? '#D1FAE5' : 
+                            (color === 'error' || color === 'decline') ? '#FEE2E2' : 
+                            getColor() + '15' 
+          }]}>
             <MaterialCommunityIcons name={icon} size={28} color={getColor()} />
           </View>
           <View style={styles.headerText}>
@@ -88,10 +94,10 @@ export default function StatCard({
 const styles = StyleSheet.create({
   card: {
     marginBottom: 16,
-    borderRadius: 8,
+    borderRadius: 20, // Augmenté de 8px à 20px (borderRadius.lg)
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#C8C8F4', // Color 04
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
@@ -109,7 +115,7 @@ const styles = StyleSheet.create({
   iconContainer: {
     width: 48,
     height: 48,
-    borderRadius: 12,
+    borderRadius: 16, // Augmenté de 12px à 16px (borderRadius.md)
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
@@ -122,7 +128,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    color: '#718096',
+    color: '#101010', // Color 03
     marginBottom: 6,
     fontWeight: '500',
   },
@@ -146,7 +152,7 @@ const styles = StyleSheet.create({
     lineHeight: 44,
   },
   subtitle: {
-    color: '#A0AEC0',
+    color: '#101010', // Color 03 - Noir pour meilleure lisibilité
     fontWeight: '400',
   },
 });

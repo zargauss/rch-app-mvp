@@ -7,10 +7,12 @@ import AppCard from '../components/ui/AppCard';
 import StatCard from '../components/ui/StatCard';
 import SegmentedControl from '../components/ui/SegmentedControl';
 import TrendChart from '../components/charts/TrendChart';
+import MultiAxisTrendChart from '../components/charts/MultiAxisTrendChart';
 import TrendIndicator from '../components/charts/TrendIndicator';
 import ScoreDistribution from '../components/charts/ScoreDistribution';
 import KeyInsights from '../components/charts/KeyInsights';
 import EmptyState from '../components/ui/EmptyState';
+import SkeletonStats from '../components/ui/SkeletonStats';
 import { useTheme } from 'react-native-paper';
 import { useFocusEffect } from '@react-navigation/native';
 import designSystem from '../theme/designSystem';
@@ -20,16 +22,27 @@ export default function StatsScreen() {
   const [stools, setStools] = useState([]);
   const [period, setPeriod] = useState('30'); // 7, 30, 90 jours
   const [dataType, setDataType] = useState('score'); // 'score' ou 'stools'
+  const [isLoading, setIsLoading] = useState(true);
   const theme = useTheme();
 
   useEffect(() => {
     loadData();
+    // Simuler un court délai pour montrer les skeletons
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 300);
+    return () => clearTimeout(timer);
   }, []);
 
   // Recharger les données à chaque fois qu'on navigue vers cet écran
   useFocusEffect(
     React.useCallback(() => {
+      setIsLoading(true);
       loadData();
+      const timer = setTimeout(() => {
+        setIsLoading(false);
+      }, 200);
+      return () => clearTimeout(timer);
     }, [])
   );
 
@@ -86,6 +99,26 @@ export default function StatsScreen() {
         return scoreEntry ? scoreEntry.score : null;
       });
 
+      // Calculer le pourcentage de selles sanglantes pour chaque jour
+      const bloodPercentageArray = dateRange.map(dateStr => {
+        // Convertir la date en timestamps (début et fin du jour)
+        const [y, m, d] = dateStr.split('-').map(Number);
+        const dayStart = new Date(y, m - 1, d, 0, 0, 0, 0).getTime();
+        const dayEnd = dayStart + 24 * 60 * 60 * 1000;
+        
+        // Filtrer les selles de ce jour
+        const dayStools = stools.filter(s => s.timestamp >= dayStart && s.timestamp < dayEnd);
+        
+        if (dayStools.length === 0) return null;
+        
+        // Compter les selles avec sang
+        const stoolsWithBlood = dayStools.filter(s => s.hasBlood).length;
+        
+        // Calculer le pourcentage
+        const percentage = (stoolsWithBlood / dayStools.length) * 100;
+        return Math.round(percentage);
+      });
+
       const validScores = chartDataArray.filter(score => score !== null);
       const average = validScores.length > 0 ? validScores.reduce((a, b) => a + b, 0) / validScores.length : null;
       const min = validScores.length > 0 ? Math.min(...validScores) : null;
@@ -94,6 +127,7 @@ export default function StatsScreen() {
       return {
         labels,
         data: chartDataArray,
+        bloodPercentageData: bloodPercentageArray,
         average,
         min,
         max,
@@ -156,6 +190,13 @@ export default function StatsScreen() {
               icon: 'toilet',
             },
           ]}
+          style={styles.segmentedButtons}
+          theme={{
+            colors: {
+              secondaryContainer: '#4C4DDC', // Color 01 pour le bouton sélectionné
+              onSecondaryContainer: '#FFFFFF',
+            }
+          }}
         />
       </View>
 
@@ -172,7 +213,11 @@ export default function StatsScreen() {
         />
       </View>
 
-      {chartData.validDays > 0 ? (
+      {isLoading ? (
+        <View style={styles.skeletonContainer}>
+          <SkeletonStats count={4} />
+        </View>
+      ) : chartData.validDays > 0 ? (
         <>
           {/* Cartes de statistiques */}
           <View style={styles.statsGrid}>
@@ -191,7 +236,7 @@ export default function StatsScreen() {
                   value={chartData.min !== null ? chartData.min.toString() : 'N/A'}
                   subtitle="Score minimum"
                   icon="target"
-                  color="success"
+                  color="improvement"
                 />
                 
                 <StatCard
@@ -199,7 +244,7 @@ export default function StatsScreen() {
                   value={chartData.max !== null ? chartData.max.toString() : 'N/A'}
                   subtitle="Résultat le plus élevé"
                   icon="alert-circle"
-                  color="error"
+                  color="decline"
                 />
               </>
             ) : (
@@ -217,7 +262,7 @@ export default function StatsScreen() {
                   value={chartData.min !== null ? chartData.min.toString() : 'N/A'}
                   subtitle="Minimum de selles"
                   icon="check-circle"
-                  color="success"
+                  color="improvement"
                 />
                 
                 <StatCard
@@ -225,7 +270,7 @@ export default function StatsScreen() {
                   value={chartData.max !== null ? chartData.max.toString() : 'N/A'}
                   subtitle="Maximum de selles"
                   icon="alert-circle"
-                  color="error"
+                  color="decline"
                 />
               </>
             )}
@@ -234,15 +279,23 @@ export default function StatsScreen() {
           {/* Graphique d'évolution */}
           <AppCard style={styles.chartCard}>
             <AppText variant="headlineLarge" style={styles.chartTitle}>
-              {dataType === 'score' ? 'Évolution du Score' : 'Évolution des Selles'}
+              {dataType === 'score' ? 'Évolution du Score et % Selles sanglantes' : 'Évolution des Selles'}
             </AppText>
             
             {Platform.OS === 'web' ? (
-              <TrendChart 
-                data={chartData.data} 
-                labels={chartData.labels}
-                period={chartData.totalDays}
-              />
+              dataType === 'score' && chartData.bloodPercentageData ? (
+                <MultiAxisTrendChart 
+                  scoreData={chartData.data} 
+                  bloodPercentageData={chartData.bloodPercentageData}
+                  labels={chartData.labels}
+                />
+              ) : (
+                <TrendChart 
+                  data={chartData.data} 
+                  labels={chartData.labels}
+                  period={chartData.totalDays}
+                />
+              )
             ) : (
               <View style={styles.nativeChartPlaceholder}>
                 <AppText variant="bodyLarge" style={styles.placeholderText}>
@@ -302,6 +355,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: designSystem.spacing[4],
     marginBottom: designSystem.spacing[4],
   },
+  segmentedButtons: {
+    // Le theme est configuré via la prop theme du composant
+  },
   periodSection: {
     paddingHorizontal: designSystem.spacing[4],
     marginBottom: designSystem.spacing[6],
@@ -313,6 +369,10 @@ const styles = StyleSheet.create({
   statsGrid: {
     paddingHorizontal: designSystem.spacing[4],
     gap: designSystem.spacing[4],
+    marginBottom: designSystem.spacing[6],
+  },
+  skeletonContainer: {
+    paddingHorizontal: designSystem.spacing[4],
     marginBottom: designSystem.spacing[6],
   },
   chartCard: {

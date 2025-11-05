@@ -227,7 +227,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   subtitle: {
-    color: '#64748B',
+    color: '#101010', // Noir pour meilleure lisibilité
     fontWeight: '600',
   },
   chartContainer: {
@@ -254,7 +254,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   legendLabel: {
-    color: '#64748B',
+    color: '#101010', // Noir pour meilleure lisibilité
     flex: 1,
   },
   legendValue: {
@@ -291,7 +291,7 @@ const styles = StyleSheet.create({
     marginRight: 6,
   },
   colorLegendText: {
-    color: '#64748B',
+    color: '#101010', // Noir pour meilleure lisibilité
     fontSize: 11,
   },
   interpretationContainer: {

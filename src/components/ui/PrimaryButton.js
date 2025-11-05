@@ -1,9 +1,11 @@
 import React from 'react';
-import { TouchableOpacity, StyleSheet, ActivityIndicator, View } from 'react-native';
+import { TouchableOpacity, StyleSheet, ActivityIndicator, View, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import AppText from './AppText';
 import designSystem from '../../theme/designSystem';
+import { usePressAnimation } from '../../utils/animations';
+import { buttonPressFeedback } from '../../utils/haptics';
 
 const { colors, spacing, borderRadius, shadows, gradients, layout } = designSystem;
 
@@ -20,6 +22,17 @@ export default function PrimaryButton({
   style,
   ...props
 }) {
+  const { scaleAnim, handlePressIn, handlePressOut } = usePressAnimation();
+
+  const handlePress = (e) => {
+    if (!disabled && !loading) {
+      buttonPressFeedback();
+    }
+    if (onPress) {
+      onPress(e);
+    }
+  };
+
   const variantConfig = {
     primary: {
       gradient: gradients.primary,
@@ -152,39 +165,47 @@ export default function PrimaryButton({
   if (outlined) {
     return (
       <TouchableOpacity
-        onPress={onPress}
+        onPress={handlePress}
         disabled={disabled || loading}
-        activeOpacity={0.7}
+        activeOpacity={1}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
         style={buttonStyle}
         {...props}
       >
-        {content}
+        <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+          {content}
+        </Animated.View>
       </TouchableOpacity>
     );
   }
 
   return (
     <TouchableOpacity
-      onPress={onPress}
+      onPress={handlePress}
       disabled={disabled || loading}
-      activeOpacity={0.8}
+      activeOpacity={1}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
       {...props}
     >
-      <LinearGradient
-        colors={config.gradient}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={buttonStyle}
-      >
-        {content}
-      </LinearGradient>
+      <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+        <LinearGradient
+          colors={config.gradient}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={buttonStyle}
+        >
+          {content}
+        </LinearGradient>
+      </Animated.View>
     </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
   button: {
-    borderRadius: borderRadius.base,
+    borderRadius: borderRadius.md, // Augmenté de base (12px) à md (16px)
     justifyContent: 'center',
     alignItems: 'center',
     ...shadows.sm,

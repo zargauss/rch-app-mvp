@@ -75,10 +75,41 @@ function MainTabs() {
 const AppNavigator = React.forwardRef((props, ref) => {
   return (
     <NavigationContainer ref={ref}>
-      <Stack.Navigator>
+      <Stack.Navigator
+        screenOptions={{
+          animation: 'fade', // Transition fade entre écrans
+          animationDuration: 250,
+          headerStyle: {
+            backgroundColor: designSystem.colors.background.tertiary,
+            elevation: 0,
+            shadowOpacity: 0,
+            borderBottomWidth: 1,
+            borderBottomColor: designSystem.colors.border.light,
+          },
+          headerTitleStyle: {
+            fontSize: designSystem.typography.fontSize.lg,
+            fontWeight: designSystem.typography.fontWeight.bold,
+            color: designSystem.colors.text.primary,
+          },
+        }}
+      >
         <Stack.Screen name="Main" component={MainTabs} options={{ headerShown: false }} />
-        <Stack.Screen name="DailySurvey" component={DailySurveyScreen} options={{ title: 'Bilan du jour' }} />
-        <Stack.Screen name="IBDiskQuestionnaire" component={IBDiskQuestionnaireScreen} options={{ title: 'Votre quotidien' }} />
+        <Stack.Screen 
+          name="DailySurvey" 
+          component={DailySurveyScreen} 
+          options={{ 
+            title: 'Bilan du jour',
+            presentation: 'modal', // Style modal pour un meilleur effet
+          }} 
+        />
+        <Stack.Screen 
+          name="IBDiskQuestionnaire" 
+          component={IBDiskQuestionnaireScreen} 
+          options={{ 
+            title: 'Votre quotidien',
+            presentation: 'modal',
+          }} 
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );

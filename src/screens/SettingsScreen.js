@@ -353,7 +353,7 @@ export default function SettingsScreen() {
       {/* Informations sur la période nocturne */}
       <AppCard style={styles.infoCard}>
         <View style={styles.infoHeader}>
-          <MaterialCommunityIcons name="weather-night" size={28} color="#2D3748" style={{ marginRight: 16 }} />
+          <MaterialCommunityIcons name="weather-night" size={28} color="#4C4DDC" style={{ marginRight: 16 }} />
           <AppText variant="headlineLarge" style={styles.infoTitle}>
             Période nocturne
           </AppText>
@@ -366,7 +366,7 @@ export default function SettingsScreen() {
       {/* Mode Développeur */}
       <AppCard style={styles.devCard}>
         <View style={styles.devHeader}>
-          <MaterialCommunityIcons name="dice-multiple" size={24} color="#065F46" style={{ marginRight: 12 }} />
+          <MaterialCommunityIcons name="dice-multiple" size={24} color="#4C4DDC" style={{ marginRight: 12 }} />
           <AppText variant="headlineLarge" style={styles.devTitle}>
             Mode Développeur
           </AppText>
@@ -444,7 +444,7 @@ export default function SettingsScreen() {
       {/* Notifications */}
       <AppCard style={styles.notificationCard}>
         <View style={styles.notificationHeader}>
-          <MaterialCommunityIcons name="bell-outline" size={24} color="#6366F1" style={{ marginRight: 12 }} />
+          <MaterialCommunityIcons name="bell-outline" size={24} color="#4C4DDC" style={{ marginRight: 12 }} />
           <AppText variant="headlineLarge" style={styles.notificationTitle}>
             Notifications
           </AppText>
@@ -456,7 +456,7 @@ export default function SettingsScreen() {
         {/* Activation des notifications */}
         <View style={styles.settingRow}>
           <View style={styles.settingLabelContainer}>
-            <MaterialCommunityIcons name="bell-check" size={20} color="#6366F1" />
+            <MaterialCommunityIcons name="bell-check" size={20} color="#4C4DDC" />
             <AppText variant="bodyMedium" style={styles.settingLabel}>
               Activer les notifications
             </AppText>
@@ -464,8 +464,8 @@ export default function SettingsScreen() {
           <Switch
             value={notificationsEnabled}
             onValueChange={handleToggleNotifications}
-            trackColor={{ false: '#CBD5E1', true: '#A5B4FC' }}
-            thumbColor={notificationsEnabled ? '#6366F1' : '#F1F5F9'}
+            trackColor={{ false: '#D4D4D8', true: '#C8C8F4' }}
+            thumbColor={notificationsEnabled ? '#4C4DDC' : '#EDEDFC'}
           />
         </View>
         
@@ -476,7 +476,7 @@ export default function SettingsScreen() {
             {/* Premier rappel */}
             <View style={styles.reminderSection}>
               <View style={styles.reminderHeader}>
-                <MaterialCommunityIcons name="clock-time-four-outline" size={20} color="#6366F1" />
+                <MaterialCommunityIcons name="clock-time-four-outline" size={20} color="#4C4DDC" />
                 <AppText variant="bodyLarge" style={styles.reminderTitle}>
                   Premier rappel
                 </AppText>
@@ -496,7 +496,7 @@ export default function SettingsScreen() {
             {/* Second rappel */}
             <View style={styles.reminderSection}>
               <View style={styles.reminderHeader}>
-                <MaterialCommunityIcons name="clock-time-eight-outline" size={20} color="#6366F1" />
+                <MaterialCommunityIcons name="clock-time-eight-outline" size={20} color="#4C4DDC" />
                 <AppText variant="bodyLarge" style={styles.reminderTitle}>
                   Deuxième rappel
                 </AppText>
@@ -517,7 +517,7 @@ export default function SettingsScreen() {
       {/* Sauvegarde des données */}
       <AppCard style={styles.backupCard}>
         <View style={styles.backupHeader}>
-          <MaterialCommunityIcons name="cloud-upload" size={24} color="#059669" style={{ marginRight: 12 }} />
+          <MaterialCommunityIcons name="cloud-upload" size={24} color="#4C4DDC" style={{ marginRight: 12 }} />
           <AppText variant="headlineLarge" style={styles.backupTitle}>
             Sauvegarde des données
           </AppText>
@@ -588,7 +588,7 @@ export default function SettingsScreen() {
       {/* Zone de danger */}
       <AppCard style={styles.dangerCard}>
         <View style={styles.dangerHeader}>
-          <MaterialCommunityIcons name="alert" size={28} color="#2D3748" style={{ marginRight: 16 }} />
+          <MaterialCommunityIcons name="alert" size={28} color="#101010" style={{ marginRight: 16 }} />
           <AppText variant="headlineLarge" style={styles.dangerTitle}>
             Zone de danger
           </AppText>
@@ -644,11 +644,11 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   title: {
-    color: '#2D3748',
+    color: '#101010', // Color 03
     fontWeight: '700',
   },
   subtitle: {
-    color: '#718096',
+    color: '#101010', // Color 03
     fontWeight: '400',
   },
   menuIcon: {
@@ -659,7 +659,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#C8C8F4', // Color 04
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
@@ -670,10 +670,10 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginBottom: 24,
     padding: 24,
-    backgroundColor: '#E8F4FD',
+    backgroundColor: '#EDEDFC', // Color 02
     borderWidth: 1,
-    borderColor: '#4A90E2',
-    shadowColor: '#4A90E2',
+    borderColor: '#4C4DDC', // Color 01
+    shadowColor: '#4C4DDC',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -685,21 +685,21 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   infoTitle: {
-    color: '#2D3748',
+    color: '#101010', // Color 03
     fontWeight: '600',
   },
   infoDescription: {
-    color: '#4A5568',
+    color: '#101010', // Color 03
     fontWeight: '400',
   },
   devCard: {
     marginHorizontal: 20,
     marginBottom: 24,
     padding: 24,
-    backgroundColor: '#F0FDF4',
+    backgroundColor: '#EDEDFC', // Color 02
     borderWidth: 1,
-    borderColor: '#10B981',
-    shadowColor: '#10B981',
+    borderColor: '#4C4DDC', // Color 01
+    shadowColor: '#4C4DDC',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -711,11 +711,11 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   devTitle: {
-    color: '#065F46',
+    color: '#101010', // Color 03
     fontWeight: '700',
   },
   devDescription: {
-    color: '#047857',
+    color: '#101010', // Color 03
     marginBottom: 20,
     lineHeight: 22,
   },
@@ -730,10 +730,10 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginBottom: 32,
     padding: 24,
-    backgroundColor: '#FFE8E8',
+    backgroundColor: '#EDEDFC', // Color 02
     borderWidth: 1,
-    borderColor: '#FF6B6B',
-    shadowColor: '#FF6B6B',
+    borderColor: '#101010', // Color 03 - Noir pour alertes
+    shadowColor: '#101010',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -745,11 +745,11 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   dangerTitle: {
-    color: '#2D3748',
+    color: '#101010', // Color 03
     fontWeight: '600',
   },
   dangerDescription: {
-    color: '#4A5568',
+    color: '#101010', // Color 03
     marginBottom: 24,
     fontWeight: '400',
   },
@@ -766,9 +766,9 @@ const styles = StyleSheet.create({
   backupCard: {
     marginHorizontal: 16,
     marginBottom: 20,
-    backgroundColor: '#F0FDF4',
+    backgroundColor: '#EDEDFC', // Color 02
     borderWidth: 1,
-    borderColor: '#BBF7D0',
+    borderColor: '#C8C8F4', // Color 04
   },
   backupHeader: {
     flexDirection: 'row',
@@ -776,11 +776,11 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   backupTitle: {
-    color: '#059669',
+    color: '#101010', // Color 03
     fontWeight: '700',
   },
   backupDescription: {
-    color: '#047857',
+    color: '#101010', // Color 03
     marginBottom: 16,
   },
   backupButtons: {
@@ -794,20 +794,20 @@ const styles = StyleSheet.create({
   manualImportContainer: {
     marginTop: 16,
     padding: 16,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#EDEDFC', // Color 02
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#C8C8F4', // Color 04
   },
   manualImportLabel: {
-    color: '#374151',
+    color: '#101010', // Color 03
     marginBottom: 8,
     fontWeight: '600',
   },
   jsonInput: {
     backgroundColor: 'white',
     borderWidth: 1,
-    borderColor: '#D1D5DB',
+    borderColor: '#C8C8F4', // Color 04
     borderRadius: 6,
     padding: 12,
     fontSize: 12,
@@ -830,10 +830,10 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginBottom: 24,
     padding: 24,
-    backgroundColor: '#EEF2FF',
+    backgroundColor: '#EDEDFC', // Color 02
     borderWidth: 1,
-    borderColor: '#C7D2FE',
-    shadowColor: '#6366F1',
+    borderColor: '#C8C8F4', // Color 04
+    shadowColor: '#4C4DDC',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -845,11 +845,11 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   notificationTitle: {
-    color: '#4338CA',
+    color: '#101010', // Color 03
     fontWeight: '700',
   },
   notificationDescription: {
-    color: '#4F46E5',
+    color: '#101010', // Color 03
     marginBottom: 20,
     lineHeight: 22,
   },
@@ -866,12 +866,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   settingLabel: {
-    color: '#3730A3',
+    color: '#101010', // Color 03
     fontWeight: '600',
   },
   divider: {
     height: 1,
-    backgroundColor: '#C7D2FE',
+    backgroundColor: '#C8C8F4', // Color 04
     marginVertical: 16,
   },
   reminderSection: {
@@ -884,11 +884,11 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   reminderTitle: {
-    color: '#4338CA',
+    color: '#101010', // Color 03
     fontWeight: '600',
   },
   reminderDescription: {
-    color: '#6366F1',
+    color: '#101010', // Color 03
     fontStyle: 'italic',
     marginBottom: 12,
     marginLeft: 28,

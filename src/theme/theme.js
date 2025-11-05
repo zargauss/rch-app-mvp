@@ -4,7 +4,21 @@ import designSystem from './designSystem';
 
 const { colors, typography } = designSystem;
 
-const systemFont = Platform.select({ ios: 'System', android: 'sans-serif', default: 'System' });
+// Inter avec fallbacks appropriés
+const getInterFont = () => {
+  if (Platform.OS === 'web') {
+    // Sur web, Inter est chargé via Google Fonts (voir App.js)
+    return 'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+  } else if (Platform.OS === 'android') {
+    // Inter sera chargé via expo-google-fonts
+    return 'Inter';
+  } else {
+    // iOS utilise System mais on peut essayer Inter si disponible
+    return 'Inter, System';
+  }
+};
+
+const interFont = getInterFont();
 
 export const theme = {
   ...DefaultTheme,
@@ -26,79 +40,79 @@ export const theme = {
     outlineVariant: colors.border.light,
     error: colors.health.danger.main,
     placeholder: colors.text.tertiary,
-    // Couleurs sémantiques personnalisées
-    success: colors.health.excellent.main,
-    warning: colors.health.moderate.main,
-    info: colors.primary[500],
+    // Couleurs sémantiques personnalisées - Palette unifiée
+    success: colors.primary[500], // #4C4DDC
+    warning: colors.primary[500], // #4C4DDC (même couleur, différenciée par opacité)
+    info: colors.primary[500], // #4C4DDC
   },
   fonts: {
     ...DefaultTheme.fonts,
-    // Titre d'écran (H1)
+    // Titre d'écran (H1) - 36px, Bold
     displayLarge: {
-      fontFamily: systemFont,
-      fontWeight: typography.fontWeight.bold,
-      fontSize: typography.fontSize['3xl'],
-      lineHeight: typography.fontSize['3xl'] * typography.lineHeight.tight,
-      letterSpacing: -0.5,
+      fontFamily: interFont,
+      fontWeight: typography.h1.fontWeight,
+      fontSize: typography.h1.fontSize,
+      lineHeight: typography.h1.lineHeight,
+      letterSpacing: typography.h1.letterSpacing,
     },
-    // Titre de section (H2)
+    // Titre de section (H2) - 28px, Bold
     displayMedium: {
-      fontFamily: systemFont,
-      fontWeight: typography.fontWeight.semiBold,
-      fontSize: typography.fontSize['2xl'],
-      lineHeight: typography.fontSize['2xl'] * typography.lineHeight.normal,
-      letterSpacing: 0,
+      fontFamily: interFont,
+      fontWeight: typography.h2.fontWeight,
+      fontSize: typography.h2.fontSize,
+      lineHeight: typography.h2.lineHeight,
+      letterSpacing: typography.h2.letterSpacing,
     },
-    // Titre de carte (H3)
+    // Titre de sous-section (H3) - 24px, SemiBold
     headlineLarge: {
-      fontFamily: systemFont,
-      fontWeight: typography.fontWeight.semiBold,
-      fontSize: typography.fontSize.xl,
-      lineHeight: typography.fontSize.xl * typography.lineHeight.normal,
-      letterSpacing: 0,
+      fontFamily: interFont,
+      fontWeight: typography.h3.fontWeight,
+      fontSize: typography.h3.fontSize,
+      lineHeight: typography.h3.lineHeight,
+      letterSpacing: typography.h3.letterSpacing,
     },
-    // Sous-titre
+    // Titre de carte (H4) - 20px, SemiBold
     headlineSmall: {
-      fontFamily: systemFont,
-      fontWeight: typography.fontWeight.semiBold,
-      fontSize: typography.fontSize.lg,
-      lineHeight: typography.fontSize.lg * typography.lineHeight.normal,
-      letterSpacing: 0,
+      fontFamily: interFont,
+      fontWeight: typography.h4.fontWeight,
+      fontSize: typography.h4.fontSize,
+      lineHeight: typography.h4.lineHeight,
+      letterSpacing: typography.h4.letterSpacing,
     },
-    // Corps de texte principal
+    // Corps de texte important (Body Large) - 18px, Regular
     bodyLarge: {
-      fontFamily: systemFont,
-      fontWeight: typography.fontWeight.regular,
-      fontSize: typography.fontSize.lg,
-      lineHeight: typography.fontSize.lg * typography.lineHeight.normal,
-      letterSpacing: 0.15,
+      fontFamily: interFont,
+      fontWeight: typography.bodyLarge.fontWeight,
+      fontSize: typography.bodyLarge.fontSize,
+      lineHeight: typography.bodyLarge.lineHeight,
+      letterSpacing: typography.bodyLarge.letterSpacing,
     },
-    // Corps de texte secondaire
+    // Corps de texte principal (Body) - 16px, Regular
     bodyMedium: {
-      fontFamily: systemFont,
-      fontWeight: typography.fontWeight.regular,
-      fontSize: typography.fontSize.base,
-      lineHeight: typography.fontSize.base * typography.lineHeight.normal,
-      letterSpacing: 0.25,
+      fontFamily: interFont,
+      fontWeight: typography.body.fontWeight,
+      fontSize: typography.body.fontSize,
+      lineHeight: typography.body.lineHeight,
+      letterSpacing: typography.body.letterSpacing,
     },
-    // Légende et texte petit
+    // Label de formulaire - 14px, Medium
     labelMedium: {
-      fontFamily: systemFont,
-      fontWeight: typography.fontWeight.medium,
-      fontSize: typography.fontSize.sm,
-      lineHeight: typography.fontSize.sm * typography.lineHeight.normal,
-      letterSpacing: 0.5,
+      fontFamily: interFont,
+      fontWeight: typography.label.fontWeight,
+      fontSize: typography.label.fontSize,
+      lineHeight: typography.label.lineHeight,
+      letterSpacing: typography.label.letterSpacing,
     },
-    // Texte très petit
+    // Caption - 12px, Regular
     labelSmall: {
-      fontFamily: systemFont,
-      fontWeight: typography.fontWeight.regular,
-      fontSize: typography.fontSize.xs,
-      lineHeight: typography.fontSize.xs * typography.lineHeight.normal,
-      letterSpacing: 0.5,
+      fontFamily: interFont,
+      fontWeight: typography.caption.fontWeight,
+      fontSize: typography.caption.fontSize,
+      lineHeight: typography.caption.lineHeight,
+      letterSpacing: typography.caption.letterSpacing,
     },
   },
-  roundness: designSystem.borderRadius.base,
+  roundness: designSystem.borderRadius.md,
   spacing: (m) => designSystem.spacing[2] * m, // Base unit 8px
 };
 

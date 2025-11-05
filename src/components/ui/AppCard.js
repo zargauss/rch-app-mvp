@@ -1,7 +1,9 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import designSystem from '../../theme/designSystem';
+import { usePressAnimation } from '../../utils/animations';
+import { cardPressFeedback } from '../../utils/haptics';
 
 const { colors, spacing, borderRadius, shadows } = designSystem;
 
@@ -12,8 +14,22 @@ export default function AppCard({
   gradient = false,
   gradientColors = null,
   noPadding = false,
+  onPress,
+  pressable = false,
   ...props 
 }) {
+  const { scaleAnim, handlePressIn, handlePressOut } = usePressAnimation();
+  const isPressable = onPress || pressable;
+
+  const handlePress = (e) => {
+    if (isPressable) {
+      cardPressFeedback();
+    }
+    if (onPress) {
+      onPress(e);
+    }
+  };
+
   const variantStyles = {
     default: {
       backgroundColor: colors.background.tertiary,
@@ -53,6 +69,53 @@ export default function AppCard({
     style,
   ];
 
+  const cardContent = (
+    <>
+      {children}
+    </>
+  );
+
+  if (isPressable) {
+    const AnimatedComponent = gradient && gradientColors ? Animated.createAnimatedComponent(LinearGradient) : Animated.View;
+    
+    if (gradient && gradientColors) {
+      return (
+        <TouchableOpacity
+          activeOpacity={1}
+          onPress={handlePress}
+          onPressIn={handlePressIn}
+          onPressOut={handlePressOut}
+          disabled={!onPress}
+          {...props}
+        >
+          <AnimatedComponent
+            colors={gradientColors}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={[cardStyle, { transform: [{ scale: scaleAnim }] }]}
+          >
+            {cardContent}
+          </AnimatedComponent>
+        </TouchableOpacity>
+      );
+    }
+
+    return (
+      <TouchableOpacity
+        activeOpacity={1}
+        onPress={handlePress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        disabled={!onPress}
+        {...props}
+      >
+        <Animated.View style={[cardStyle, { transform: [{ scale: scaleAnim }] }]}>
+          {cardContent}
+        </Animated.View>
+      </TouchableOpacity>
+    );
+  }
+
   if (gradient && gradientColors) {
     return (
       <LinearGradient
@@ -62,21 +125,21 @@ export default function AppCard({
         style={cardStyle}
         {...props}
       >
-        {children}
+        {cardContent}
       </LinearGradient>
     );
   }
 
   return (
     <View style={cardStyle} {...props}>
-      {children}
+      {cardContent}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: borderRadius.md,
+    borderRadius: borderRadius.lg, // Augmenté de md (16px) à lg (20px)
     padding: spacing[4],
     marginBottom: spacing[4],
   },

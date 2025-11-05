@@ -7,8 +7,8 @@ import AppText from '../components/ui/AppText';
 import PrimaryButton from '../components/ui/PrimaryButton';
 import SecondaryButton from '../components/ui/SecondaryButton';
 import StatCard from '../components/ui/StatCard';
-import FloatingActionButton from '../components/ui/FloatingActionButton';
 import Toast from '../components/ui/Toast';
+import SkeletonCard from '../components/ui/SkeletonCard';
 import DateTimeInput, { isValidDate, isValidTime } from '../components/ui/DateTimeInput';
 import Slider from '@react-native-community/slider';
 import storage from '../utils/storage';
@@ -18,6 +18,7 @@ import { getSurveyDayKey } from '../utils/dayKey';
 import { useTheme } from 'react-native-paper';
 import designSystem from '../theme/designSystem';
 import { fetchRSSFeed } from '../services/rssService';
+import { saveFeedback, errorFeedback, toggleFeedback } from '../utils/haptics';
 
 export default function HomeScreen({ route }) {
   const navigation = useNavigation();
@@ -455,11 +456,13 @@ export default function HomeScreen({ route }) {
   const handleSave = () => {
     // Valider la date et l'heure
     if (!isValidDate(dateInput)) {
+      errorFeedback();
       showToast('Date invalide', 'error');
       return;
     }
 
     if (!isValidTime(timeInput)) {
+      errorFeedback();
       showToast('Heure invalide', 'error');
       return;
     }
@@ -500,6 +503,7 @@ export default function HomeScreen({ route }) {
         storage.set('scoresHistory', JSON.stringify(newHistory));
       }
     }
+    saveFeedback();
     hideModal();
   };
 
@@ -522,76 +526,79 @@ export default function HomeScreen({ route }) {
         contentContainerStyle={styles.scrollViewContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* En-tête avec message d'accueil */}
-        <View style={styles.header}>
-          <View style={styles.headerTop}>
-            <View style={styles.profileSection}>
-              <View style={styles.profileIcon}>
-                <MaterialCommunityIcons name="account-circle" size={32} color="#4A90E2" />
-              </View>
-              <View style={styles.greetingSection}>
-                <AppText variant="displayMedium" style={styles.greeting}>
-                  Bonjour !
-                </AppText>
-                <AppText variant="bodyMedium" style={styles.subGreeting}>
-                  Comment vous sentez-vous aujourd'hui ?
-                </AppText>
-              </View>
-            </View>
-          </View>
-        </View>
-
-        {/* Actions principales - Mises en avant */}
+        {/* Actions principales - Grille 2x2 */}
         <View style={styles.mainActionsContainer}>
-          <AppCard style={styles.mainActionCard}>
-            <AppText variant="headlineLarge" style={styles.mainActionTitle}>
-              Actions importantes du jour
-            </AppText>
-            
-            <View style={styles.mainActionButtons}>
-              <PrimaryButton
-                mode="contained"
-                onPress={showModal}
-                style={styles.mainPrimaryAction}
-                icon="plus"
-                buttonColor="#4ECDC4"
-              >
-                Enregistrer une selle
-              </PrimaryButton>
-              
-              <PrimaryButton
-                mode="contained"
-                onPress={navigateToSurvey}
-                style={styles.mainSecondaryAction}
-                icon={surveyCompleted ? "check" : "clipboard-text"}
-                buttonColor="#4A90E2"
-                disabled={false}
-              >
-                {surveyCompleted ? "Modifier le bilan" : "Compléter le bilan"}
-              </PrimaryButton>
-              
-              <PrimaryButton
-                mode="contained"
-                onPress={showTreatmentModal}
-                style={styles.mainSecondaryAction}
-                icon="pill"
-                buttonColor="#9B59B6"
-              >
-                Prise de traitement
-              </PrimaryButton>
-              
-              <PrimaryButton
-                mode="contained"
-                onPress={() => navigation.navigate('IBDiskQuestionnaire')}
-                style={styles.mainSecondaryAction}
-                icon="chart-box-outline"
-                buttonColor="#F39C12"
-                disabled={!ibdiskAvailable}
-              >
-                {ibdiskAvailable ? 'Votre quotidien' : `Disponible dans ${ibdiskDaysRemaining} jour${ibdiskDaysRemaining > 1 ? 's' : ''}`}
-              </PrimaryButton>
-            </View>
-          </AppCard>
+          <View style={styles.actionsGrid}>
+            {/* Bouton 1: Enregistrer une selle */}
+            <AppCard
+              onPress={showModal}
+              pressable
+              style={styles.actionCard}
+            >
+              <View style={styles.actionCardContent}>
+                <MaterialCommunityIcons name="plus-circle" size={24} color="#4C4DDC" />
+                <AppText variant="body" style={styles.actionTitle} weight="semiBold">
+                  Enregistrer une selle
+                </AppText>
+              </View>
+            </AppCard>
+
+            {/* Bouton 2: Compléter le bilan */}
+            <AppCard
+              onPress={navigateToSurvey}
+              pressable
+              style={styles.actionCard}
+            >
+              <View style={styles.actionCardContent}>
+                <MaterialCommunityIcons 
+                  name={surveyCompleted ? "check-circle" : "clipboard-text"} 
+                  size={24} 
+                  color="#4C4DDC" 
+                />
+                <AppText variant="body" style={styles.actionTitle} weight="semiBold">
+                  {surveyCompleted ? "Modifier le bilan" : "Compléter le bilan"}
+                </AppText>
+              </View>
+            </AppCard>
+
+            {/* Bouton 3: Prise de traitement */}
+            <AppCard
+              onPress={showTreatmentModal}
+              pressable
+              style={styles.actionCard}
+            >
+              <View style={styles.actionCardContent}>
+                <MaterialCommunityIcons name="pill" size={24} color="#4C4DDC" />
+                <AppText variant="body" style={styles.actionTitle} weight="semiBold">
+                  Prise de traitement
+                </AppText>
+              </View>
+            </AppCard>
+
+            {/* Bouton 4: Votre quotidien */}
+            <AppCard
+              onPress={ibdiskAvailable ? () => navigation.navigate('IBDiskQuestionnaire') : null}
+              pressable={ibdiskAvailable}
+              style={[
+                styles.actionCard,
+                !ibdiskAvailable && styles.actionCardDisabled
+              ]}
+            >
+              <View style={styles.actionCardContent}>
+                <MaterialCommunityIcons name="chart-box-outline" size={24} color="#4C4DDC" />
+                <AppText 
+                  variant="body" 
+                  style={[
+                    styles.actionTitle, 
+                    !ibdiskAvailable && styles.actionTitleDisabled
+                  ]} 
+                  weight="semiBold"
+                >
+                  {ibdiskAvailable ? 'Votre quotidien' : `Disponible dans ${ibdiskDaysRemaining} jour${ibdiskDaysRemaining > 1 ? 's' : ''}`}
+                </AppText>
+              </View>
+            </AppCard>
+          </View>
         </View>
 
         {/* Cartes de résumé */}
@@ -628,7 +635,7 @@ export default function HomeScreen({ route }) {
         <AppCard style={styles.newsCard}>
           <View style={styles.newsHeader}>
             <MaterialCommunityIcons name="newspaper" size={24} color={designSystem.colors.primary[500]} />
-            <AppText variant="h4" style={styles.newsTitle}>
+            <AppText variant="h3" style={styles.newsTitle}>
               Actualités AFA
             </AppText>
           </View>
@@ -637,11 +644,7 @@ export default function HomeScreen({ route }) {
           </AppText>
           
           {rssLoading ? (
-            <View style={styles.newsLoading}>
-              <AppText variant="bodyMedium" style={styles.newsLoadingText}>
-                Chargement des actualités...
-              </AppText>
-            </View>
+            <SkeletonCard count={3} />
           ) : rssArticles.length > 0 ? (
             <View style={styles.newsItems}>
               {rssArticles.map((article, index) => (
@@ -656,7 +659,7 @@ export default function HomeScreen({ route }) {
                       </AppText>
                     </View>
                   </View>
-                  <AppText variant="bodyMedium" style={styles.newsItemTitle}>
+                  <AppText variant="body" style={styles.newsItemTitle}>
                     {article.title}
                   </AppText>
                   <AppText variant="bodySmall" style={styles.newsItemExcerpt}>
@@ -693,19 +696,12 @@ export default function HomeScreen({ route }) {
         </AppCard>
       </ScrollView>
 
-      {/* Bouton d'action flottant */}
-      <FloatingActionButton
-        onPress={showModal}
-        icon="+"
-        label="Ajouter"
-      />
-
       {/* Modal d'enregistrement de selle */}
       <Portal>
         <Modal visible={visible} onDismiss={hideModal} contentContainerStyle={styles.modalContainer}>
           <AppCard style={styles.modalCard}>
             <ScrollView showsVerticalScrollIndicator={false} style={styles.modalScroll}>
-              <AppText variant="headlineLarge" style={styles.modalTitle}>
+              <AppText variant="h2" style={styles.modalTitle}>
                 Nouvelle selle
               </AppText>
               
@@ -747,7 +743,10 @@ export default function HomeScreen({ route }) {
                 <AppText variant="bodyLarge">Présence de sang</AppText>
                 <Switch 
                   value={hasBlood} 
-                  onValueChange={setHasBlood}
+                  onValueChange={(value) => {
+                    toggleFeedback();
+                    setHasBlood(value);
+                  }}
                   color={theme.colors.error}
                 />
               </View>
@@ -883,84 +882,43 @@ const styles = StyleSheet.create({
   scrollViewContent: {
     paddingBottom: 100,
   },
-  header: {
-    paddingTop: designSystem.spacing[4],
-    paddingBottom: designSystem.spacing[8],
-    paddingHorizontal: designSystem.spacing[4],
-  },
-  headerTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  profileSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  profileIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: designSystem.colors.primary[100],
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: designSystem.spacing[4],
-    borderWidth: 2,
-    borderColor: designSystem.colors.background.tertiary,
-  },
-  greetingSection: {
-    flex: 1,
-  },
-  greeting: {
-    color: designSystem.colors.text.primary,
-    marginBottom: designSystem.spacing[1],
-  },
-  subGreeting: {
-    color: designSystem.colors.text.secondary,
-  },
   statsContainer: {
     marginBottom: designSystem.spacing[6],
   },
   mainActionsContainer: {
-    marginBottom: designSystem.spacing[8],
-  },
-  mainActionCard: {
-    padding: designSystem.spacing[7],
-    backgroundColor: designSystem.colors.background.tertiary,
-    borderWidth: 2,
-    borderColor: designSystem.colors.primary[500],
-    ...designSystem.shadows.lg,
-  },
-  mainActionTitle: {
-    color: designSystem.colors.text.primary,
     marginBottom: designSystem.spacing[6],
-    textAlign: 'center',
+    paddingHorizontal: designSystem.spacing[4],
+    paddingTop: designSystem.spacing[4],
   },
-  mainActionButtons: {
-    gap: designSystem.spacing[4],
-  },
-  mainPrimaryAction: {
-    marginBottom: designSystem.spacing[2],
-    borderRadius: designSystem.borderRadius.base,
-    paddingVertical: designSystem.spacing[2],
-  },
-  mainSecondaryAction: {
-    marginBottom: designSystem.spacing[2],
-    borderRadius: designSystem.borderRadius.base,
-    paddingVertical: designSystem.spacing[2],
-  },
-  actionsContainer: {
-    marginBottom: designSystem.spacing[6],
+  actionsGrid: {
+    flexDirection: 'column',
+    gap: designSystem.spacing[3],
   },
   actionCard: {
-    padding: designSystem.spacing[6],
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: designSystem.colors.background.tertiary,
-    ...designSystem.shadows.base,
+    borderRadius: designSystem.borderRadius.lg,
+    padding: designSystem.spacing[4],
+    ...designSystem.shadows.md,
+    borderWidth: 1,
+    borderColor: designSystem.colors.border.light,
+  },
+  actionCardDisabled: {
+    opacity: 0.6,
+  },
+  actionCardContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    gap: designSystem.spacing[3],
   },
   actionTitle: {
+    flex: 1,
     color: designSystem.colors.text.primary,
-    marginBottom: designSystem.spacing[5],
+  },
+  actionTitleDisabled: {
+    color: designSystem.colors.text.secondary,
   },
   actionButtons: {
     gap: designSystem.spacing[4],
@@ -1023,7 +981,7 @@ const styles = StyleSheet.create({
   },
   newsItemTitle: {
     color: designSystem.colors.text.primary,
-    fontWeight: designSystem.typography.fontWeight.semiBold,
+    fontWeight: designSystem.typography.fontWeight.normal, // Style texte normal
     marginBottom: designSystem.spacing[1],
   },
   newsItemExcerpt: {

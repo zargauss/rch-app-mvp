@@ -1,9 +1,10 @@
 import React from 'react';
-import { View, StyleSheet, Modal, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
+import { View, StyleSheet, Modal, TouchableOpacity, ScrollView, Dimensions, Animated } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import AppCard from './AppCard';
 import AppText from './AppText';
 import designSystem from '../../theme/designSystem';
+import { useModalAnimation } from '../../utils/animations';
 
 const { colors, spacing, borderRadius } = designSystem;
 const { width, height } = Dimensions.get('window');
@@ -17,6 +18,8 @@ export default function AppModal({
   scrollable = true,
   showCloseButton = true,
 }) {
+  const { fadeAnim, scaleAnim, overlayFade } = useModalAnimation(visible);
+
   if (!visible) return null;
 
   const modalContent = (
@@ -48,22 +51,31 @@ export default function AppModal({
     <Modal
       visible={visible}
       transparent
-      animationType="fade"
+      animationType="none"
       onRequestClose={onClose}
       statusBarTranslucent
     >
-      <View style={styles.overlay}>
+      <Animated.View style={[styles.overlay, { opacity: overlayFade }]}>
         <TouchableOpacity 
           style={styles.backdrop} 
           activeOpacity={1} 
           onPress={onClose}
         />
-        <View style={[styles.container, { maxWidth }]}>
+        <Animated.View 
+          style={[
+            styles.container, 
+            { 
+              maxWidth,
+              opacity: fadeAnim,
+              transform: [{ scale: scaleAnim }],
+            }
+          ]}
+        >
           <AppCard style={styles.card}>
             {modalContent}
           </AppCard>
-        </View>
-      </View>
+        </Animated.View>
+      </Animated.View>
     </Modal>
   );
 }

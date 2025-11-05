@@ -1,5 +1,5 @@
 ﻿import React, { useEffect, useMemo, useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import { Text, Button, RadioButton, Switch } from 'react-native-paper';
 import AppText from '../components/ui/AppText';
 import PrimaryButton from '../components/ui/PrimaryButton';
@@ -110,86 +110,90 @@ export default function DailySurveyScreen() {
 
   return (
     <View style={styles.container}>
-      <AppText variant="title" style={styles.title}>Bilan du jour</AppText>
-
-      <AppCard style={styles.block}>
-      <AppText style={styles.question}>Incontinence fécale</AppText>
-      <RadioButton.Group onValueChange={setFecalIncontinence} value={fecalIncontinence}>
-        <View style={styles.row}><RadioButton value="oui" /><AppText>Oui</AppText></View>
-        <View style={styles.row}><RadioButton value="non" /><AppText>Non</AppText></View>
-      </RadioButton.Group>
-      </AppCard>
-
-      <AppCard style={styles.block}>
-      <AppText style={styles.question}>Douleurs abdominales</AppText>
-      <View style={styles.horizontalButtons}>
-        {[
-          { value: 0, label: 'Aucune' },
-          { value: 1, label: 'Légères' },
-          { value: 2, label: 'Moyennes' },
-          { value: 3, label: 'Intenses' }
-        ].map((option) => (
-          <View key={option.value} style={styles.buttonContainer}>
-            <AppText 
-              style={[
-                styles.buttonText, 
-                abdominalPain === option.value && styles.selectedButtonText
-              ]}
-              onPress={() => setAbdominalPain(option.value)}
-            >
-              {option.label}
-            </AppText>
-            {abdominalPain === option.value && <View style={styles.selectedIndicator} />}
-          </View>
-        ))}
-      </View>
-      </AppCard>
-
-      <AppCard style={styles.block}>
-      <AppText style={styles.question}>État général</AppText>
-      <View style={styles.horizontalButtons}>
-        {[
-          { value: 0, label: 'Parfait' },
-          { value: 1, label: 'Très bon' },
-          { value: 2, label: 'Bon' },
-          { value: 3, label: 'Moyen' },
-          { value: 4, label: 'Mauvais' },
-          { value: 5, label: 'Très mauvais' }
-        ].map((option) => (
-          <View key={option.value} style={styles.buttonContainer}>
-            <AppText 
-              style={[
-                styles.buttonText, 
-                generalState === option.value && styles.selectedButtonText
-              ]}
-              onPress={() => setGeneralState(option.value)}
-            >
-              {option.label}
-            </AppText>
-            {generalState === option.value && <View style={styles.selectedIndicator} />}
-          </View>
-        ))}
-      </View>
-      </AppCard>
-
-      <AppCard style={styles.block}>
-      <AppText style={styles.question}>Prise d'un antidiarrhéique</AppText>
-      <View style={styles.row}>
-        <AppText>Oui</AppText>
-        <Switch value={antidiarrheal === 'oui'} onValueChange={(v)=>setAntidiarrheal(v ? 'oui' : 'non')} />
-      </View>
-      </AppCard>
-
-      <PrimaryButton 
-        mode="contained" 
-        onPress={handleSave} 
-        disabled={!hasChanges()} 
-        style={styles.save}
-        buttonColor="#4A90E2"
+      <ScrollView 
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
       >
-        Enregistrer mon bilan
-      </PrimaryButton>
-      {alreadySubmitted ? <Text style={styles.info}>Bilan déjà enregistré aujourd'hui (modifications possibles).</Text> : null}
+        <AppCard style={styles.block}>
+          <AppText style={styles.question}>Incontinence fécale</AppText>
+          <RadioButton.Group onValueChange={setFecalIncontinence} value={fecalIncontinence}>
+            <View style={styles.row}><RadioButton value="oui" /><AppText>Oui</AppText></View>
+            <View style={styles.row}><RadioButton value="non" /><AppText>Non</AppText></View>
+          </RadioButton.Group>
+        </AppCard>
+
+        <AppCard style={styles.block}>
+          <AppText style={styles.question}>Douleurs abdominales</AppText>
+          <View style={styles.horizontalButtons}>
+            {[
+              { value: 0, label: 'Aucune' },
+              { value: 1, label: 'Légères' },
+              { value: 2, label: 'Moyennes' },
+              { value: 3, label: 'Intenses' }
+            ].map((option) => (
+              <View key={option.value} style={styles.buttonContainer}>
+                <AppText 
+                  style={[
+                    styles.buttonText, 
+                    abdominalPain === option.value && styles.selectedButtonText
+                  ]}
+                  onPress={() => setAbdominalPain(option.value)}
+                >
+                  {option.label}
+                </AppText>
+                {abdominalPain === option.value && <View style={styles.selectedIndicator} />}
+              </View>
+            ))}
+          </View>
+        </AppCard>
+
+        <AppCard style={styles.block}>
+          <AppText style={styles.question}>État général</AppText>
+          <View style={styles.horizontalButtons}>
+            {[
+              { value: 0, label: 'Parfait' },
+              { value: 1, label: 'Très bon' },
+              { value: 2, label: 'Bon' },
+              { value: 3, label: 'Moyen' },
+              { value: 4, label: 'Mauvais' },
+              { value: 5, label: 'Très mauvais' }
+            ].map((option) => (
+              <View key={option.value} style={styles.buttonContainer}>
+                <AppText 
+                  style={[
+                    styles.buttonText, 
+                    generalState === option.value && styles.selectedButtonText
+                  ]}
+                  onPress={() => setGeneralState(option.value)}
+                >
+                  {option.label}
+                </AppText>
+                {generalState === option.value && <View style={styles.selectedIndicator} />}
+              </View>
+            ))}
+          </View>
+        </AppCard>
+
+        <AppCard style={styles.block}>
+          <AppText style={styles.question}>Prise d'un antidiarrhéique</AppText>
+          <View style={styles.row}>
+            <AppText>Oui</AppText>
+            <Switch value={antidiarrheal === 'oui'} onValueChange={(v)=>setAntidiarrheal(v ? 'oui' : 'non')} />
+          </View>
+        </AppCard>
+
+        <PrimaryButton 
+          mode="contained" 
+          onPress={handleSave} 
+          disabled={!hasChanges()} 
+          style={styles.save}
+          buttonColor="#4C4DDC"
+        >
+          Enregistrer mon bilan
+        </PrimaryButton>
+        {alreadySubmitted ? <Text style={styles.info}>Bilan déjà enregistré aujourd'hui (modifications possibles).</Text> : null}
+      </ScrollView>
     </View>
   );
 }
@@ -197,13 +201,17 @@ export default function DailySurveyScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16
   },
-  title: {
-    marginBottom: 16
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: 16,
+    paddingTop: 8, // Réduit pour économiser l'espace
+    paddingBottom: 24, // Espace en bas pour que le bouton soit visible
   },
   question: {
-    marginTop: 16,
+    marginTop: 0, // Supprimé pour réduire l'espace
     marginBottom: 8
   },
   row: {
@@ -227,20 +235,20 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 16,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: '#EDEDFC',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#C8C8F4',
     minWidth: 60,
     alignItems: 'center'
   },
   buttonText: {
     fontSize: 12,
     fontWeight: '500',
-    color: '#718096',
+    color: '#101010',
     textAlign: 'center'
   },
   selectedButtonText: {
-    color: '#4A90E2',
+    color: '#4C4DDC',
     fontWeight: '600'
   },
   selectedIndicator: {
@@ -251,20 +259,23 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#4A90E2'
+    backgroundColor: '#4C4DDC'
   },
   save: {
-    marginTop: 32,
-    marginBottom: 16,
+    marginTop: 16, // Réduit de 32 à 16 pour économiser l'espace
+    marginBottom: 8, // Réduit de 16 à 8
     alignSelf: 'stretch',
-    paddingVertical: 12,
+    paddingVertical: 14, // Légèrement réduit de 16 à 14
     borderRadius: 16,
-    elevation: 4
+    elevation: 4,
+    minHeight: 56, // Hauteur minimale pour faciliter le clic
   },
   info: {
     marginTop: 8
   },
   block: {
-    marginBottom: 16
+    marginBottom: 12, // Réduit de 16 à 12 pour économiser l'espace
+    paddingTop: 12, // Réduit le padding vertical supérieur (par défaut 16)
+    paddingBottom: 12, // Réduit le padding vertical inférieur (par défaut 16)
   }
 });

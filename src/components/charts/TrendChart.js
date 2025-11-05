@@ -27,10 +27,10 @@ const TrendChart = ({ data, labels, period }) => {
       const x = padding.left + (index / (data.length - 1)) * innerWidth;
       const y = padding.top + innerHeight - ((value - minScore) / range) * innerHeight;
 
-      // Déterminer la couleur selon le score
-      let color = '#10B981'; // Vert
-      if (value >= 7) color = '#EF4444'; // Rouge
-      else if (value >= 4) color = '#F59E0B'; // Orange
+      // Déterminer la couleur selon le score - Palette unifiée
+      let color = '#4C4DDC'; // Color 01 - Principal
+      if (value >= 7) color = '#101010'; // Color 03 - Noir pour alertes
+      else if (value >= 4) color = '#4C4DDC'; // Color 01 avec opacité différente
 
       return { x, y, value, color, index };
     }).filter(p => p !== null);
@@ -109,7 +109,7 @@ const TrendChart = ({ data, labels, period }) => {
                 y1={line.y}
                 x2={chartWidth - padding.right}
                 y2={line.y}
-                stroke="#E2E8F0"
+                stroke="#C8C8F4"
                 strokeWidth="1"
                 strokeDasharray="4 4"
               />
@@ -117,7 +117,7 @@ const TrendChart = ({ data, labels, period }) => {
                 x={padding.left - 10}
                 y={line.y + 4}
                 fontSize="10"
-                fill="#94A3B8"
+                fill="#D4D4D8"
                 textAnchor="end"
               >
                 {line.value}
@@ -129,8 +129,8 @@ const TrendChart = ({ data, labels, period }) => {
         {/* Zones colorées */}
         <defs>
           <linearGradient id="areaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#4A90E2" stopOpacity="0.2" />
-            <stop offset="100%" stopColor="#4A90E2" stopOpacity="0.05" />
+            <stop offset="0%" stopColor="#4C4DDC" stopOpacity="0.2" />
+            <stop offset="100%" stopColor="#4C4DDC" stopOpacity="0.05" />
           </linearGradient>
         </defs>
 
@@ -143,7 +143,7 @@ const TrendChart = ({ data, labels, period }) => {
         {/* Ligne de données */}
         <path
           d={linePath}
-          stroke="#4A90E2"
+          stroke="#4C4DDC"
           strokeWidth="3"
           fill="none"
           strokeLinecap="round"
@@ -176,7 +176,7 @@ const TrendChart = ({ data, labels, period }) => {
           y1={chartHeight - padding.bottom}
           x2={chartWidth - padding.right}
           y2={chartHeight - padding.bottom}
-          stroke="#CBD5E0"
+          stroke="#C8C8F4"
           strokeWidth="2"
         />
 
@@ -187,7 +187,7 @@ const TrendChart = ({ data, labels, period }) => {
             x={label.x}
             y={chartHeight - padding.bottom + 20}
             fontSize="10"
-            fill="#64748B"
+            fill="#101010"
             textAnchor="middle"
           >
             {label.label}
@@ -200,7 +200,7 @@ const TrendChart = ({ data, labels, period }) => {
           y1={padding.top}
           x2={padding.left}
           y2={chartHeight - padding.bottom}
-          stroke="#CBD5E0"
+          stroke="#C8C8F4"
           strokeWidth="2"
         />
       </svg>
@@ -222,7 +222,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   emptyText: {
-    color: '#94A3B8',
+    color: '#101010', // Color 03 - Noir pour meilleure lisibilité
   },
 });
 

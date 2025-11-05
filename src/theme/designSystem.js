@@ -2,18 +2,18 @@
 // Système de design complet pour l'application
 
 export const colors = {
-  // Couleurs principales - Palette médicale douce
+  // Couleurs principales - Palette unifiée
   primary: {
-    50: '#EEF2FF',
-    100: '#E0E7FF',
-    200: '#C7D2FE',
-    300: '#A5B4FC',
-    400: '#818CF8',
-    500: '#6366F1', // Principale
-    600: '#4F46E5',
-    700: '#4338CA',
-    800: '#3730A3',
-    900: '#312E81',
+    50: '#EDEDFC',
+    100: '#EDEDFC',
+    200: '#C8C8F4',
+    300: '#C8C8F4',
+    400: '#4C4DDC',
+    500: '#4C4DDC', // Principale (Color 01)
+    600: '#4C4DDC',
+    700: '#4C4DDC',
+    800: '#4C4DDC',
+    900: '#101010', // Color 03
   },
   
   // Couleurs secondaires - Vert médical
@@ -30,32 +30,43 @@ export const colors = {
     900: '#14532D',
   },
   
-  // États de santé
+  // États de santé - Utilisant uniquement la palette unifiée
   health: {
     excellent: {
-      main: '#10B981',
-      light: '#D1FAE5',
-      dark: '#047857',
+      main: '#4C4DDC', // Color 01 - pour les états positifs
+      light: '#EDEDFC', // Color 02 - fond clair
+      dark: '#4C4DDC', // Color 01
     },
     good: {
-      main: '#3B82F6',
-      light: '#DBEAFE',
-      dark: '#1E40AF',
+      main: '#4C4DDC', // Color 01
+      light: '#C8C8F4', // Color 04 - fond lavande
+      dark: '#4C4DDC', // Color 01
     },
     moderate: {
-      main: '#F59E0B',
-      light: '#FEF3C7',
-      dark: '#D97706',
+      main: '#4C4DDC', // Color 01 - avec opacité pour distinction
+      light: '#C8C8F4', // Color 04
+      dark: '#4C4DDC', // Color 01
     },
     warning: {
-      main: '#F97316',
-      light: '#FFEDD5',
-      dark: '#EA580C',
+      main: '#4C4DDC', // Color 01
+      light: '#EDEDFC', // Color 02
+      dark: '#4C4DDC', // Color 01
     },
     danger: {
-      main: '#EF4444',
-      light: '#FEE2E2',
-      dark: '#DC2626',
+      main: '#101010', // Color 03 - noir pour les alertes
+      light: '#EDEDFC', // Color 02
+      dark: '#101010', // Color 03
+    },
+    // Couleurs pastel pour amélioration/dégradation
+    improvement: {
+      main: '#86EFAC', // Vert pastel pour amélioration
+      light: '#D1FAE5', // Vert pastel très clair
+      dark: '#16A34A', // Vert plus foncé
+    },
+    decline: {
+      main: '#FCA5A5', // Rouge pastel pour dégradation
+      light: '#FEE2E2', // Rouge pastel très clair
+      dark: '#DC2626', // Rouge plus foncé
     },
   },
   
@@ -75,38 +86,112 @@ export const colors = {
   
   // Background et surface
   background: {
-    primary: '#FAFBFC',
-    secondary: '#F3F4F6',
+    primary: '#EDEDFC', // Color 02
+    secondary: '#C8C8F4', // Color 04
     tertiary: '#FFFFFF',
   },
   
   // Texte
   text: {
-    primary: '#1F2937',
-    secondary: '#6B7280',
-    tertiary: '#9CA3AF',
-    disabled: '#D1D5DB',
+    primary: '#101010', // Color 03 - Noir principal
+    secondary: '#101010', // Color 03 - Noir pour meilleure lisibilité (au lieu de bleu)
+    tertiary: '#101010', // Color 03 - Noir au lieu de gris pour meilleure lisibilité
+    disabled: '#D4D4D8', // Color 05 - Gris uniquement pour les éléments désactivés
     inverse: '#FFFFFF',
   },
   
   // Bordures
   border: {
-    light: '#F3F4F6',
-    medium: '#E5E7EB',
-    dark: '#D1D5DB',
+    light: '#C8C8F4', // Color 04
+    medium: '#D4D4D8', // Color 05
+    dark: '#4C4DDC', // Color 01
   },
 };
 
 export const typography = {
-  // Famille de polices
+  // Famille de polices - Inter
   fontFamily: {
-    regular: 'System',
-    medium: 'System',
-    semiBold: 'System',
-    bold: 'System',
+    regular: 'Inter',
+    medium: 'Inter-Medium',
+    semiBold: 'Inter-SemiBold',
+    bold: 'Inter-Bold',
+    // Fallback pour web
+    fallback: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
   },
   
-  // Tailles de police
+  // Hiérarchie typographique claire
+  // H1 - Titre principal d'écran (36px)
+  h1: {
+    fontSize: 36,
+    lineHeight: 44,
+    fontWeight: '700',
+    letterSpacing: -0.5,
+  },
+  // H2 - Titre de section (28px)
+  h2: {
+    fontSize: 28,
+    lineHeight: 36,
+    fontWeight: '700',
+    letterSpacing: -0.3,
+  },
+  // H3 - Titre de sous-section (24px)
+  h3: {
+    fontSize: 24,
+    lineHeight: 32,
+    fontWeight: '600',
+    letterSpacing: 0,
+  },
+  // H4 - Titre de carte (20px)
+  h4: {
+    fontSize: 20,
+    lineHeight: 28,
+    fontWeight: '600',
+    letterSpacing: 0,
+  },
+  // Body Large - Texte important (18px)
+  bodyLarge: {
+    fontSize: 18,
+    lineHeight: 28,
+    fontWeight: '400',
+    letterSpacing: 0.15,
+  },
+  // Body - Texte principal (16px)
+  body: {
+    fontSize: 16,
+    lineHeight: 24,
+    fontWeight: '400',
+    letterSpacing: 0.25,
+  },
+  // Body Small - Texte secondaire (14px)
+  bodySmall: {
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: '400',
+    letterSpacing: 0.25,
+  },
+  // Caption - Légendes et labels (12px)
+  caption: {
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '400',
+    letterSpacing: 0.4,
+  },
+  // Label - Labels de formulaires (14px, medium)
+  label: {
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: '500',
+    letterSpacing: 0.1,
+  },
+  // Button - Texte de bouton (16px, semiBold)
+  button: {
+    fontSize: 16,
+    lineHeight: 24,
+    fontWeight: '600',
+    letterSpacing: 0.5,
+  },
+  
+  // Tailles de police (pour compatibilité)
   fontSize: {
     xs: 12,
     sm: 14,
@@ -152,11 +237,12 @@ export const spacing = {
 
 export const borderRadius = {
   none: 0,
-  sm: 4,
-  base: 8,
-  md: 12,
-  lg: 16,
-  xl: 20,
+  sm: 8,
+  base: 12,
+  md: 16,
+  lg: 20,
+  xl: 24,
+  '2xl': 28,
   full: 9999,
 };
 

@@ -14,8 +14,8 @@ const TrendIndicator = ({ data, period, dataType = 'score' }) => {
         percentage: 0,
         text: 'Données insuffisantes',
         icon: 'minus',
-        color: '#94A3B8',
-        backgroundColor: '#F1F5F9',
+        color: '#101010', // Color 03 - Noir pour meilleure lisibilité
+        backgroundColor: '#EDEDFC', // Color 02
         description: 'Enregistrez au moins 2 scores pour voir l\'analyse de tendance.'
       };
     }
@@ -38,8 +38,8 @@ const TrendIndicator = ({ data, period, dataType = 'score' }) => {
         percentage: Math.abs(percentChange).toFixed(1),
         text: 'Amélioration',
         icon: 'trending-up',
-        color: '#10B981',
-        backgroundColor: '#ECFDF5',
+        color: '#16A34A', // Vert pastel foncé
+        backgroundColor: '#D1FAE5', // Vert pastel clair
         description: dataType === 'score' 
           ? `Votre score moyen a diminué de ${Math.abs(percentChange).toFixed(1)}% sur cette période. C'est une excellente nouvelle !`
           : `Votre nombre de selles moyen a diminué de ${Math.abs(percentChange).toFixed(1)}% sur cette période. C'est une excellente nouvelle !`
@@ -52,8 +52,8 @@ const TrendIndicator = ({ data, period, dataType = 'score' }) => {
         percentage: Math.abs(percentChange).toFixed(1),
         text: 'Dégradation',
         icon: 'trending-down',
-        color: '#EF4444',
-        backgroundColor: '#FEF2F2',
+        color: '#DC2626', // Rouge pastel foncé
+        backgroundColor: '#FEE2E2', // Rouge pastel clair
         description: dataType === 'score'
           ? `Votre score moyen a augmenté de ${Math.abs(percentChange).toFixed(1)}% sur cette période. Consultez votre médecin si nécessaire.`
           : `Votre nombre de selles moyen a augmenté de ${Math.abs(percentChange).toFixed(1)}% sur cette période. Consultez votre médecin si nécessaire.`
@@ -65,8 +65,8 @@ const TrendIndicator = ({ data, period, dataType = 'score' }) => {
       percentage: Math.abs(percentChange).toFixed(1),
       text: 'Stable',
       icon: 'minus',
-      color: '#F59E0B',
-      backgroundColor: '#FFFBEB',
+      color: '#4C4DDC', // Color 01
+      backgroundColor: '#C8C8F4', // Color 04 - Lavande clair
       description: dataType === 'score'
         ? `Votre score reste stable avec une variation de ${Math.abs(percentChange).toFixed(1)}% sur cette période.`
         : `Votre nombre de selles reste stable avec une variation de ${Math.abs(percentChange).toFixed(1)}% sur cette période.`
@@ -120,7 +120,7 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#C8C8F4', // Color 04
   },
   header: {
     flexDirection: 'row',
@@ -142,7 +142,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   label: {
-    color: '#64748B',
+    color: '#101010', // Color 03
     marginBottom: 4,
     textTransform: 'uppercase',
     fontWeight: '600',
@@ -160,17 +160,17 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   description: {
-    color: '#475569',
+    color: '#101010', // Color 03
     lineHeight: 22,
     marginBottom: 12,
   },
   periodInfo: {
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
+    borderTopColor: '#C8C8F4', // Color 04
   },
   periodText: {
-    color: '#94A3B8',
+    color: '#D4D4D8', // Color 05
     textAlign: 'center',
   },
 });

@@ -350,7 +350,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   subtitle: {
-    color: '#64748B',
+    color: '#101010', // Noir pour meilleure lisibilité
     marginBottom: 20,
     lineHeight: 22,
   },
@@ -370,7 +370,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   progressText: {
-    color: '#64748B',
+    color: '#101010', // Noir pour meilleure lisibilité
     textAlign: 'center',
     fontWeight: '600',
   },
@@ -432,7 +432,7 @@ const styles = StyleSheet.create({
     fontSize: 32,
   },
   scoreLabel: {
-    color: '#64748B',
+    color: '#101010', // Noir pour meilleure lisibilité
     fontWeight: '600',
     marginLeft: 4,
   },
@@ -463,14 +463,14 @@ const styles = StyleSheet.create({
     borderTopColor: '#E2E8F0',
   },
   scaleLabelLeft: {
-    color: '#64748B',
+    color: '#101010', // Noir pour meilleure lisibilité
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '500',
     textAlign: 'left',
   },
   scaleLabelRight: {
-    color: '#64748B',
+    color: '#101010', // Noir pour meilleure lisibilité
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '500',
