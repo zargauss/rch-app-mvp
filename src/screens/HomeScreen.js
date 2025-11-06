@@ -329,12 +329,6 @@ export default function HomeScreen({ route }) {
     setEditingStool(null);
   };
 
-  const parseDateTime = (dateStr, timeStr) => {
-    const [day, month, year] = dateStr.split('/').map(Number);
-    const [hours, minutes] = timeStr.split(':').map(Number);
-    return new Date(year, month - 1, day, hours, minutes);
-  };
-
   const handleSaveEdit = () => {
     if (!editingStool) return;
 
