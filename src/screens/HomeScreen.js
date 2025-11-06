@@ -19,11 +19,12 @@ import { useTheme } from 'react-native-paper';
 import designSystem from '../theme/designSystem';
 import { fetchRSSFeed } from '../services/rssService';
 import { saveFeedback, errorFeedback, toggleFeedback } from '../utils/haptics';
+import { useStoolModal } from '../contexts/StoolModalContext';
 
 export default function HomeScreen({ route }) {
   const navigation = useNavigation();
   const theme = useTheme();
-  const [visible, setVisible] = useState(false);
+  const { isModalVisible, openModal, closeModal } = useStoolModal();
   const [bristol, setBristol] = useState(4);
   const [hasBlood, setHasBlood] = useState(false);
   const [dailyCount, setDailyCount] = useState(0);
@@ -188,7 +189,7 @@ export default function HomeScreen({ route }) {
   useEffect(() => {
     if (route?.params?.openSurveyModal && !surveyCompleted) {
       console.log('🔔 Ouverture automatique du modal de bilan suite à une notification');
-      setVisible(true);
+      openModal();
       // Réinitialiser le paramètre pour éviter une réouverture lors du prochain focus
       navigation.setParams({ openSurveyModal: false });
     }
@@ -255,10 +256,7 @@ export default function HomeScreen({ route }) {
   );
 
   const hideModal = () => {
-    setVisible(false);
-    const now = new Date();
-    setDateInput(now.toLocaleDateString('fr-FR'));
-    setTimeInput(now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }));
+    closeModal();
   };
 
   // Fonctions pour la modale de traitement
@@ -341,30 +339,35 @@ export default function HomeScreen({ route }) {
     showToast('💊 Traitement enregistré !', 'success');
   };
   const showModal = () => {
-    const now = new Date();
-    setDateInput(now.toLocaleDateString('fr-FR'));
-    setTimeInput(now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }));
-    
-    // Récupérer la dernière selle pour pré-remplir les valeurs
-    const stoolsJson = storage.getString('dailySells');
-    const stools = stoolsJson ? JSON.parse(stoolsJson) : [];
-    
-    if (stools.length > 0) {
-      // Trier par timestamp décroissant pour avoir la plus récente
-      const sortedStools = stools.sort((a, b) => b.timestamp - a.timestamp);
-      const lastStool = sortedStools[0];
-      
-      // Utiliser les valeurs de la dernière selle
-      setBristol(lastStool.bristolScale);
-      setHasBlood(lastStool.hasBlood);
-    } else {
-      // Valeurs par défaut si aucune selle
-      setBristol(4);
-      setHasBlood(false);
-    }
-    
-    setVisible(true);
+    openModal();
   };
+
+  // Initialiser les valeurs quand la modale s'ouvre via le contexte
+  useEffect(() => {
+    if (isModalVisible) {
+      const now = new Date();
+      setDateInput(now.toLocaleDateString('fr-FR'));
+      setTimeInput(now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }));
+      
+      // Récupérer la dernière selle pour pré-remplir les valeurs
+      const stoolsJson = storage.getString('dailySells');
+      const stools = stoolsJson ? JSON.parse(stoolsJson) : [];
+      
+      if (stools.length > 0) {
+        // Trier par timestamp décroissant pour avoir la plus récente
+        const sortedStools = stools.sort((a, b) => b.timestamp - a.timestamp);
+        const lastStool = sortedStools[0];
+        
+        // Utiliser les valeurs de la dernière selle
+        setBristol(lastStool.bristolScale);
+        setHasBlood(lastStool.hasBlood);
+      } else {
+        // Valeurs par défaut si aucune selle
+        setBristol(4);
+        setHasBlood(false);
+      }
+    }
+  }, [isModalVisible]);
 
   const containerStyle = useMemo(() => ({
     margin: 16
@@ -698,7 +701,7 @@ export default function HomeScreen({ route }) {
 
       {/* Modal d'enregistrement de selle */}
       <Portal>
-        <Modal visible={visible} onDismiss={hideModal} contentContainerStyle={styles.modalContainer}>
+        <Modal visible={isModalVisible} onDismiss={hideModal} contentContainerStyle={styles.modalContainer}>
           <AppCard style={styles.modalCard}>
             <ScrollView showsVerticalScrollIndicator={false} style={styles.modalScroll}>
               <AppText variant="h2" style={styles.modalTitle}>

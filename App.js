@@ -5,6 +5,7 @@ import { Provider as PaperProvider } from 'react-native-paper';
 import * as Notifications from 'expo-notifications';
 import theme from './src/theme/theme';
 import AppNavigator from './src/navigation/AppNavigator';
+import { StoolModalProvider } from './src/contexts/StoolModalContext';
 
 // Import du script de mise à jour PWA
 import './src/utils/pwaUpdate';
@@ -67,7 +68,9 @@ export default function App() {
 
   return (
     <PaperProvider theme={theme}>
-      <AppNavigator ref={navigationRef} />
+      <StoolModalProvider>
+        <AppNavigator ref={navigationRef} />
+      </StoolModalProvider>
     </PaperProvider>
   );
 }

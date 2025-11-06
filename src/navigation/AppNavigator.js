@@ -12,6 +12,7 @@ import ExportScreen from '../screens/ExportScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import DailySurveyScreen from '../screens/DailySurveyScreen';
 import IBDiskQuestionnaireScreen from '../screens/IBDiskQuestionnaireScreen';
+import CustomTabBar from '../components/navigation/CustomTabBar';
 import designSystem from '../theme/designSystem';
 
 const Tab = createBottomTabNavigator();
@@ -20,6 +21,7 @@ const Stack = createNativeStackNavigator();
 function MainTabs() {
   return (
     <Tab.Navigator
+      tabBar={(props) => <CustomTabBar {...props} />}
       screenOptions={({ route }) => ({
         headerShown: true,
         headerStyle: {
