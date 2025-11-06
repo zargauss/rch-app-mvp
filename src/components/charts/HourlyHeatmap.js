@@ -10,7 +10,9 @@ import AppCard from '../ui/AppCard';
 const HourlyHeatmap = ({ stools = [], periodDays = 30 }) => {
   const { width } = Dimensions.get('window');
   const chartWidth = Math.min(width - 80, 600);
-  const chartHeight = 56; // bande compacte
+  const barHeight = 36; // barre plus fine
+  const labelsHeight = 20; // espace pour les labels
+  const chartHeight = barHeight + labelsHeight; // hauteur totale
   const segmentCount = 24;
 
   const { hourlyAverages, maxAvg, totalAvgSum } = useMemo(() => {
@@ -97,11 +99,11 @@ const HourlyHeatmap = ({ stools = [], periodDays = 30 }) => {
           </View>
         ) : (
           <View style={styles.chartWrapper} ref={wrapperRef}>
-            <svg width={chartWidth} height={chartHeight} style={{ overflow: 'hidden' }}>
+            <svg width={chartWidth} height={chartHeight} style={{ overflow: 'visible' }}>
               {/* Masque pour coins arrondis uniquement sur les bords extérieurs */}
               <defs>
                 <clipPath id="roundedBar">
-                  <rect x="0" y="0" width={chartWidth} height={chartHeight} rx="8" ry="8" />
+                  <rect x="0" y="0" width={chartWidth} height={barHeight} rx="6" ry="6" />
                 </clipPath>
               </defs>
 
@@ -117,7 +119,7 @@ const HourlyHeatmap = ({ stools = [], periodDays = 30 }) => {
                       x={x}
                       y={0}
                       width={segmentWidth}
-                      height={chartHeight}
+                      height={barHeight}
                       fill={fill}
                       stroke={hover && hover.hour === hour ? '#101010' : 'transparent'}
                       strokeWidth={hover && hover.hour === hour ? 2 : 0}
@@ -129,13 +131,13 @@ const HourlyHeatmap = ({ stools = [], periodDays = 30 }) => {
                 })}
               </g>
 
-              {/* Ticks d'heures clefs */}
+              {/* Ticks d'heures clefs - lignes verticales fines */}
               {ticks.map((t, idx) => {
                 const x = (t / 24) * chartWidth;
                 return (
                   <g key={idx}>
-                    <line x1={x} y1={chartHeight - 16} x2={x} y2={chartHeight} stroke="#C8C8F4" strokeWidth="1" />
-                    <text x={x} y={chartHeight - 2} fontSize="10" fill="#101010" textAnchor="middle">
+                    <line x1={x} y1={barHeight} x2={x} y2={barHeight + 4} stroke="#C8C8F4" strokeWidth="1" />
+                    <text x={x} y={barHeight + 18} fontSize="11" fill="#101010" textAnchor="middle" fontWeight="600">
                       {t}
                     </text>
                   </g>
@@ -149,7 +151,7 @@ const HourlyHeatmap = ({ stools = [], periodDays = 30 }) => {
                   styles.tooltip,
                   {
                     left: Math.min(Math.max(hover.x + 8, 8), chartWidth - 160),
-                    top: Math.min(Math.max(hover.y - 56, 8), chartHeight - 56),
+                    top: Math.min(Math.max(hover.y - 56, 8), barHeight - 56),
                   },
                 ]}
                 pointerEvents="none"
@@ -221,7 +223,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   emptyContainer: {
-    height: 56,
+    height: 56, // garde la même hauteur pour l'état vide
     justifyContent: 'center',
     alignItems: 'center',
   },
