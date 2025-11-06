@@ -1,5 +1,5 @@
 ﻿import React, { useMemo, useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Linking, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, ScrollView, Linking, TouchableOpacity, Platform, Alert } from 'react-native';
 import { Text, Button, Portal, Modal, Card, Switch, TextInput } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import AppCard from '../components/ui/AppCard';
@@ -20,6 +20,10 @@ import designSystem from '../theme/designSystem';
 import { fetchRSSFeed } from '../services/rssService';
 import { saveFeedback, errorFeedback, toggleFeedback } from '../utils/haptics';
 import { useStoolModal } from '../contexts/StoolModalContext';
+import SegmentedControl from '../components/ui/SegmentedControl';
+import AnimatedListItem from '../components/ui/AnimatedListItem';
+import IBDiskChart from '../components/charts/IBDiskChart';
+import { deleteFeedback } from '../utils/haptics';
 
 export default function HomeScreen({ route }) {
   const navigation = useNavigation();
@@ -29,8 +33,22 @@ export default function HomeScreen({ route }) {
   const [hasBlood, setHasBlood] = useState(false);
   const [dailyCount, setDailyCount] = useState(0);
   const [surveyCompleted, setSurveyCompleted] = useState(false);
-  const [yesterdayScore, setYesterdayScore] = useState(null);
   const [todayProvisionalScore, setTodayProvisionalScore] = useState(null);
+  
+  // États pour l'historique (depuis HistoryScreen)
+  const [stools, setStools] = useState([]);
+  const [scores, setScores] = useState([]);
+  const [treatments, setTreatments] = useState([]);
+  const [ibdiskHistory, setIbdiskHistory] = useState([]);
+  const [currentIbdiskIndex, setCurrentIbdiskIndex] = useState(0);
+  const [calendarMode, setCalendarMode] = useState('score');
+  const [calendarMonthOffset, setCalendarMonthOffset] = useState(0);
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [editingStool, setEditingStool] = useState(null);
+  const [editBristol, setEditBristol] = useState(4);
+  const [editHasBlood, setEditHasBlood] = useState(false);
+  const [editDateInput, setEditDateInput] = useState('');
+  const [editTimeInput, setEditTimeInput] = useState('');
   const [dateInput, setDateInput] = useState('');
   const [timeInput, setTimeInput] = useState('');
   
@@ -213,23 +231,8 @@ export default function HomeScreen({ route }) {
       // Charger les articles RSS
       loadRSSArticles();
 
-      // Compute yesterday score and persist to history if needed
-      const today = new Date();
-      const yesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
-      const yDateStr = formatDate(yesterday);
-      const calculatedYesterday = calculateLichtigerScore(yDateStr, storage);
-
-      // Read history
-      const histJson = storage.getString('scoresHistory');
-      const history = histJson ? JSON.parse(histJson) : [];
-      const existing = history.find((h) => h.date === yDateStr);
-      if (calculatedYesterday != null && !existing) {
-        const newHistory = [{ date: yDateStr, score: calculatedYesterday }, ...history];
-        storage.set('scoresHistory', JSON.stringify(newHistory));
-        setYesterdayScore(calculatedYesterday);
-      } else {
-        setYesterdayScore(existing ? existing.score : calculatedYesterday);
-      }
+      // Charger les données de l'historique
+      loadHistoryData();
 
       // Today provisional score
       const tDateStr = formatDate(today);
@@ -257,6 +260,277 @@ export default function HomeScreen({ route }) {
 
   const hideModal = () => {
     closeModal();
+  };
+
+  // Fonctions pour l'historique (depuis HistoryScreen)
+  const loadHistoryData = () => {
+    const stoolsJson = storage.getString('dailySells');
+    const entries = stoolsJson ? JSON.parse(stoolsJson) : [];
+    setStools(entries.sort((a, b) => b.timestamp - a.timestamp));
+    
+    const histJson = storage.getString('scoresHistory');
+    const history = histJson ? JSON.parse(histJson) : [];
+    setScores(history);
+    
+    const treatmentsJson = storage.getString('treatments');
+    const treatmentsList = treatmentsJson ? JSON.parse(treatmentsJson) : [];
+    setTreatments(treatmentsList.sort((a, b) => b.timestamp - a.timestamp));
+    
+    // Charger l'historique IBDisk
+    const ibdiskJson = storage.getString('ibdiskHistory');
+    const ibdiskList = ibdiskJson ? JSON.parse(ibdiskJson) : [];
+    setIbdiskHistory(ibdiskList);
+    setCurrentIbdiskIndex(0);
+  };
+
+  const handleDeleteStool = (stoolId) => {
+    const executeDelete = () => {
+      deleteFeedback();
+      const stoolsJson = storage.getString('dailySells');
+      const stools = stoolsJson ? JSON.parse(stoolsJson) : [];
+      const updated = stools.filter(s => s.id !== stoolId);
+      storage.set('dailySells', JSON.stringify(updated));
+      setStools(updated.sort((a, b) => b.timestamp - a.timestamp));
+      setDailyCount(computeTodayCount());
+    };
+
+    if (Platform.OS === 'web') {
+      if (window.confirm('Êtes-vous sûr de vouloir supprimer cette selle ?')) {
+        executeDelete();
+      }
+    } else {
+      Alert.alert(
+        'Supprimer la selle',
+        'Êtes-vous sûr de vouloir supprimer cette selle ?',
+        [
+          { text: 'Annuler', style: 'cancel' },
+          { text: 'Supprimer', onPress: executeDelete, style: 'destructive' }
+        ]
+      );
+    }
+  };
+
+  const handleEditStool = (stool) => {
+    setEditingStool(stool);
+    setEditBristol(stool.bristolScale);
+    setEditHasBlood(stool.hasBlood);
+    
+    const date = new Date(stool.timestamp);
+    const dateStr = date.toLocaleDateString('fr-FR');
+    const timeStr = date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    
+    setEditDateInput(dateStr);
+    setEditTimeInput(timeStr);
+    setEditModalVisible(true);
+  };
+
+  const hideEditModal = () => {
+    setEditModalVisible(false);
+    setEditingStool(null);
+  };
+
+  const parseDateTime = (dateStr, timeStr) => {
+    const [day, month, year] = dateStr.split('/').map(Number);
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    return new Date(year, month - 1, day, hours, minutes);
+  };
+
+  const handleSaveEdit = () => {
+    if (!editingStool) return;
+
+    const editDateTime = parseDateTime(editDateInput, editTimeInput);
+
+    const updatedStool = {
+      ...editingStool,
+      timestamp: editDateTime.getTime(),
+      bristolScale: Math.round(editBristol),
+      hasBlood: editHasBlood
+    };
+
+    const stoolsJson = storage.getString('dailySells');
+    const stools = stoolsJson ? JSON.parse(stoolsJson) : [];
+    const updated = stools.map(s => s.id === editingStool.id ? updatedStool : s);
+    storage.set('dailySells', JSON.stringify(updated));
+    setStools(updated.sort((a, b) => b.timestamp - a.timestamp));
+    setDailyCount(computeTodayCount());
+    saveFeedback();
+    hideEditModal();
+  };
+
+  const formatCompactDate = (timestamp) => {
+    const date = new Date(timestamp);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    const isToday = date.toDateString() === today.toDateString();
+    const isYesterday = date.toDateString() === yesterday.toDateString();
+
+    const time = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+    
+    if (isToday) return `Aujourd'hui ${time}`;
+    if (isYesterday) return `Hier ${time}`;
+    
+    return `${date.getDate()}/${date.getMonth() + 1} ${time}`;
+  };
+
+  const getBristolColor = (bristol) => {
+    if (bristol <= 2) return '#4C4DDC';
+    if (bristol <= 4) return '#4C4DDC';
+    if (bristol <= 5) return '#C8C8F4';
+    return '#101010';
+  };
+
+  const handlePreviousIbdisk = () => {
+    if (currentIbdiskIndex < ibdiskHistory.length - 1) {
+      setCurrentIbdiskIndex(currentIbdiskIndex + 1);
+    }
+  };
+
+  const handleNextIbdisk = () => {
+    if (currentIbdiskIndex > 0) {
+      setCurrentIbdiskIndex(currentIbdiskIndex - 1);
+    }
+  };
+
+  // Rendu calendrier moderne (depuis HistoryScreen)
+  const renderModernCalendar = () => {
+    const now = new Date();
+    const targetDate = new Date(now.getFullYear(), now.getMonth() + calendarMonthOffset, 1);
+    const year = targetDate.getFullYear();
+    const month = targetDate.getMonth();
+    
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    
+    let startingDayOfWeek = firstDay.getDay();
+    startingDayOfWeek = startingDayOfWeek === 0 ? 6 : startingDayOfWeek - 1;
+    
+    const days = [];
+    for (let i = 0; i < startingDayOfWeek; i++) {
+      days.push(null);
+    }
+    for (let day = 1; day <= daysInMonth; day++) {
+      days.push(day);
+    }
+    const remainingCells = days.length % 7;
+    if (remainingCells > 0) {
+      for (let i = 0; i < (7 - remainingCells); i++) {
+        days.push(null);
+      }
+    }
+
+    const monthNames = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+    const dayNames = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+    const isCurrentMonth = calendarMonthOffset === 0;
+
+    return (
+      <View style={styles.calendarContainer}>
+        <View style={styles.calendarMonthHeader}>
+          <TouchableOpacity 
+            onPress={() => setCalendarMonthOffset(calendarMonthOffset - 1)}
+            style={styles.monthNavButton}
+          >
+            <AppText style={styles.monthNavIcon}>←</AppText>
+          </TouchableOpacity>
+          
+          <View style={styles.monthTitleContainer}>
+            <AppText variant="headlineLarge" style={styles.calendarMonth}>
+              {monthNames[month]} {year}
+            </AppText>
+            {isCurrentMonth && (
+              <View style={styles.currentMonthBadge}>
+                <AppText variant="labelSmall" style={styles.currentMonthText}>
+                  Aujourd'hui
+                </AppText>
+              </View>
+            )}
+          </View>
+          
+          <TouchableOpacity 
+            onPress={() => setCalendarMonthOffset(calendarMonthOffset + 1)}
+            style={styles.monthNavButton}
+          >
+            <AppText style={styles.monthNavIcon}>→</AppText>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.calendarHeader}>
+          {dayNames.map((name, index) => (
+            <View key={index} style={styles.dayNameCell}>
+              <AppText variant="labelSmall" style={styles.dayName}>
+                {name}
+              </AppText>
+            </View>
+          ))}
+        </View>
+
+        <View style={styles.calendarGrid}>
+          {days.map((day, index) => {
+            if (day === null) {
+              return <View key={`empty-${index}`} style={styles.dayCell} />;
+            }
+
+            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            
+            let cellContent = null;
+            let cellStyle = [styles.dayCell];
+            let hasData = false;
+
+            if (calendarMode === 'score') {
+              const score = calculateLichtigerScore(dateStr, storage);
+              if (score !== null) {
+                hasData = true;
+                let scoreColor = '#4C4DDC';
+                if (score >= 10) scoreColor = '#101010';
+                
+                cellStyle.push(styles.dayCellWithScore, { backgroundColor: scoreColor });
+                cellContent = (
+                  <View style={styles.dayCellContent}>
+                    <AppText variant="headlineLarge" style={styles.scoreInCell}>
+                      {score}
+                    </AppText>
+                  </View>
+                );
+              }
+            } else {
+              const [y, m, d] = dateStr.split('-').map(Number);
+              const dayStart = new Date(y, m - 1, d, 0, 0, 0, 0).getTime();
+              const dayEnd = dayStart + 24 * 60 * 60 * 1000;
+              const dayEntries = stools.filter(s => s.timestamp >= dayStart && s.timestamp < dayEnd);
+              
+              if (dayEntries.length > 0) {
+                hasData = true;
+                cellStyle.push(styles.dayCellWithStools);
+                cellContent = (
+                  <View style={styles.dayCellContent}>
+                    <AppText variant="displayMedium" style={styles.stoolCountLarge}>
+                      {dayEntries.length}
+                    </AppText>
+                  </View>
+                );
+              }
+            }
+
+            if (!hasData) {
+              cellStyle.push(styles.dayCellEmpty);
+              cellContent = (
+                <AppText variant="bodyMedium" style={styles.dayNumberEmpty}>
+                  {day}
+                </AppText>
+              );
+            }
+
+            return (
+              <View key={index} style={cellStyle}>
+                {cellContent}
+              </View>
+            );
+          })}
+        </View>
+      </View>
+    );
   };
 
   // Fonctions pour la modale de traitement
@@ -529,109 +803,98 @@ export default function HomeScreen({ route }) {
         contentContainerStyle={styles.scrollViewContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Actions principales - Grille 2x2 */}
-        <View style={styles.mainActionsContainer}>
-          <View style={styles.actionsGrid}>
-            {/* Bouton 1: Enregistrer une selle */}
-            <AppCard
-              onPress={showModal}
-              pressable
-              style={styles.actionCard}
-            >
-              <View style={styles.actionCardContent}>
-                <MaterialCommunityIcons name="plus-circle" size={24} color="#4C4DDC" />
-                <AppText variant="body" style={styles.actionTitle} weight="semiBold">
-                  Enregistrer une selle
-                </AppText>
-              </View>
-            </AppCard>
-
-            {/* Bouton 2: Compléter le bilan */}
-            <AppCard
-              onPress={navigateToSurvey}
-              pressable
-              style={styles.actionCard}
-            >
-              <View style={styles.actionCardContent}>
-                <MaterialCommunityIcons 
-                  name={surveyCompleted ? "check-circle" : "clipboard-text"} 
-                  size={24} 
-                  color="#4C4DDC" 
-                />
-                <AppText variant="body" style={styles.actionTitle} weight="semiBold">
-                  {surveyCompleted ? "Modifier le bilan" : "Compléter le bilan"}
-                </AppText>
-              </View>
-            </AppCard>
-
-            {/* Bouton 3: Prise de traitement */}
-            <AppCard
-              onPress={showTreatmentModal}
-              pressable
-              style={styles.actionCard}
-            >
-              <View style={styles.actionCardContent}>
-                <MaterialCommunityIcons name="pill" size={24} color="#4C4DDC" />
-                <AppText variant="body" style={styles.actionTitle} weight="semiBold">
-                  Prise de traitement
-                </AppText>
-              </View>
-            </AppCard>
-
-            {/* Bouton 4: Votre quotidien */}
-            <AppCard
-              onPress={ibdiskAvailable ? () => navigation.navigate('IBDiskQuestionnaire') : null}
-              pressable={ibdiskAvailable}
-              style={[
-                styles.actionCard,
-                !ibdiskAvailable && styles.actionCardDisabled
-              ]}
-            >
-              <View style={styles.actionCardContent}>
-                <MaterialCommunityIcons name="chart-box-outline" size={24} color="#4C4DDC" />
-                <AppText 
-                  variant="body" 
-                  style={[
-                    styles.actionTitle, 
-                    !ibdiskAvailable && styles.actionTitleDisabled
-                  ]} 
-                  weight="semiBold"
-                >
-                  {ibdiskAvailable ? 'Votre quotidien' : `Disponible dans ${ibdiskDaysRemaining} jour${ibdiskDaysRemaining > 1 ? 's' : ''}`}
-                </AppText>
-              </View>
-            </AppCard>
+        {/* Section Aujourd'hui */}
+        <AppCard style={styles.todaySection}>
+          <View style={styles.sectionHeader}>
+            <MaterialCommunityIcons name="calendar-today" size={24} color={designSystem.colors.primary[500]} />
+            <AppText variant="h3" style={styles.sectionTitle}>
+              Aujourd'hui
+            </AppText>
           </View>
-        </View>
+          
+          <View style={styles.statsContainer}>
+            <StatCard
+              title="Selles aujourd'hui"
+              value={dailyCount.toString()}
+              subtitle="Enregistrements"
+              icon="toilet"
+              color="primary"
+            />
+            
+            <StatCard
+              title="Score du jour"
+              value={todayProvisionalScore !== null ? todayProvisionalScore : 'N/A'}
+              subtitle="Provisoire"
+              icon="chart-bar"
+              color={todayProvisionalScore !== null ? (todayProvisionalScore < 5 ? 'success' : todayProvisionalScore <= 10 ? 'warning' : 'error') : 'info'}
+            />
+          </View>
 
-        {/* Cartes de résumé */}
-        <View style={styles.statsContainer}>
-          <StatCard
-            title="Score d'hier"
-            value={yesterdayScore !== null ? yesterdayScore : 'N/A'}
-            subtitle="Score de Lichtiger"
-            icon="chart-line"
-            color={yesterdayScore !== null ? (yesterdayScore < 5 ? 'success' : yesterdayScore <= 10 ? 'warning' : 'error') : 'info'}
-            trend={yesterdayScore !== null ? 'stable' : null}
-            trendValue={yesterdayScore !== null ? 'Stable' : null}
-          />
-          
-          <StatCard
-            title="Selles aujourd'hui"
-            value={dailyCount.toString()}
-            subtitle="Enregistrements"
-            icon="toilet"
-            color="primary"
-          />
-          
-          <StatCard
-            title="Score du jour"
-            value={todayProvisionalScore !== null ? todayProvisionalScore : 'N/A'}
-            subtitle="Provisoire"
-            icon="chart-bar"
-            color={todayProvisionalScore !== null ? (todayProvisionalScore < 5 ? 'success' : todayProvisionalScore <= 10 ? 'warning' : 'error') : 'info'}
-          />
-        </View>
+          {/* Liste des selles d'aujourd'hui */}
+          {(() => {
+            const today = new Date();
+            const start = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+            const end = start + 24 * 60 * 60 * 1000;
+            const todayStools = stools.filter(s => s.timestamp >= start && s.timestamp < end);
+            
+            if (todayStools.length === 0) {
+              return (
+                <View style={styles.emptyTodayState}>
+                  <AppText variant="bodyMedium" style={styles.emptyText}>
+                    Aucune selle enregistrée aujourd'hui
+                  </AppText>
+                </View>
+              );
+            }
+            
+            return (
+              <View style={styles.todayStoolsList}>
+                {todayStools.map((item, index) => (
+                  <AnimatedListItem key={item.id} index={index} delay={30}>
+                    <View style={styles.stoolItem}>
+                      <View style={styles.stoolMain}>
+                        <View style={[styles.bristolBadge, { backgroundColor: getBristolColor(item.bristolScale) }]}>
+                          <AppText variant="bodyLarge" style={styles.bristolNumber}>
+                            {item.bristolScale}
+                          </AppText>
+                        </View>
+                        <View style={styles.stoolInfo}>
+                          <View style={styles.stoolDateContainer}>
+                            <AppText variant="bodyMedium" style={styles.stoolDate}>
+                              {formatCompactDate(item.timestamp)}
+                            </AppText>
+                            {item.hasBlood && (
+                              <MaterialCommunityIcons 
+                                name="water" 
+                                size={16} 
+                                color="#DC2626" 
+                                style={{ marginLeft: 6 }}
+                              />
+                            )}
+                          </View>
+                        </View>
+                        <View style={styles.stoolActions}>
+                          <TouchableOpacity 
+                            onPress={() => handleEditStool(item)}
+                            style={styles.actionButton}
+                          >
+                            <MaterialCommunityIcons name="pencil" size={20} color="#4C4DDC" />
+                          </TouchableOpacity>
+                          <TouchableOpacity 
+                            onPress={() => handleDeleteStool(item.id)}
+                            style={styles.actionButton}
+                          >
+                            <MaterialCommunityIcons name="delete" size={20} color="#DC2626" />
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    </View>
+                  </AnimatedListItem>
+                ))}
+              </View>
+            );
+          })()}
+        </AppCard>
 
 
         {/* Actualités de l'association MICI */}
@@ -697,6 +960,170 @@ export default function HomeScreen({ route }) {
             Voir toutes les actualités
           </PrimaryButton>
         </AppCard>
+
+        {/* Section Historique */}
+        <AppCard style={styles.historySection}>
+          <View style={styles.sectionHeader}>
+            <MaterialCommunityIcons name="clock-outline" size={24} color={designSystem.colors.primary[500]} />
+            <AppText variant="h3" style={styles.sectionTitle}>
+              Historique
+            </AppText>
+          </View>
+
+          {/* Liste des selles */}
+          {stools.length === 0 ? (
+            <View style={styles.emptyState}>
+              <AppText variant="bodyMedium" style={styles.emptyText}>
+                Aucune selle enregistrée
+              </AppText>
+            </View>
+          ) : (
+            <View>
+              {stools.slice(0, 10).map((item, index) => (
+                <AnimatedListItem key={item.id} index={index} delay={30}>
+                  <View style={styles.stoolItem}>
+                    <View style={styles.stoolMain}>
+                      <View style={[styles.bristolBadge, { backgroundColor: getBristolColor(item.bristolScale) }]}>
+                        <AppText variant="bodyLarge" style={styles.bristolNumber}>
+                          {item.bristolScale}
+                        </AppText>
+                      </View>
+                      <View style={styles.stoolInfo}>
+                        <View style={styles.stoolDateContainer}>
+                          <AppText variant="bodyMedium" style={styles.stoolDate}>
+                            {formatCompactDate(item.timestamp)}
+                          </AppText>
+                          {item.hasBlood && (
+                            <MaterialCommunityIcons 
+                              name="water" 
+                              size={16} 
+                              color="#DC2626" 
+                              style={{ marginLeft: 6 }}
+                            />
+                          )}
+                        </View>
+                      </View>
+                      <View style={styles.stoolActions}>
+                        <TouchableOpacity 
+                          onPress={() => handleEditStool(item)}
+                          style={styles.actionButton}
+                        >
+                          <MaterialCommunityIcons name="pencil" size={20} color="#4C4DDC" />
+                        </TouchableOpacity>
+                        <TouchableOpacity 
+                          onPress={() => handleDeleteStool(item.id)}
+                          style={styles.actionButton}
+                        >
+                          <MaterialCommunityIcons name="delete" size={20} color="#DC2626" />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  </View>
+                </AnimatedListItem>
+              ))}
+            </View>
+          )}
+        </AppCard>
+
+        {/* Calendrier moderne */}
+        <AppCard style={styles.calendarCard}>
+          <View style={styles.calendarHeaderSection}>
+            <SegmentedControl
+              options={[
+                { value: 'score', label: 'Score' },
+                { value: 'bristol', label: 'Selles' }
+              ]}
+              selectedValue={calendarMode}
+              onValueChange={setCalendarMode}
+            />
+          </View>
+          
+          {renderModernCalendar()}
+
+          {/* Légende */}
+          <View style={styles.legend}>
+            {calendarMode === 'score' ? (
+              <>
+                <View style={styles.legendItem}>
+                  <View style={[styles.legendSquare, { backgroundColor: '#4C4DDC' }]} />
+                  <AppText variant="labelSmall" style={styles.legendText}>Excellent (0-3)</AppText>
+                </View>
+                <View style={styles.legendItem}>
+                  <View style={[styles.legendSquare, { backgroundColor: '#4C4DDC' }]} />
+                  <AppText variant="labelSmall" style={styles.legendText}>Acceptable (4-9)</AppText>
+                </View>
+                <View style={styles.legendItem}>
+                  <View style={[styles.legendSquare, { backgroundColor: '#101010' }]} />
+                  <AppText variant="labelSmall" style={styles.legendText}>Préoccupant (10+)</AppText>
+                </View>
+              </>
+            ) : (
+              <View style={styles.legendFullWidth}>
+                <AppText variant="labelSmall" style={styles.legendTextCentered}>
+                  💡 Le chiffre indique le nombre de selles enregistrées ce jour-là
+                </AppText>
+              </View>
+            )}
+          </View>
+        </AppCard>
+
+        {/* Historique IBDisk */}
+        {ibdiskHistory.length > 0 && (
+          <AppCard style={styles.ibdiskCard}>
+            <View style={styles.ibdiskHeader}>
+              <AppText variant="headlineLarge" style={styles.cardTitle}>
+                Historique IBDisk
+              </AppText>
+              
+              {ibdiskHistory.length > 1 ? (
+                <View style={styles.ibdiskNavigation}>
+                  <TouchableOpacity
+                    onPress={handlePreviousIbdisk}
+                    disabled={currentIbdiskIndex >= ibdiskHistory.length - 1}
+                    style={[
+                      styles.navButton,
+                      currentIbdiskIndex >= ibdiskHistory.length - 1 && styles.navButtonDisabled
+                    ]}
+                  >
+                    <MaterialCommunityIcons 
+                      name="chevron-left" 
+                      size={24} 
+                      color={currentIbdiskIndex >= ibdiskHistory.length - 1 ? '#A3A3A3' : '#101010'} 
+                    />
+                  </TouchableOpacity>
+                  
+                  <AppText variant="labelMedium" style={styles.navText}>
+                    {currentIbdiskIndex + 1} / {ibdiskHistory.length}
+                  </AppText>
+                  
+                  <TouchableOpacity
+                    onPress={handleNextIbdisk}
+                    disabled={currentIbdiskIndex <= 0}
+                    style={[
+                      styles.navButton,
+                      currentIbdiskIndex <= 0 && styles.navButtonDisabled
+                    ]}
+                  >
+                    <MaterialCommunityIcons 
+                      name="chevron-right" 
+                      size={24} 
+                      color={currentIbdiskIndex <= 0 ? '#A3A3A3' : '#101010'} 
+                    />
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <AppText variant="labelSmall" style={styles.singleQuestionnaireText}>
+                  Premier questionnaire IBDisk
+                </AppText>
+              )}
+            </View>
+            
+            <IBDiskChart 
+              data={ibdiskHistory[currentIbdiskIndex]?.answers || {}} 
+              date={ibdiskHistory[currentIbdiskIndex]?.date || ''} 
+            />
+          </AppCard>
+        )}
       </ScrollView>
 
       {/* Modal d'enregistrement de selle */}
@@ -1113,5 +1540,270 @@ const styles = StyleSheet.create({
   suggestionButtonLabel: {
     color: designSystem.colors.secondary[500],
     fontSize: designSystem.typography.fontSize.sm,
+  },
+  // Styles pour la section Aujourd'hui
+  todaySection: {
+    marginBottom: designSystem.spacing[6],
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: designSystem.spacing[4],
+  },
+  sectionTitle: {
+    marginLeft: designSystem.spacing[3],
+    color: designSystem.colors.text.primary,
+  },
+  emptyTodayState: {
+    paddingVertical: designSystem.spacing[6],
+    alignItems: 'center',
+  },
+  todayStoolsList: {
+    marginTop: designSystem.spacing[4],
+  },
+  // Styles pour la section Historique
+  historySection: {
+    marginBottom: designSystem.spacing[6],
+  },
+  emptyState: {
+    paddingVertical: designSystem.spacing[6],
+    alignItems: 'center',
+  },
+  emptyText: {
+    color: designSystem.colors.text.secondary,
+  },
+  stoolItem: {
+    marginBottom: designSystem.spacing[3],
+  },
+  stoolMain: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#EDEDFC',
+    borderRadius: designSystem.borderRadius.md,
+    padding: designSystem.spacing[3],
+    borderWidth: 1,
+    borderColor: '#C8C8F4',
+  },
+  bristolBadge: {
+    width: 40,
+    height: 40,
+    borderRadius: designSystem.borderRadius.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: designSystem.spacing[3],
+  },
+  bristolNumber: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  stoolInfo: {
+    flex: 1,
+  },
+  stoolDateContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  stoolDate: {
+    color: designSystem.colors.text.primary,
+    fontWeight: '500',
+  },
+  stoolActions: {
+    flexDirection: 'row',
+    gap: designSystem.spacing[2],
+  },
+  actionButton: {
+    width: 36,
+    height: 36,
+    borderRadius: designSystem.borderRadius.md,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#C8C8F4',
+  },
+  // Styles pour le calendrier
+  calendarCard: {
+    marginBottom: designSystem.spacing[6],
+  },
+  calendarHeaderSection: {
+    marginBottom: designSystem.spacing[5],
+  },
+  calendarContainer: {
+    marginBottom: designSystem.spacing[4],
+  },
+  calendarMonthHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: designSystem.spacing[4],
+    paddingHorizontal: designSystem.spacing[2],
+  },
+  monthNavButton: {
+    width: 44,
+    height: 44,
+    borderRadius: designSystem.borderRadius.md,
+    backgroundColor: '#EDEDFC',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#C8C8F4',
+  },
+  monthNavIcon: {
+    fontSize: 24,
+    color: '#4C4DDC',
+    fontWeight: '700',
+  },
+  monthTitleContainer: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  calendarMonth: {
+    color: designSystem.colors.text.primary,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  currentMonthBadge: {
+    backgroundColor: '#4C4DDC',
+    paddingHorizontal: designSystem.spacing[3],
+    paddingVertical: designSystem.spacing[1],
+    borderRadius: designSystem.borderRadius.md,
+    marginTop: designSystem.spacing[1],
+  },
+  currentMonthText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  calendarHeader: {
+    flexDirection: 'row',
+    marginBottom: designSystem.spacing[2],
+  },
+  dayNameCell: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: designSystem.spacing[2],
+  },
+  dayName: {
+    color: designSystem.colors.text.primary,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
+  calendarGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  dayCell: {
+    width: '13.48%',
+    aspectRatio: 1,
+    margin: '0.4%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dayCellEmpty: {
+    opacity: 0.7,
+  },
+  dayCellWithScore: {
+    borderRadius: designSystem.borderRadius.sm,
+  },
+  dayCellWithStools: {
+    backgroundColor: '#EDEDFC',
+    borderRadius: designSystem.borderRadius.sm,
+    borderWidth: 2,
+    borderColor: '#4C4DDC',
+  },
+  dayCellContent: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    height: '100%',
+  },
+  scoreInCell: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 22,
+  },
+  stoolCountLarge: {
+    color: '#4C4DDC',
+    fontWeight: '700',
+    fontSize: 26,
+  },
+  dayNumberEmpty: {
+    color: designSystem.colors.text.primary,
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  legend: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: designSystem.spacing[3],
+    paddingTop: designSystem.spacing[4],
+    borderTopWidth: 1,
+    borderTopColor: designSystem.colors.border.light,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: designSystem.spacing[2],
+  },
+  legendSquare: {
+    width: 20,
+    height: 20,
+    borderRadius: designSystem.borderRadius.sm,
+  },
+  legendText: {
+    color: designSystem.colors.text.primary,
+    fontWeight: '500',
+  },
+  legendFullWidth: {
+    flex: 1,
+    backgroundColor: '#EDEDFC',
+    padding: designSystem.spacing[3],
+    borderRadius: designSystem.borderRadius.md,
+    borderWidth: 1,
+    borderColor: '#C8C8F4',
+  },
+  legendTextCentered: {
+    color: designSystem.colors.text.primary,
+    textAlign: 'center',
+    fontWeight: '500',
+  },
+  // Styles pour IBDisk
+  ibdiskCard: {
+    marginBottom: designSystem.spacing[6],
+  },
+  ibdiskHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: designSystem.spacing[4],
+  },
+  cardTitle: {
+    color: designSystem.colors.text.primary,
+    fontWeight: '700',
+  },
+  ibdiskNavigation: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: designSystem.spacing[3],
+  },
+  navButton: {
+    width: 36,
+    height: 36,
+    borderRadius: designSystem.borderRadius.md,
+    backgroundColor: '#EDEDFC',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#C8C8F4',
+  },
+  navButtonDisabled: {
+    opacity: 0.5,
+  },
+  navText: {
+    color: designSystem.colors.text.primary,
+    fontWeight: '600',
+  },
+  singleQuestionnaireText: {
+    color: designSystem.colors.text.secondary,
+    fontStyle: 'italic',
   },
 });
