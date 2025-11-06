@@ -1,5 +1,5 @@
-import React, { useMemo, useRef, useState, useCallback } from 'react';
-import { View, StyleSheet, Dimensions, Platform } from 'react-native';
+import React, { useMemo, useRef, useState, useCallback, useEffect } from 'react';
+import { View, StyleSheet, Dimensions, Platform, Animated } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import AppText from '../ui/AppText';
 import AppCard from '../ui/AppCard';
@@ -64,7 +64,25 @@ const HourlyHeatmap = ({ stools = [], periodDays = 30 }) => {
 
   // Tooltip (web uniquement)
   const wrapperRef = useRef(null);
-  const [hover, setHover] = useState(null); // { hour, x, y }
+  const [hover, setHover] = useState(null); // { hour, x, y, avg }
+
+  // Animation du tooltip (fade + scale)
+  const tooltipOpacity = useRef(new Animated.Value(0)).current;
+  const tooltipScale = useRef(new Animated.Value(0.96)).current;
+
+  useEffect(() => {
+    if (hover) {
+      Animated.parallel([
+        Animated.timing(tooltipOpacity, { toValue: 1, duration: 140, useNativeDriver: true }),
+        Animated.spring(tooltipScale, { toValue: 1, speed: 20, bounciness: 6, useNativeDriver: true }),
+      ]).start();
+    } else {
+      Animated.parallel([
+        Animated.timing(tooltipOpacity, { toValue: 0, duration: 120, useNativeDriver: true }),
+        Animated.timing(tooltipScale, { toValue: 0.96, duration: 120, useNativeDriver: true }),
+      ]).start();
+    }
+  }, [hover, tooltipOpacity, tooltipScale]);
 
   const handleMouseMove = useCallback((e, hour, avg) => {
     if (!wrapperRef.current) return;
@@ -146,31 +164,49 @@ const HourlyHeatmap = ({ stools = [], periodDays = 30 }) => {
             </svg>
 
             {hover && (
-              <View
-                style={[
-                  styles.tooltip,
-                  {
-                    left: Math.min(Math.max(hover.x + 8, 8), chartWidth - 160),
-                    top: Math.min(Math.max(hover.y - 56, 8), barHeight - 56),
-                  },
-                ]}
-                pointerEvents="none"
-              >
-                <View style={styles.tooltipHeader}>
-                  <MaterialCommunityIcons name="clock-outline" size={14} color="#4C4DDC" />
-                  <AppText variant="labelSmall" style={styles.tooltipHour}>
-                    {String(hover.hour).padStart(2, '0')}h - {String((hover.hour + 1) % 24).padStart(2, '0')}h
+              <>
+                <Animated.View
+                  style={[
+                    styles.tooltip,
+                    {
+                      left: Math.min(Math.max(hover.x - 70, 8), chartWidth - 160),
+                      top: -64, // au-dessus de la barre
+                      opacity: tooltipOpacity,
+                      transform: [{ scale: tooltipScale }],
+                    },
+                  ]}
+                  pointerEvents="none"
+                >
+                  <View style={styles.tooltipHeader}>
+                    <MaterialCommunityIcons name="clock-outline" size={14} color="#4C4DDC" />
+                    <AppText variant="labelSmall" style={styles.tooltipHour}>
+                      {String(hover.hour).padStart(2, '0')}h - {String((hover.hour + 1) % 24).padStart(2, '0')}h
+                    </AppText>
+                  </View>
+                  <AppText variant="labelSmall" style={styles.tooltipValue}>
+                    {hover.avg.toFixed(2)} selles/heure
                   </AppText>
-                </View>
-                <AppText variant="labelSmall" style={styles.tooltipValue}>
-                  {hover.avg.toFixed(2)} selles/heure
-                </AppText>
-                {totalAvgSum > 0 && (
-                  <AppText variant="labelSmall" style={styles.tooltipSub}>
-                    {(Math.max(0, hover.avg) / totalAvgSum * 100).toFixed(1)}% de la journée
-                  </AppText>
-                )}
-              </View>
+                  {totalAvgSum > 0 && (
+                    <AppText variant="labelSmall" style={styles.tooltipSub}>
+                      {(Math.max(0, hover.avg) / totalAvgSum * 100).toFixed(1)}% de la journée
+                    </AppText>
+                  )}
+                </Animated.View>
+
+                {/* Caret/Flèche pointant vers la barre */}
+                <Animated.View
+                  pointerEvents="none"
+                  style={[
+                    styles.tooltipArrow,
+                    {
+                      left: Math.min(Math.max(hover.x - 4, 10), chartWidth - 14),
+                      top: -10,
+                      opacity: tooltipOpacity,
+                      transform: [{ scale: tooltipScale }],
+                    },
+                  ]}
+                />
+              </>
             )}
           </View>
         )
@@ -260,6 +296,21 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingVertical: 8,
     paddingHorizontal: 10,
+    // Ombre douce
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+  },
+  tooltipArrow: {
+    position: 'absolute',
+    width: 10,
+    height: 10,
+    backgroundColor: '#FFFFFF',
+    borderLeftWidth: 1,
+    borderTopWidth: 1,
+    borderColor: '#C8C8F4',
+    transform: [{ rotate: '45deg' }],
   },
   tooltipHeader: {
     flexDirection: 'row',
