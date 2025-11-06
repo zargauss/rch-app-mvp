@@ -83,7 +83,7 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
         {/* Deuxième onglet (Historique) */}
         {state.routes[1] && renderTab(state.routes[1], 1)}
 
-        {/* Bouton central avec + */}
+        {/* Bouton central avec icône toilettes */}
         <TouchableOpacity
           style={styles.centralButton}
           onPress={handleAddStool}
@@ -92,7 +92,7 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
           accessibilityLabel="Ajouter une selle"
         >
           <MaterialCommunityIcons
-            name="plus"
+            name="toilet"
             size={28}
             color="#FFFFFF"
           />
