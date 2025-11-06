@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { View, StyleSheet, ScrollView, Platform } from 'react-native';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { SegmentedButtons } from 'react-native-paper';
 import storage from '../utils/storage';
 import AppText from '../components/ui/AppText';
@@ -11,6 +12,7 @@ import MultiAxisTrendChart from '../components/charts/MultiAxisTrendChart';
 import TrendIndicator from '../components/charts/TrendIndicator';
 import ScoreDistribution from '../components/charts/ScoreDistribution';
 import KeyInsights from '../components/charts/KeyInsights';
+import HourlyHeatmap from '../components/charts/HourlyHeatmap';
 import EmptyState from '../components/ui/EmptyState';
 import SkeletonStats from '../components/ui/SkeletonStats';
 import { useTheme } from 'react-native-paper';
@@ -276,12 +278,18 @@ export default function StatsScreen() {
             )}
           </View>
 
-          {/* Graphique d'évolution */}
+          {/* Graphique d'évolution - style de titre harmonisé */}
           <AppCard style={styles.chartCard}>
-            <AppText variant="headlineLarge" style={styles.chartTitle}>
-              {dataType === 'score' ? 'Évolution du Score et % Selles sanglantes' : 'Évolution des Selles'}
+            <View style={styles.titleRow}>
+              <MaterialCommunityIcons name="chart-timeline-variant" size={28} color="#4C4DDC" style={{ marginRight: 12 }} />
+              <AppText variant="headlineLarge" style={styles.chartTitle}>
+                {dataType === 'score' ? 'Évolution du Score et % Selles sanglantes' : 'Évolution des Selles'}
+              </AppText>
+            </View>
+            <AppText variant="bodyMedium" style={styles.chartSubtitle}>
+              {dataType === 'score' ? 'Tendance sur la période sélectionnée' : 'Nombre de selles par jour sur la période'}
             </AppText>
-            
+
             {Platform.OS === 'web' ? (
               dataType === 'score' && chartData.bloodPercentageData ? (
                 <MultiAxisTrendChart 
@@ -307,6 +315,11 @@ export default function StatsScreen() {
               </View>
             )}
           </AppCard>
+
+          {/* Heatmap horaire (uniquement pour les selles) */}
+          {dataType === 'stools' && (
+            <HourlyHeatmap stools={stools.filter(Boolean)} periodDays={chartData.totalDays} />
+          )}
 
           {/* Analyse de tendance */}
           {chartData.validDays >= 2 && (
@@ -379,7 +392,17 @@ const styles = StyleSheet.create({
     marginHorizontal: designSystem.spacing[4],
     marginBottom: designSystem.spacing[6],
   },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: designSystem.spacing[1],
+    paddingRight: designSystem.spacing[2],
+  },
   chartTitle: {
+    color: designSystem.colors.text.primary,
+    fontWeight: '700',
+  },
+  chartSubtitle: {
     color: designSystem.colors.text.primary,
     marginBottom: designSystem.spacing[4],
   },
