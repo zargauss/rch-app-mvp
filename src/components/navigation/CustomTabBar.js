@@ -14,10 +14,18 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
     openModal();
   };
 
+  // Filtrer les routes pour exclure Paramètres de la tab bar
+  const visibleRoutes = state.routes.filter(route => route.name !== 'Paramètres');
+  const visibleDescriptors = visibleRoutes.reduce((acc, route) => {
+    acc[route.key] = descriptors[route.key];
+    return acc;
+  }, {});
+
   // Rendre un onglet
   const renderTab = (route, index) => {
-    const { options } = descriptors[route.key];
-    const isFocused = state.index === index;
+    const { options } = visibleDescriptors[route.key];
+    const actualIndex = state.routes.findIndex(r => r.key === route.key);
+    const isFocused = state.index === actualIndex;
 
     const onPress = () => {
       const event = navigation.emit({
@@ -44,7 +52,6 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
     if (route.name === 'Bilan') iconName = 'clipboard-text';
     if (route.name === 'Statistiques') iconName = 'chart-line';
     if (route.name === 'Export') iconName = 'file-pdf-box';
-    if (route.name === 'Paramètres') iconName = 'cog';
 
     return (
       <TouchableOpacity
@@ -78,10 +85,10 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
     <View style={styles.container}>
       <View style={styles.tabBar}>
         {/* Premier onglet (Accueil) */}
-        {state.routes[0] && renderTab(state.routes[0], 0)}
+        {visibleRoutes[0] && renderTab(visibleRoutes[0], 0)}
         
         {/* Deuxième onglet (Bilan) */}
-        {state.routes[1] && renderTab(state.routes[1], 1)}
+        {visibleRoutes[1] && renderTab(visibleRoutes[1], 1)}
 
         {/* Bouton central avec icône toilettes */}
         <TouchableOpacity
@@ -98,14 +105,11 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
           />
         </TouchableOpacity>
 
-        {/* Troisième onglet (Statistiques) - index 2 */}
-        {state.routes[2] && renderTab(state.routes[2], 2)}
+        {/* Troisième onglet (Statistiques) */}
+        {visibleRoutes[2] && renderTab(visibleRoutes[2], 2)}
 
-        {/* Quatrième onglet (Export) - index 3 */}
-        {state.routes[3] && renderTab(state.routes[3], 3)}
-
-        {/* Cinquième onglet (Paramètres) - index 4 */}
-        {state.routes[4] && renderTab(state.routes[4], 4)}
+        {/* Quatrième onglet (Export) */}
+        {visibleRoutes[3] && renderTab(visibleRoutes[3], 3)}
       </View>
     </View>
   );

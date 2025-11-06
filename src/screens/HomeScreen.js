@@ -1532,6 +1532,7 @@ const styles = StyleSheet.create({
   },
   // Styles pour la section Aujourd'hui
   todaySection: {
+    marginTop: designSystem.spacing[4],
     marginBottom: designSystem.spacing[6],
   },
   sectionHeader: {

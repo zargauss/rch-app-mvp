@@ -135,7 +135,7 @@ export default function SurveyScreen() {
                 <MaterialCommunityIcons 
                   name={surveyCompleted ? "check-circle" : "clipboard-text-outline"} 
                   size={32} 
-                  color={surveyCompleted ? designSystem.colors.health.success.main : designSystem.colors.primary[500]} 
+                  color={surveyCompleted ? designSystem.colors.secondary[600] : designSystem.colors.primary[500]} 
                 />
                 <View style={styles.cardHeaderText}>
                   <AppText variant="h4" style={styles.cardTitle}>
