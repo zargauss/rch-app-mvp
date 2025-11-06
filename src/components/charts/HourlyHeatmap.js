@@ -290,9 +290,10 @@ const styles = StyleSheet.create({
     position: 'absolute',
     minWidth: 140,
     maxWidth: 180,
-    backgroundColor: '#FFFFFF',
+    // Effet glass : fond semi-transparent avec blur
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
     borderWidth: 1,
-    borderColor: '#C8C8F4',
+    borderColor: 'rgba(200, 200, 244, 0.6)',
     borderRadius: 10,
     paddingVertical: 8,
     paddingHorizontal: 10,
@@ -301,16 +302,26 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.12,
     shadowRadius: 12,
+    // Backdrop blur pour l'effet glass (web uniquement)
+    ...(Platform.OS === 'web' && {
+      backdropFilter: 'blur(12px) saturate(180%)',
+      WebkitBackdropFilter: 'blur(12px) saturate(180%)',
+    }),
   },
   tooltipArrow: {
     position: 'absolute',
     width: 10,
     height: 10,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
     borderLeftWidth: 1,
     borderTopWidth: 1,
-    borderColor: '#C8C8F4',
+    borderColor: 'rgba(200, 200, 244, 0.6)',
     transform: [{ rotate: '45deg' }],
+    // Backdrop blur pour l'effet glass (web uniquement)
+    ...(Platform.OS === 'web' && {
+      backdropFilter: 'blur(12px) saturate(180%)',
+      WebkitBackdropFilter: 'blur(12px) saturate(180%)',
+    }),
   },
   tooltipHeader: {
     flexDirection: 'row',
