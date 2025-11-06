@@ -1,5 +1,5 @@
 ﻿import React from 'react';
-import { Platform } from 'react-native';
+import { Platform, TouchableOpacity } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -22,7 +22,7 @@ function MainTabs() {
   return (
     <Tab.Navigator
       tabBar={(props) => <CustomTabBar {...props} />}
-      screenOptions={({ route }) => ({
+      screenOptions={({ route, navigation }) => ({
         headerShown: true,
         headerStyle: {
           backgroundColor: designSystem.colors.background.tertiary,
@@ -62,7 +62,18 @@ function MainTabs() {
           if (route.name === 'Export') iconName = 'file-pdf-box';
           if (route.name === 'Paramètres') iconName = 'cog';
           return <MaterialCommunityIcons name={iconName} size={26} color={color} />;
-        }
+        },
+        headerRight: ({ tintColor }) => 
+          route.name !== 'Paramètres' ? (
+            <TouchableOpacity
+              onPress={() => navigation.navigate('Paramètres')}
+              style={{ marginRight: 16 }}
+              accessibilityRole="button"
+              accessibilityLabel="Paramètres"
+            >
+              <MaterialCommunityIcons name="cog" size={24} color={tintColor || designSystem.colors.text.primary} />
+            </TouchableOpacity>
+          ) : null
       })}
     >
       <Tab.Screen name="Accueil" component={HomeScreen} />
