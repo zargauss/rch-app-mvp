@@ -98,35 +98,40 @@ const HourlyHeatmap = ({ stools = [], periodDays = 30 }) => {
         ) : (
           <View style={styles.chartWrapper} ref={wrapperRef}>
             <svg width={chartWidth} height={chartHeight} style={{ overflow: 'hidden' }}>
-              {/* Segments 24h */}
-              {hourlyAverages.map((avg, hour) => {
-                const segmentWidth = chartWidth / segmentCount;
-                const x = Math.floor(hour * segmentWidth);
-                const y = 0;
-                const fill = colorForValue(avg);
-                return (
-                  <g key={hour}>
+              {/* Masque pour coins arrondis uniquement sur les bords extérieurs */}
+              <defs>
+                <clipPath id="roundedBar">
+                  <rect x="0" y="0" width={chartWidth} height={chartHeight} rx="8" ry="8" />
+                </clipPath>
+              </defs>
+
+              {/* Barre uniforme avec segments contigus */}
+              <g clipPath="url(#roundedBar)">
+                {hourlyAverages.map((avg, hour) => {
+                  const segmentWidth = chartWidth / segmentCount;
+                  const x = hour * segmentWidth;
+                  const fill = colorForValue(avg);
+                  return (
                     <rect
+                      key={hour}
                       x={x}
-                      y={y}
-                      width={Math.ceil(segmentWidth)}
+                      y={0}
+                      width={segmentWidth}
                       height={chartHeight}
-                      rx="6"
-                      ry="6"
                       fill={fill}
                       stroke={hover && hover.hour === hour ? '#101010' : 'transparent'}
-                      strokeWidth={hover && hover.hour === hour ? 1 : 0}
+                      strokeWidth={hover && hover.hour === hour ? 2 : 0}
                       onMouseMove={(e) => handleMouseMove(e, hour, avg)}
                       onMouseLeave={handleMouseLeave}
+                      style={{ cursor: 'pointer' }}
                     />
-                  </g>
-                );
-              })}
+                  );
+                })}
+              </g>
 
               {/* Ticks d'heures clefs */}
               {ticks.map((t, idx) => {
-                const segmentWidth = chartWidth / segmentCount;
-                const x = Math.floor((t / 24) * chartWidth);
+                const x = (t / 24) * chartWidth;
                 return (
                   <g key={idx}>
                     <line x1={x} y1={chartHeight - 16} x2={x} y2={chartHeight} stroke="#C8C8F4" strokeWidth="1" />
