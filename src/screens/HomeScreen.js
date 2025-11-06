@@ -833,13 +833,7 @@ export default function HomeScreen({ route }) {
             const todayStools = stools.filter(s => s.timestamp >= start && s.timestamp < end);
             
             if (todayStools.length === 0) {
-              return (
-                <View style={styles.emptyTodayState}>
-                  <AppText variant="bodyMedium" style={styles.emptyText}>
-                    Aucune selle enregistrée aujourd'hui
-                  </AppText>
-                </View>
-              );
+              return null;
             }
             
             return (
