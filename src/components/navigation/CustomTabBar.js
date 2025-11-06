@@ -41,7 +41,7 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
     // Icônes pour chaque route
     let iconName = 'home';
     if (route.name === 'Accueil') iconName = 'home';
-    if (route.name === 'Historique') iconName = 'clock-outline';
+    if (route.name === 'Bilan') iconName = 'clipboard-text';
     if (route.name === 'Statistiques') iconName = 'chart-line';
     if (route.name === 'Export') iconName = 'file-pdf-box';
     if (route.name === 'Paramètres') iconName = 'cog';
@@ -80,7 +80,7 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
         {/* Premier onglet (Accueil) */}
         {state.routes[0] && renderTab(state.routes[0], 0)}
         
-        {/* Deuxième onglet (Historique) */}
+        {/* Deuxième onglet (Bilan) */}
         {state.routes[1] && renderTab(state.routes[1], 1)}
 
         {/* Bouton central avec icône toilettes */}
