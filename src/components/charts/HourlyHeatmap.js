@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useState, useCallback } from 'react';
 import { View, StyleSheet, Dimensions, Platform } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import AppText from '../ui/AppText';
@@ -60,6 +60,22 @@ const HourlyHeatmap = ({ stools = [], periodDays = 30 }) => {
 
   const insufficientData = periodDays < 3 || hourlyAverages.every((v) => v === 0);
 
+  // Tooltip (web uniquement)
+  const wrapperRef = useRef(null);
+  const [hover, setHover] = useState(null); // { hour, x, y }
+
+  const handleMouseMove = useCallback((e, hour, avg) => {
+    if (!wrapperRef.current) return;
+    const rect = wrapperRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    setHover({ hour, x, y, avg });
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    setHover(null);
+  }, []);
+
   return (
     <AppCard style={styles.container}>
       <View style={styles.titleContainer}>
@@ -80,7 +96,7 @@ const HourlyHeatmap = ({ stools = [], periodDays = 30 }) => {
             </AppText>
           </View>
         ) : (
-          <View style={styles.chartWrapper}>
+          <View style={styles.chartWrapper} ref={wrapperRef}>
             <svg width={chartWidth} height={chartHeight} style={{ overflow: 'hidden' }}>
               {/* Segments 24h */}
               {hourlyAverages.map((avg, hour) => {
@@ -90,7 +106,19 @@ const HourlyHeatmap = ({ stools = [], periodDays = 30 }) => {
                 const fill = colorForValue(avg);
                 return (
                   <g key={hour}>
-                    <rect x={x} y={y} width={Math.ceil(segmentWidth)} height={chartHeight} rx="6" ry="6" fill={fill} />
+                    <rect
+                      x={x}
+                      y={y}
+                      width={Math.ceil(segmentWidth)}
+                      height={chartHeight}
+                      rx="6"
+                      ry="6"
+                      fill={fill}
+                      stroke={hover && hover.hour === hour ? '#101010' : 'transparent'}
+                      strokeWidth={hover && hover.hour === hour ? 1 : 0}
+                      onMouseMove={(e) => handleMouseMove(e, hour, avg)}
+                      onMouseLeave={handleMouseLeave}
+                    />
                   </g>
                 );
               })}
@@ -109,6 +137,34 @@ const HourlyHeatmap = ({ stools = [], periodDays = 30 }) => {
                 );
               })}
             </svg>
+
+            {hover && (
+              <View
+                style={[
+                  styles.tooltip,
+                  {
+                    left: Math.min(Math.max(hover.x + 8, 8), chartWidth - 160),
+                    top: Math.min(Math.max(hover.y - 56, 8), chartHeight - 56),
+                  },
+                ]}
+                pointerEvents="none"
+              >
+                <View style={styles.tooltipHeader}>
+                  <MaterialCommunityIcons name="clock-outline" size={14} color="#4C4DDC" />
+                  <AppText variant="labelSmall" style={styles.tooltipHour}>
+                    {String(hover.hour).padStart(2, '0')}h - {String((hover.hour + 1) % 24).padStart(2, '0')}h
+                  </AppText>
+                </View>
+                <AppText variant="labelSmall" style={styles.tooltipValue}>
+                  {hover.avg.toFixed(2)} selles/heure
+                </AppText>
+                {totalAvgSum > 0 && (
+                  <AppText variant="labelSmall" style={styles.tooltipSub}>
+                    {(Math.max(0, hover.avg) / totalAvgSum * 100).toFixed(1)}% de la journée
+                  </AppText>
+                )}
+              </View>
+            )}
           </View>
         )
       ) : (
@@ -186,6 +242,36 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 4,
     marginLeft: 6,
+  },
+  tooltip: {
+    position: 'absolute',
+    minWidth: 140,
+    maxWidth: 180,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#C8C8F4',
+    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+  },
+  tooltipHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 2,
+  },
+  tooltipHour: {
+    color: '#101010',
+    fontWeight: '700',
+  },
+  tooltipValue: {
+    color: '#101010',
+    fontWeight: '600',
+  },
+  tooltipSub: {
+    color: '#101010',
+    opacity: 0.8,
+    marginTop: 2,
   },
 });
 
