@@ -2,6 +2,7 @@
 import { View, StyleSheet, ScrollView, Linking, TouchableOpacity, Platform, Alert } from 'react-native';
 import { Text, Button, Portal, Modal, Card, Switch, TextInput } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import HealthIcon from '../components/ui/HealthIcon';
 import AppCard from '../components/ui/AppCard';
 import AppText from '../components/ui/AppText';
 import PrimaryButton from '../components/ui/PrimaryButton';
@@ -9,6 +10,7 @@ import SecondaryButton from '../components/ui/SecondaryButton';
 import StatCard from '../components/ui/StatCard';
 import Toast from '../components/ui/Toast';
 import SkeletonCard from '../components/ui/SkeletonCard';
+import EmptyState from '../components/ui/EmptyState';
 import DateTimeInput, { isValidDate, isValidTime } from '../components/ui/DateTimeInput';
 import Slider from '@react-native-community/slider';
 import storage from '../utils/storage';
@@ -801,7 +803,7 @@ export default function HomeScreen({ route }) {
         {/* Section Aujourd'hui */}
         <AppCard style={styles.todaySection}>
           <View style={styles.sectionHeader}>
-            <MaterialCommunityIcons name="calendar-today" size={24} color={designSystem.colors.primary[500]} />
+            <HealthIcon name="calendar" size={28} color={designSystem.colors.primary[500]} />
             <AppText variant="h3" style={styles.sectionTitle}>
               Aujourd'hui
             </AppText>
@@ -889,7 +891,7 @@ export default function HomeScreen({ route }) {
         {/* Actualités de l'association MICI */}
         <AppCard style={styles.newsCard}>
           <View style={styles.newsHeader}>
-            <MaterialCommunityIcons name="newspaper" size={24} color={designSystem.colors.primary[500]} />
+            <HealthIcon name="report" size={28} color={designSystem.colors.primary[500]} />
             <AppText variant="h3" style={styles.newsTitle}>
               Actualités AFA
             </AppText>
@@ -953,7 +955,7 @@ export default function HomeScreen({ route }) {
         {/* Section Historique */}
         <AppCard style={styles.historySection}>
           <View style={styles.sectionHeader}>
-            <MaterialCommunityIcons name="clock-outline" size={24} color={designSystem.colors.primary[500]} />
+            <HealthIcon name="journal" size={28} color={designSystem.colors.primary[500]} />
             <AppText variant="h3" style={styles.sectionTitle}>
               Historique
             </AppText>
@@ -961,11 +963,12 @@ export default function HomeScreen({ route }) {
 
           {/* Liste des selles */}
           {stools.length === 0 ? (
-            <View style={styles.emptyState}>
-              <AppText variant="bodyMedium" style={styles.emptyText}>
-                Aucune selle enregistrée
-              </AppText>
-            </View>
+            <EmptyState
+              healthIcon="empty"
+              title="Aucune selle enregistrée"
+              description="Commencez à suivre votre santé intestinale en enregistrant votre première selle"
+              size="compact"
+            />
           ) : (
             <View>
               {stools.slice(0, 10).map((item, index) => (
@@ -1296,10 +1299,11 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
-    paddingHorizontal: designSystem.spacing[4],
+    paddingHorizontal: designSystem.spacing[5], // Augmenté de [4] à [5] pour plus d'air
   },
   scrollViewContent: {
-    paddingBottom: 100,
+    paddingTop: designSystem.spacing[4], // Ajout d'un padding top
+    paddingBottom: 120, // Augmenté de 100 à 120 pour la tab bar
   },
   statsContainer: {
     marginBottom: designSystem.spacing[6],
@@ -1538,11 +1542,12 @@ const styles = StyleSheet.create({
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: designSystem.spacing[4],
+    marginBottom: designSystem.spacing[5], // Augmenté de [4] à [5]
+    gap: designSystem.spacing[3],
   },
   sectionTitle: {
-    marginLeft: designSystem.spacing[3],
     color: designSystem.colors.text.primary,
+    fontWeight: '700',
   },
   emptyTodayState: {
     paddingVertical: designSystem.spacing[6],
@@ -1602,9 +1607,9 @@ const styles = StyleSheet.create({
     gap: designSystem.spacing[2],
   },
   actionButton: {
-    width: 36,
-    height: 36,
-    borderRadius: designSystem.borderRadius.md,
+    width: 44, // Augmenté de 36px à 44px (touch target minimum)
+    height: 44,
+    borderRadius: designSystem.borderRadius.lg, // Augmenté à lg
     backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
@@ -1629,9 +1634,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: designSystem.spacing[2],
   },
   monthNavButton: {
-    width: 44,
-    height: 44,
-    borderRadius: designSystem.borderRadius.md,
+    width: 48, // Augmenté de 44px à 48px
+    height: 48,
+    borderRadius: designSystem.borderRadius.lg, // Augmenté à lg
     backgroundColor: '#EDEDFC',
     justifyContent: 'center',
     alignItems: 'center',
