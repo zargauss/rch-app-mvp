@@ -75,13 +75,13 @@ export default function HomeScreen({ route }) {
   const [rssLoading, setRssLoading] = useState(true);
 
   const bristolDescriptions = useMemo(() => ({
-    1: 'Type 1 — Noix dures séparées (constipation sévère)',
-    2: 'Type 2 — Saucisse grumeleuse (constipation)',
-    3: 'Type 3 — Saucisse fissurée (normal)',
-    4: 'Type 4 — Saucisse lisse et molle (normal)',
-    5: 'Type 5 — Morceaux mous (tendance diarrhéique)',
-    6: 'Type 6 — Morceaux floconneux (diarrhée)',
-    7: 'Type 7 — Aqueux, sans morceaux (diarrhée sévère)'
+    1: 'Noix dures séparées',
+    2: 'Saucisse grumeleuse',
+    3: 'Saucisse fissurée',
+    4: 'Saucisse lisse (normal)',
+    5: 'Morceaux mous',
+    6: 'Morceaux floconneux',
+    7: 'Aqueux, liquide'
   }), []);
 
   // Fonction pour charger les articles RSS
@@ -817,7 +817,7 @@ export default function HomeScreen({ route }) {
               icon="toilet"
               color="primary"
             />
-            
+
             <StatCard
               title="Score du jour"
               value={todayProvisionalScore !== null ? todayProvisionalScore : 'N/A'}
@@ -826,65 +826,6 @@ export default function HomeScreen({ route }) {
               color={todayProvisionalScore !== null ? (todayProvisionalScore < 5 ? 'success' : todayProvisionalScore <= 10 ? 'warning' : 'error') : 'info'}
             />
           </View>
-
-          {/* Liste des selles d'aujourd'hui */}
-          {(() => {
-            const today = new Date();
-            const start = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
-            const end = start + 24 * 60 * 60 * 1000;
-            const todayStools = stools.filter(s => s.timestamp >= start && s.timestamp < end);
-            
-            if (todayStools.length === 0) {
-              return null;
-            }
-            
-            return (
-              <View style={styles.todayStoolsList}>
-                {todayStools.map((item, index) => (
-                  <AnimatedListItem key={item.id} index={index} delay={30}>
-                    <View style={styles.stoolItem}>
-                      <View style={styles.stoolMain}>
-                        <View style={[styles.bristolBadge, { backgroundColor: getBristolColor(item.bristolScale) }]}>
-                          <AppText variant="bodyLarge" style={styles.bristolNumber}>
-                            {item.bristolScale}
-                          </AppText>
-                        </View>
-                        <View style={styles.stoolInfo}>
-                          <View style={styles.stoolDateContainer}>
-                            <AppText variant="bodyMedium" style={styles.stoolDate}>
-                              {formatCompactDate(item.timestamp)}
-                            </AppText>
-                            {item.hasBlood && (
-                              <MaterialCommunityIcons 
-                                name="water" 
-                                size={16} 
-                                color="#DC2626" 
-                                style={{ marginLeft: 6 }}
-                              />
-                            )}
-                          </View>
-                        </View>
-                        <View style={styles.stoolActions}>
-                          <TouchableOpacity 
-                            onPress={() => handleEditStool(item)}
-                            style={styles.actionButton}
-                          >
-                            <MaterialCommunityIcons name="pencil" size={20} color="#4C4DDC" />
-                          </TouchableOpacity>
-                          <TouchableOpacity 
-                            onPress={() => handleDeleteStool(item.id)}
-                            style={styles.actionButton}
-                          >
-                            <MaterialCommunityIcons name="delete" size={20} color="#DC2626" />
-                          </TouchableOpacity>
-                        </View>
-                      </View>
-                    </View>
-                  </AnimatedListItem>
-                ))}
-              </View>
-            );
-          })()}
         </AppCard>
 
 
@@ -1198,6 +1139,86 @@ export default function HomeScreen({ route }) {
         </Modal>
       </Portal>
 
+      {/* Modal d'édition de selle */}
+      <Portal>
+        <Modal visible={editModalVisible} onDismiss={hideEditModal} contentContainerStyle={styles.modalContainer}>
+          <AppCard style={styles.modalCard}>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <AppText variant="h2" style={styles.modalTitle}>
+                Modifier la selle
+              </AppText>
+
+              <View style={styles.dateTimeSection}>
+                <AppText style={styles.fieldLabel}>Date et heure</AppText>
+                <DateTimeInput
+                  dateValue={editDateInput}
+                  timeValue={editTimeInput}
+                  onDateChange={setEditDateInput}
+                  onTimeChange={setEditTimeInput}
+                  dateLabel="Date (DD/MM/YYYY)"
+                  timeLabel="Heure (HH:MM)"
+                />
+                <AppText variant="labelSmall" style={styles.dateTimeHint}>
+                  Format: Date DD/MM/YYYY, Heure HH:MM (24h)
+                </AppText>
+              </View>
+
+              <View style={styles.bristolSection}>
+                <AppText style={styles.fieldLabel}>Consistance (Bristol)</AppText>
+                <Slider
+                  minimumValue={1}
+                  maximumValue={7}
+                  step={1}
+                  value={editBristol}
+                  onValueChange={setEditBristol}
+                  style={styles.slider}
+                  minimumTrackTintColor={theme.colors.primary}
+                  maximumTrackTintColor={theme.colors.outline}
+                  thumbStyle={{ backgroundColor: theme.colors.primary }}
+                />
+                <AppText variant="labelMedium" style={styles.bristolHint}>
+                  Sélection: {editBristol} — {bristolDescriptions[editBristol]}
+                </AppText>
+              </View>
+
+              <View style={styles.bloodSection}>
+                <View style={styles.switchRow}>
+                  <AppText variant="bodyLarge">Présence de sang</AppText>
+                  <Switch
+                    value={editHasBlood}
+                    onValueChange={(value) => {
+                      toggleFeedback();
+                      setEditHasBlood(value);
+                    }}
+                    color={theme.colors.error}
+                  />
+                </View>
+              </View>
+
+              <View style={styles.modalActions}>
+                <PrimaryButton
+                  onPress={handleSaveEdit}
+                  style={styles.saveButton}
+                  variant="primary"
+                  size="medium"
+                >
+                  Enregistrer
+                </PrimaryButton>
+                <PrimaryButton
+                  onPress={hideEditModal}
+                  style={styles.cancelButton}
+                  variant="neutral"
+                  size="medium"
+                  outlined
+                >
+                  Annuler
+                </PrimaryButton>
+              </View>
+            </ScrollView>
+          </AppCard>
+        </Modal>
+      </Portal>
+
       {/* Modale de prise de traitement */}
       <Portal>
         <Modal visible={treatmentModalVisible} onDismiss={hideTreatmentModal} contentContainerStyle={styles.modalContainer}>
@@ -1441,8 +1462,8 @@ const styles = StyleSheet.create({
     fontWeight: designSystem.typography.fontWeight.medium,
   },
   modalContainer: {
-    margin: designSystem.spacing[5],
-    maxHeight: '85%',
+    margin: designSystem.spacing[4], // Réduit de [5] à [4]
+    maxHeight: '90%', // Augmenté de 85% à 90%
   },
   modalCard: {
     backgroundColor: designSystem.colors.background.tertiary,
@@ -1452,21 +1473,23 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   modalScroll: {
-    padding: designSystem.spacing[7],
+    padding: designSystem.spacing[5], // Réduit de [7] à [5] pour plus d'espace
   },
   modalTitle: {
     color: designSystem.colors.text.primary,
-    marginBottom: designSystem.spacing[7],
+    marginBottom: designSystem.spacing[5], // Réduit de [7] à [5]
     textAlign: 'center',
+    fontSize: 24, // Ajout taille explicite pour mobile
+    lineHeight: 32,
   },
   dateTimeSection: {
-    marginBottom: designSystem.spacing[6],
+    marginBottom: designSystem.spacing[5], // Réduit de [6] à [5]
   },
   fieldLabel: {
-    fontSize: designSystem.typography.fontSize.base,
+    fontSize: designSystem.typography.fontSize.sm, // Réduit de base à sm (14px)
     fontWeight: designSystem.typography.fontWeight.semiBold,
     color: designSystem.colors.text.secondary,
-    marginBottom: designSystem.spacing[4],
+    marginBottom: designSystem.spacing[3], // Réduit de [4] à [3]
   },
   dateTimeRow: {
     flexDirection: 'row',
@@ -1479,24 +1502,28 @@ const styles = StyleSheet.create({
   },
   dateTimeHint: {
     color: designSystem.colors.text.tertiary,
-    marginTop: designSystem.spacing[3],
+    marginTop: designSystem.spacing[2], // Réduit de [3] à [2]
     fontStyle: 'italic',
     textAlign: 'center',
+    fontSize: 11, // Ajout taille petite pour mobile
+    lineHeight: 16,
   },
   bristolSection: {
-    marginBottom: designSystem.spacing[7],
+    marginBottom: designSystem.spacing[5], // Réduit de [7] à [5]
   },
   slider: {
     height: 48,
-    marginVertical: designSystem.spacing[4],
+    marginVertical: designSystem.spacing[3], // Réduit de [4] à [3]
   },
   bristolHint: {
     color: designSystem.colors.text.secondary,
     textAlign: 'center',
-    marginTop: designSystem.spacing[3],
+    marginTop: designSystem.spacing[2], // Réduit de [3] à [2]
+    fontSize: 13, // Ajout pour meilleure lisibilité
+    lineHeight: 18,
   },
   bloodSection: {
-    marginBottom: designSystem.spacing[7],
+    marginBottom: designSystem.spacing[5], // Réduit de [7] à [5]
   },
   switchRow: {
     flexDirection: 'row',
@@ -1510,8 +1537,8 @@ const styles = StyleSheet.create({
   modalActions: {
     flexDirection: 'column',
     gap: designSystem.spacing[3],
-    marginTop: designSystem.spacing[6],
-    marginBottom: designSystem.spacing[4],
+    marginTop: designSystem.spacing[4], // Réduit de [6] à [4]
+    marginBottom: designSystem.spacing[2], // Réduit de [4] à [2]
   },
   cancelButton: {
     width: '100%',
