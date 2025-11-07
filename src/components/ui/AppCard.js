@@ -139,9 +139,9 @@ export default function AppCard({
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: borderRadius.lg, // Augmenté de md (16px) à lg (20px)
-    padding: spacing[4],
-    marginBottom: spacing[4],
+    borderRadius: borderRadius.xl, // Augmenté à xl (28px) pour un look plus moderne
+    padding: spacing[5], // Augmenté de spacing[4] à spacing[5] (20px)
+    marginBottom: spacing[5], // Plus d'espacement entre les cards
   },
   noPadding: {
     padding: 0,

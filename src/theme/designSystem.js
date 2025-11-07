@@ -238,11 +238,12 @@ export const spacing = {
 export const borderRadius = {
   none: 0,
   sm: 8,
-  base: 12,
-  md: 16,
-  lg: 20,
-  xl: 24,
-  '2xl': 28,
+  base: 16, // Augmenté de 12 à 16
+  md: 20, // Augmenté de 16 à 20
+  lg: 24, // Augmenté de 20 à 24
+  xl: 28, // Augmenté de 24 à 28
+  '2xl': 32, // Augmenté de 28 à 32
+  '3xl': 40, // Nouveau
   full: 9999,
 };
 

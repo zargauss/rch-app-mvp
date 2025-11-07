@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Platform, Animated } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import AppText from '../ui/AppText';
 import designSystem from '../../theme/designSystem';
 import { useStoolModal } from '../../contexts/StoolModalContext';
 import { buttonPressFeedback } from '../../utils/haptics';
@@ -21,7 +22,7 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
     return acc;
   }, {});
 
-  // Rendre un onglet
+  // Rendre un onglet moderne avec label
   const renderTab = (route, index) => {
     const { options } = visibleDescriptors[route.key];
     const actualIndex = state.routes.findIndex(r => r.key === route.key);
@@ -35,6 +36,7 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
       });
 
       if (!isFocused && !event.defaultPrevented) {
+        buttonPressFeedback();
         navigation.navigate(route.name);
       }
     };
@@ -46,12 +48,26 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
       });
     };
 
-    // Icônes pour chaque route
+    // Icônes et labels pour chaque route
     let iconName = 'home';
-    if (route.name === 'Accueil') iconName = 'home';
-    if (route.name === 'Bilan') iconName = 'clipboard-text';
-    if (route.name === 'Statistiques') iconName = 'chart-line';
-    if (route.name === 'Export') iconName = 'file-pdf-box';
+    let label = route.name;
+
+    if (route.name === 'Accueil') {
+      iconName = 'home';
+      label = 'Accueil';
+    }
+    if (route.name === 'Bilan') {
+      iconName = 'clipboard-text';
+      label = 'Bilan';
+    }
+    if (route.name === 'Statistiques') {
+      iconName = 'chart-line';
+      label = 'Stats';
+    }
+    if (route.name === 'Export') {
+      iconName = 'file-pdf-box';
+      label = 'Export';
+    }
 
     return (
       <TouchableOpacity
@@ -63,19 +79,26 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
         onPress={onPress}
         onLongPress={onLongPress}
         style={styles.tabItem}
+        activeOpacity={0.7}
       >
-        <MaterialCommunityIcons
-          name={iconName}
-          size={26}
-          color={isFocused ? colors.primary[500] : colors.text.tertiary}
-        />
-        <View style={styles.labelContainer}>
+        <View style={[
+          styles.tabContent,
+          isFocused && styles.tabContentFocused
+        ]}>
           <MaterialCommunityIcons
-            name="circle"
-            size={4}
-            color={isFocused ? colors.primary[500] : 'transparent'}
-            style={styles.labelDot}
+            name={iconName}
+            size={24}
+            color={isFocused ? colors.primary[500] : colors.text.tertiary}
           />
+          <AppText
+            variant="caption"
+            style={[
+              styles.tabLabel,
+              { color: isFocused ? colors.primary[500] : colors.text.tertiary }
+            ]}
+          >
+            {label}
+          </AppText>
         </View>
       </TouchableOpacity>
     );
@@ -124,12 +147,13 @@ const styles = StyleSheet.create({
   },
   tabBar: {
     flexDirection: 'row',
-    height: Platform.OS === 'ios' ? 85 : designSystem.layout.tabBarHeight,
-    paddingBottom: Platform.OS === 'ios' ? 25 : 10,
-    paddingTop: 10,
+    height: Platform.OS === 'ios' ? 88 : 72,
+    paddingBottom: Platform.OS === 'ios' ? 28 : 12,
+    paddingTop: 8,
+    paddingHorizontal: 8,
     borderTopWidth: 0,
     backgroundColor: designSystem.colors.background.tertiary,
-    ...designSystem.shadows.lg,
+    ...designSystem.shadows.xl,
     alignItems: 'center',
     justifyContent: 'space-around',
   },
@@ -137,26 +161,35 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 4,
+    minHeight: 48, // Touch target minimum
+    paddingHorizontal: 4,
   },
-  labelContainer: {
-    marginTop: 4,
-    height: 4,
+  tabContent: {
     alignItems: 'center',
     justifyContent: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: designSystem.borderRadius.lg,
+    minWidth: 60,
   },
-  labelDot: {
+  tabContentFocused: {
+    backgroundColor: designSystem.colors.primary[50],
+  },
+  tabLabel: {
     marginTop: 2,
+    fontWeight: '600',
+    fontSize: 11,
   },
   centralButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     backgroundColor: designSystem.colors.primary[500],
     alignItems: 'center',
     justifyContent: 'center',
-    marginHorizontal: 8,
-    ...designSystem.shadows.md,
-    elevation: 6,
+    marginHorizontal: 12,
+    marginBottom: 8,
+    ...designSystem.shadows.lg,
+    elevation: 8,
   },
 });

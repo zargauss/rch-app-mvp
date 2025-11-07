@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Animated } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import HealthIcon from './HealthIcon';
 import AppText from './AppText';
 import PrimaryButton from './PrimaryButton';
 import designSystem from '../../theme/designSystem';
@@ -8,13 +9,28 @@ import { fadeIn, scaleIn } from '../../utils/animations';
 
 const { colors, spacing, borderRadius } = designSystem;
 
+/**
+ * Composant EmptyState moderne avec support des HealthIcons
+ *
+ * Usage:
+ * <EmptyState
+ *   healthIcon="journal"
+ *   title="Aucune donnée"
+ *   description="Commencez par ajouter vos premières entrées"
+ *   actionLabel="Ajouter"
+ *   onAction={() => {}}
+ * />
+ */
+
 export default function EmptyState({
   icon = 'inbox',
+  healthIcon, // Nouveau: utiliser HealthIcon au lieu de MaterialCommunityIcons
   title,
   description,
   actionLabel,
   onAction,
   variant = 'default',
+  size = 'default', // 'default' | 'compact'
 }) {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
@@ -55,11 +71,14 @@ export default function EmptyState({
   };
 
   const config = variantConfig[variant];
+  const iconSize = size === 'compact' ? 48 : 72;
+  const containerSize = size === 'compact' ? 96 : 140;
 
   return (
-    <Animated.View 
+    <Animated.View
       style={[
         styles.container,
+        size === 'compact' && styles.containerCompact,
         {
           opacity: fadeAnim,
           transform: [{ scale: scaleAnim }],
@@ -70,17 +89,28 @@ export default function EmptyState({
         style={[
           styles.iconContainer,
           {
+            width: containerSize,
+            height: containerSize,
+            borderRadius: containerSize / 2,
             backgroundColor: config.iconBg,
             borderColor: config.borderColor,
             transform: [{ scale: iconScaleAnim }],
           }
         ]}
       >
-        <MaterialCommunityIcons 
-          name={icon} 
-          size={64} 
-          color={config.iconColor}
-        />
+        {healthIcon ? (
+          <HealthIcon
+            name={healthIcon}
+            size={iconSize}
+            color={config.iconColor}
+          />
+        ) : (
+          <MaterialCommunityIcons
+            name={icon}
+            size={iconSize}
+            color={config.iconColor}
+          />
+        )}
       </Animated.View>
       
       <AppText variant="h3" weight="semiBold" color="primary" align="center" style={styles.title}>
@@ -110,22 +140,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing[6],
     paddingVertical: spacing[10],
   },
+  containerCompact: {
+    paddingVertical: spacing[6],
+  },
   iconContainer: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: spacing[6],
     borderWidth: 2,
-    shadowColor: colors.text.primary,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
+    ...designSystem.shadows.base,
   },
   title: {
     marginBottom: spacing[3],
@@ -134,7 +157,7 @@ const styles = StyleSheet.create({
   description: {
     marginBottom: spacing[6],
     maxWidth: 320,
-    lineHeight: 22,
+    lineHeight: 24,
   },
   button: {
     minWidth: 200,

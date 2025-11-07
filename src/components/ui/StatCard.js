@@ -93,8 +93,8 @@ export default function StatCard({
 
 const styles = StyleSheet.create({
   card: {
-    marginBottom: 16,
-    borderRadius: 20, // Augmenté de 8px à 20px (borderRadius.lg)
+    marginBottom: 20,
+    borderRadius: 24, // Augmenté à 24px (borderRadius.xl) pour plus de modernité
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#C8C8F4', // Color 04
@@ -105,17 +105,17 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   content: {
-    padding: 20,
+    padding: 24, // Augmenté de 20px à 24px
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 20, // Augmenté de 16px à 20px
   },
   iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 16, // Augmenté de 12px à 16px (borderRadius.md)
+    width: 56, // Augmenté de 48px à 56px (touch target)
+    height: 56,
+    borderRadius: 20, // Augmenté de 16px à 20px (borderRadius.lg)
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
