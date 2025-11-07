@@ -2,13 +2,16 @@ import React from 'react';
 import { View, TouchableOpacity, StyleSheet, Platform, Animated } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import AppText from '../ui/AppText';
+import NotificationBadge from '../ui/NotificationBadge';
 import designSystem from '../../theme/designSystem';
 import { useStoolModal } from '../../contexts/StoolModalContext';
 import { buttonPressFeedback } from '../../utils/haptics';
+import usePendingQuestionnaires from '../../hooks/usePendingQuestionnaires';
 
 export default function CustomTabBar({ state, descriptors, navigation }) {
   const { openModal } = useStoolModal();
   const { colors } = designSystem;
+  const pendingCount = usePendingQuestionnaires();
 
   const handleAddStool = () => {
     buttonPressFeedback();
@@ -85,11 +88,17 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
           styles.tabContent,
           isFocused && styles.tabContentFocused
         ]}>
-          <MaterialCommunityIcons
-            name={iconName}
-            size={24}
-            color={isFocused ? colors.primary[500] : colors.text.tertiary}
-          />
+          <View style={styles.iconWrapper}>
+            <MaterialCommunityIcons
+              name={iconName}
+              size={24}
+              color={isFocused ? colors.primary[500] : colors.text.tertiary}
+            />
+            {/* Badge pour l'onglet Bilan */}
+            {route.name === 'Bilan' && (
+              <NotificationBadge count={pendingCount} size="medium" />
+            )}
+          </View>
           <AppText
             variant="caption"
             style={[
@@ -179,6 +188,13 @@ const styles = StyleSheet.create({
     marginTop: 2,
     fontWeight: '600',
     fontSize: 11,
+  },
+  iconWrapper: {
+    position: 'relative',
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   centralButton: {
     width: 60,
