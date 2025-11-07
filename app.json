@@ -34,13 +34,21 @@
       "name": "RCH Suivi",
       "shortName": "RCH Suivi",
       "description": "Application de suivi médical pour la Rectocolite Hémorragique",
-      "themeColor": "#005A9C",
-      "backgroundColor": "#F5F5F7",
+      "themeColor": "#4C4DDC",
+      "backgroundColor": "#EDEDFC",
       "display": "standalone",
       "orientation": "portrait",
       "startUrl": "/",
       "lang": "fr",
-      "categories": ["medical", "health", "productivity"]
+      "categories": ["medical", "health", "productivity"],
+      "preferRelatedApplications": false,
+      "scope": "/",
+      "dir": "ltr",
+      "splash": {
+        "backgroundColor": "#EDEDFC",
+        "resizeMode": "contain",
+        "image": "./assets/splash-icon.png"
+      }
     },
     "plugins": [
       [

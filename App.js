@@ -10,19 +10,22 @@ import { StoolModalProvider } from './src/contexts/StoolModalContext';
 // Import du script de mise à jour PWA
 import './src/utils/pwaUpdate';
 
+// Import du service worker PWA
+import { initPWA } from './src/utils/registerServiceWorker';
+
 export default function App() {
   const navigationRef = useRef(null);
   const notificationListener = useRef();
   const responseListener = useRef();
 
-  // Charger Inter depuis Google Fonts pour le web
+  // Charger Inter depuis Google Fonts pour le web et initialiser PWA
   useEffect(() => {
     if (Platform.OS === 'web') {
       const link = document.createElement('link');
       link.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap';
       link.rel = 'stylesheet';
       document.head.appendChild(link);
-      
+
       // Ajouter le style de base pour Inter
       const style = document.createElement('style');
       style.textContent = `
@@ -31,6 +34,13 @@ export default function App() {
         }
       `;
       document.head.appendChild(style);
+
+      // Initialiser le service worker PWA
+      initPWA().then((result) => {
+        console.log('✅ PWA initialisée:', result);
+      }).catch((error) => {
+        console.error('❌ Erreur lors de l\'initialisation PWA:', error);
+      });
     }
   }, []);
 

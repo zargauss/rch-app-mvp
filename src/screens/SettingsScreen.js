@@ -10,6 +10,7 @@ import AppCard from '../components/ui/AppCard';
 import SettingsSection, { SettingsItem } from '../components/settings/SettingsSection';
 import Divider from '../components/ui/Divider';
 import TimeInput from '../components/ui/TimeInput';
+import PWAInstallButton from '../components/ui/PWAInstallButton';
 import { useTheme } from 'react-native-paper';
 import { injectTestData, clearTestData, generateScenarioData, generateIBDiskTestData } from '../utils/dataGenerator';
 import designSystem from '../theme/designSystem';
@@ -350,6 +351,9 @@ export default function SettingsScreen() {
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: theme.colors.background }]} contentContainerStyle={styles.scrollContent}>
+      {/* Bouton d'installation PWA (uniquement sur web) */}
+      <PWAInstallButton />
+
       {/* Informations sur la période nocturne */}
       <AppCard style={styles.infoCard}>
         <View style={styles.infoHeader}>
