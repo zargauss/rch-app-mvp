@@ -523,3 +523,30 @@ export const findMedicationByName = (name) => {
   const medications = getMedications();
   return Object.values(medications).find(m => m.name.toLowerCase() === name.toLowerCase());
 };
+
+/**
+ * Trouve un médicament par son ID
+ * @param {string} id - ID du médicament
+ * @returns {object|null}
+ */
+export const findMedicationById = (id) => {
+  const medications = getMedications();
+  return medications[id] || null;
+};
+
+/**
+ * Alias pour getIntakes - Récupère toutes les prises
+ * @returns {Array}
+ */
+export const getAllIntakes = () => {
+  return getIntakes();
+};
+
+/**
+ * Récupère uniquement les schémas thérapeutiques actifs (sans endDate)
+ * @returns {Array}
+ */
+export const getActiveTherapeuticSchemas = () => {
+  const schemas = getTherapeuticSchemas();
+  return schemas.filter(schema => !schema.endDate);
+};

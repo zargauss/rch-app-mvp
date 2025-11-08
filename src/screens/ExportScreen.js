@@ -924,7 +924,7 @@ export default function ExportScreen() {
               </thead>
               <tbody>
                 ${schemas.map(schema => {
-                  const medication = medications.find(m => m.id === schema.medicationId);
+                  const medication = medications[schema.medicationId];
                   if (!medication) return '';
 
                   const startDate = new Date(schema.startDate).toLocaleDateString('fr-FR');
@@ -979,7 +979,7 @@ export default function ExportScreen() {
             }
 
             const rows = freeIntakes.sort((a, b) => new Date(b.dateTaken) - new Date(a.dateTaken)).map(intake => {
-              const medication = medications.find(m => m.id === intake.medicationId);
+              const medication = medications[intake.medicationId];
               if (!medication) return '';
 
               const date = new Date(intake.dateTaken).toLocaleDateString('fr-FR');

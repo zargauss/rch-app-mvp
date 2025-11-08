@@ -70,7 +70,7 @@ const TreatmentScreen = () => {
 
     return activeSchemas
       .map(schema => {
-        const medication = medications.find(m => m.id === schema.medicationId);
+        const medication = medications[schema.medicationId];
         return medication ? { schema, medication } : null;
       })
       .filter(Boolean)
@@ -83,7 +83,7 @@ const TreatmentScreen = () => {
     const medications = getMedications();
 
     const intakesWithMeta = intakes.map(intake => {
-      const medication = medications.find(m => m.id === intake.medicationId);
+      const medication = medications[intake.medicationId];
       return {
         ...intake,
         medicationName: medication?.name || 'Médicament inconnu',
@@ -205,7 +205,7 @@ const TreatmentScreen = () => {
     const [day, month, year] = editDateInput.split('/');
     const dateTaken = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
 
-    updateIntake(selectedIntake.id, dosesNum, dateTaken);
+    updateIntake(selectedIntake.id, { doses: dosesNum, dateTaken });
     buttonPressFeedback();
     setEditIntakeModalVisible(false);
     setSelectedIntake(null);
