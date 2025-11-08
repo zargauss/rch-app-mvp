@@ -347,39 +347,48 @@ const TreatmentScreen = () => {
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
-      {/* Header with tabs */}
-      <View style={styles.header}>
-        <View style={styles.tabBar}>
-          <TouchableOpacity
-            onPress={() => {
-              setActiveTab('active');
-              buttonPressFeedback();
-            }}
-            style={[styles.tab, activeTab === 'active' && styles.tabActive]}
-          >
-            <AppText
-              variant="bodyLarge"
-              style={[styles.tabText, activeTab === 'active' && styles.tabTextActive]}
-            >
-              Schémas actifs
-            </AppText>
-          </TouchableOpacity>
+      {/* Header with history button (only in active view) */}
+      {activeTab === 'active' && (
+        <View style={styles.header}>
           <TouchableOpacity
             onPress={() => {
               setActiveTab('history');
               buttonPressFeedback();
             }}
-            style={[styles.tab, activeTab === 'history' && styles.tabActive]}
+            style={styles.historyButton}
           >
-            <AppText
-              variant="bodyLarge"
-              style={[styles.tabText, activeTab === 'history' && styles.tabTextActive]}
-            >
-              Historique
-            </AppText>
+            <MaterialCommunityIcons
+              name="history"
+              size={20}
+              color={designSystem.colors.primary[500]}
+            />
+            <AppText style={styles.historyButtonText}>Historique</AppText>
           </TouchableOpacity>
         </View>
-      </View>
+      )}
+
+      {/* Header with back button (only in history view) */}
+      {activeTab === 'history' && (
+        <View style={styles.header}>
+          <TouchableOpacity
+            onPress={() => {
+              setActiveTab('active');
+              buttonPressFeedback();
+            }}
+            style={styles.backButton}
+          >
+            <MaterialCommunityIcons
+              name="arrow-left"
+              size={24}
+              color={designSystem.colors.primary[500]}
+            />
+            <AppText style={styles.backButtonText}>Retour</AppText>
+          </TouchableOpacity>
+          <AppText variant="h3" style={styles.historyTitle}>
+            Historique des prises
+          </AppText>
+        </View>
+      )}
 
       {/* Content */}
       <ScrollView
@@ -550,43 +559,54 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: designSystem.spacing[4],
-    paddingTop: designSystem.spacing[4],
+    paddingTop: designSystem.spacing[2],
     paddingBottom: designSystem.spacing[3],
   },
-  tabBar: {
+  historyButton: {
     flexDirection: 'row',
-    backgroundColor: designSystem.colors.background.secondary,
-    borderRadius: designSystem.borderRadius.xl,
-    padding: designSystem.spacing[1],
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: designSystem.spacing[3],
-    borderRadius: designSystem.borderRadius.lg,
     alignItems: 'center',
+    gap: designSystem.spacing[2],
+    paddingVertical: designSystem.spacing[2],
+    paddingHorizontal: designSystem.spacing[3],
+    backgroundColor: designSystem.colors.background.secondary,
+    borderRadius: designSystem.borderRadius.md,
+    alignSelf: 'flex-start',
   },
-  tabActive: {
-    backgroundColor: designSystem.colors.primary[500],
+  historyButtonText: {
+    color: designSystem.colors.primary[500],
+    fontSize: designSystem.typography.fontSize.sm,
+    fontWeight: designSystem.typography.fontWeight.semiBold,
   },
-  tabText: {
-    color: designSystem.colors.text.secondary,
-    fontWeight: '600',
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: designSystem.spacing[1],
+    marginBottom: designSystem.spacing[3],
   },
-  tabTextActive: {
-    color: '#FFFFFF',
+  backButtonText: {
+    color: designSystem.colors.primary[500],
+    fontSize: designSystem.typography.fontSize.md,
+    fontWeight: designSystem.typography.fontWeight.semiBold,
+  },
+  historyTitle: {
+    color: designSystem.colors.text.primary,
+    fontSize: 22,
+    fontWeight: '700',
   },
   content: {
     flex: 1,
   },
   contentContainer: {
     padding: designSystem.spacing[4],
+    paddingBottom: Platform.OS === 'ios' ? 120 : 100, // Space for tab bar + FAB
   },
   freeIntakeButton: {
     marginTop: designSystem.spacing[4],
+    marginBottom: designSystem.spacing[4],
   },
   fab: {
     position: 'absolute',
-    bottom: designSystem.spacing[6],
+    bottom: Platform.OS === 'ios' ? 108 : 92, // Above tab bar (88px iOS, 72px Android)
     right: designSystem.spacing[6],
     width: 64,
     height: 64,

@@ -1200,7 +1200,10 @@ export default function ExportScreen() {
   };
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <ScrollView
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+      contentContainerStyle={styles.contentContainer}
+    >
       <AppCard style={styles.infoCard}>
         <View style={styles.infoTitleContainer}>
           <MaterialCommunityIcons name="file-document-outline" size={24} color="#4A90E2" />
@@ -1288,6 +1291,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16
+  },
+  contentContainer: {
+    paddingBottom: Platform.OS === 'ios' ? 100 : 88, // Space for tab bar
   },
   title: {
     marginBottom: 16,
