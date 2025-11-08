@@ -11,7 +11,7 @@ import CreateSchemaModal from '../components/treatment/CreateSchemaModal';
 import EditSchemaModal from '../components/treatment/EditSchemaModal';
 import AddFreeIntakeModal from '../components/treatment/AddFreeIntakeModal';
 import DateTimeInput, { isValidDate } from '../components/ui/DateTimeInput';
-import { Portal, Modal } from 'react-native-paper';
+import { Portal, Modal, TextInput } from 'react-native-paper';
 import AppCard from '../components/ui/AppCard';
 import designSystem from '../theme/designSystem';
 import {
@@ -433,31 +433,27 @@ const TreatmentScreen = () => {
             : '#DC2626';
 
           return (
-            <TouchableOpacity
-              key={schema.id}
-              onPress={() => handleEdit(schema, medication)}
-              activeOpacity={0.7}
-            >
-              <AppCard style={styles.historyCard}>
-                <View style={styles.schemaHistoryHeader}>
-                  <MaterialCommunityIcons
-                    name="file-document"
-                    size={24}
-                    color={designSystem.colors.primary[500]}
-                  />
-                  <View style={styles.schemaHistoryText}>
-                    <AppText variant="h4" style={styles.schemaHistoryName}>
-                      {medication.name}
-                    </AppText>
-                    <AppText variant="labelSmall" style={styles.schemaHistoryFrequency}>
-                      {formatFrequency(schema.frequency)}
-                    </AppText>
-                    <AppText variant="labelSmall" style={styles.schemaHistoryPeriod}>
-                      Du {startDate} au {endDate}
-                    </AppText>
-                  </View>
+            <AppCard key={schema.id} style={styles.historyCard}>
+              <View style={styles.schemaHistoryHeader}>
+                <MaterialCommunityIcons
+                  name="file-document"
+                  size={24}
+                  color={designSystem.colors.primary[500]}
+                />
+                <View style={styles.schemaHistoryText}>
+                  <AppText variant="h4" style={styles.schemaHistoryName}>
+                    {medication.name}
+                  </AppText>
+                  <AppText variant="labelSmall" style={styles.schemaHistoryFrequency}>
+                    {formatFrequency(schema.frequency)}
+                  </AppText>
+                  <AppText variant="labelSmall" style={styles.schemaHistoryPeriod}>
+                    Du {startDate} au {endDate}
+                  </AppText>
                 </View>
-                <View style={styles.schemaHistoryFooter}>
+              </View>
+              <View style={styles.schemaHistoryFooter}>
+                <View style={styles.schemaHistoryObservance}>
                   <AppText variant="labelSmall" style={styles.schemaHistoryLabel}>
                     Observance :
                   </AppText>
@@ -465,8 +461,21 @@ const TreatmentScreen = () => {
                     {adherence}%
                   </AppText>
                 </View>
-              </AppCard>
-            </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => handleEdit(schema, medication)}
+                  style={styles.modifyButton}
+                >
+                  <MaterialCommunityIcons
+                    name="pencil"
+                    size={18}
+                    color={designSystem.colors.primary[500]}
+                  />
+                  <AppText variant="labelSmall" style={styles.modifyButtonText}>
+                    Modifier
+                  </AppText>
+                </TouchableOpacity>
+              </View>
+            </AppCard>
           );
         })}
       </>
@@ -682,9 +691,14 @@ const TreatmentScreen = () => {
 
             <View style={styles.modalSection}>
               <AppText style={styles.fieldLabel}>Nombre de doses</AppText>
-              <View style={styles.input}>
-                <AppText>{editDoses}</AppText>
-              </View>
+              <TextInput
+                value={editDoses}
+                onChangeText={setEditDoses}
+                keyboardType="number-pad"
+                mode="outlined"
+                style={styles.textInput}
+                outlineStyle={{ borderRadius: designSystem.borderRadius.md }}
+              />
             </View>
 
             <View style={styles.modalSection}>
@@ -889,12 +903,30 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: designSystem.colors.border.light,
   },
+  schemaHistoryObservance: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: designSystem.spacing[2],
+  },
   schemaHistoryLabel: {
     color: designSystem.colors.text.secondary,
   },
   schemaHistoryAdherence: {
     fontSize: 18,
     fontWeight: '700',
+  },
+  modifyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: designSystem.spacing[1],
+    paddingVertical: designSystem.spacing[1],
+    paddingHorizontal: designSystem.spacing[2],
+    borderRadius: designSystem.borderRadius.sm,
+    backgroundColor: designSystem.colors.primary[50],
+  },
+  modifyButtonText: {
+    color: designSystem.colors.primary[500],
+    fontWeight: '600',
   },
   modalContainer: {
     margin: designSystem.spacing[4],
@@ -928,6 +960,9 @@ const styles = StyleSheet.create({
     fontWeight: designSystem.typography.fontWeight.semiBold,
     color: designSystem.colors.text.secondary,
     marginBottom: designSystem.spacing[3],
+  },
+  textInput: {
+    backgroundColor: designSystem.colors.background.secondary,
   },
   input: {
     backgroundColor: designSystem.colors.background.secondary,

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Platform, Alert } from 'react-native';
-import { Portal, Modal, TextInput, RadioButton } from 'react-native-paper';
+import { Portal, Modal, TextInput, RadioButton, HelperText } from 'react-native-paper';
 import AppCard from '../ui/AppCard';
 import AppText from '../ui/AppText';
 import PrimaryButton from '../ui/PrimaryButton';
@@ -32,6 +32,15 @@ const EditSchemaModal = ({ visible, schema, medication, onDismiss, onSuccess }) 
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
+  // États d'erreur
+  const [errors, setErrors] = useState({
+    medicationName: '',
+    startDate: '',
+    endDate: '',
+    dosesPerDay: '',
+    intervalDays: ''
+  });
+
   React.useEffect(() => {
     if (visible && schema && medication) {
       setMedicationName(medication.name);
@@ -54,6 +63,15 @@ const EditSchemaModal = ({ visible, schema, medication, onDismiss, onSuccess }) 
       } else {
         setEndDate('');
       }
+
+      // Réinitialiser les erreurs
+      setErrors({
+        medicationName: '',
+        startDate: '',
+        endDate: '',
+        dosesPerDay: '',
+        intervalDays: ''
+      });
     }
   }, [visible, schema, medication]);
 
@@ -90,19 +108,60 @@ const EditSchemaModal = ({ visible, schema, medication, onDismiss, onSuccess }) 
   };
 
   const handleSave = () => {
+    // Réinitialiser les erreurs
+    const newErrors = {
+      medicationName: '',
+      startDate: '',
+      endDate: '',
+      dosesPerDay: '',
+      intervalDays: ''
+    };
+
+    let hasError = false;
+
     if (!medicationName.trim()) {
-      alert('Veuillez entrer le nom du médicament');
-      return;
+      newErrors.medicationName = 'Veuillez entrer le nom du médicament';
+      hasError = true;
     }
 
     // Valider les dates
     if (!isValidDate(startDate)) {
-      alert('Date de début invalide');
-      return;
+      newErrors.startDate = 'Date invalide (format: JJ/MM/AAAA)';
+      hasError = true;
+    } else {
+      // Vérifier que la date de début n'est pas dans le futur
+      const [dayStart, monthStart, yearStart] = startDate.split('/');
+      const startDateObj = new Date(parseInt(yearStart), parseInt(monthStart) - 1, parseInt(dayStart));
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      if (startDateObj > today) {
+        newErrors.startDate = 'La date de début ne peut pas être dans le futur';
+        hasError = true;
+      }
     }
 
-    if (schema?.endDate && endDate && !isValidDate(endDate)) {
-      alert('Date de fin invalide');
+    if (schema?.endDate && endDate) {
+      if (!isValidDate(endDate)) {
+        newErrors.endDate = 'Date invalide (format: JJ/MM/AAAA)';
+        hasError = true;
+      } else if (isValidDate(startDate)) {
+        // Vérifier que la date de début < date de fin
+        const [dayStart, monthStart, yearStart] = startDate.split('/');
+        const startDateObj = new Date(parseInt(yearStart), parseInt(monthStart) - 1, parseInt(dayStart));
+        const [dayEnd, monthEnd, yearEnd] = endDate.split('/');
+        const endDateObj = new Date(parseInt(yearEnd), parseInt(monthEnd) - 1, parseInt(dayEnd));
+
+        if (startDateObj > endDateObj) {
+          newErrors.endDate = 'La date de fin doit être après la date de début';
+          hasError = true;
+        }
+      }
+    }
+
+    setErrors(newErrors);
+
+    if (hasError) {
       return;
     }
 
@@ -224,12 +283,17 @@ const EditSchemaModal = ({ visible, schema, medication, onDismiss, onSuccess }) 
                 mode="outlined"
                 style={styles.input}
                 outlineStyle={{ borderRadius: designSystem.borderRadius.md }}
+                error={!!errors.medicationName}
               />
-              {hasNameChanged() && (
+              {errors.medicationName ? (
+                <HelperText type="error" visible={true}>
+                  {errors.medicationName}
+                </HelperText>
+              ) : hasNameChanged() ? (
                 <AppText variant="labelSmall" style={styles.warningText}>
                   ⚠️ Le nom sera mis à jour dans tout l'historique
                 </AppText>
-              )}
+              ) : null}
             </View>
 
             {/* Date de début */}
@@ -256,7 +320,11 @@ const EditSchemaModal = ({ visible, schema, medication, onDismiss, onSuccess }) 
                 outlineStyle={{ borderRadius: designSystem.borderRadius.md }}
                 placeholder="JJ/MM/AAAA"
                 keyboardType="numeric"
+                error={!!errors.startDate}
               />
+              <HelperText type="error" visible={!!errors.startDate}>
+                {errors.startDate}
+              </HelperText>
             </View>
 
             {/* Date de fin (si schéma historique) */}
@@ -284,7 +352,11 @@ const EditSchemaModal = ({ visible, schema, medication, onDismiss, onSuccess }) 
                   outlineStyle={{ borderRadius: designSystem.borderRadius.md }}
                   placeholder="JJ/MM/AAAA"
                   keyboardType="numeric"
+                  error={!!errors.endDate}
                 />
+                <HelperText type="error" visible={!!errors.endDate}>
+                  {errors.endDate}
+                </HelperText>
               </View>
             )}
 
