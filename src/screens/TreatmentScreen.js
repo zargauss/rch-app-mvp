@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Platform, Alert } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Platform, Alert, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useFocusEffect } from '@react-navigation/native';
@@ -33,6 +33,9 @@ import {
 import { buttonPressFeedback } from '../utils/haptics';
 
 const TreatmentScreen = () => {
+  const { width } = useWindowDimensions();
+  const isMobile = width < 768; // Mobile si largeur < 768px
+
   const [activeTab, setActiveTab] = useState('active'); // 'active' | 'history'
   const [historyView, setHistoryView] = useState('intakes'); // 'intakes' | 'schemas'
   const [refreshKey, setRefreshKey] = useState(0);
@@ -424,10 +427,10 @@ const TreatmentScreen = () => {
           const adherence = schema.adherence || 0;
 
           const adherenceColor = adherence >= 90
-            ? designSystem.colors.health.success.main
+            ? '#16A34A'
             : adherence >= 70
-            ? designSystem.colors.health.warning.main
-            : designSystem.colors.health.danger.main;
+            ? '#F59E0B'
+            : '#DC2626';
 
           return (
             <TouchableOpacity
@@ -480,7 +483,7 @@ const TreatmentScreen = () => {
       {/* Header with action buttons and history link (only in active view) */}
       {activeTab === 'active' && (
         <View style={styles.header}>
-          <View style={styles.headerLeft}>
+          <View style={[styles.headerLeft, isMobile && styles.headerLeftMobile]}>
             <PrimaryButton
               onPress={() => setCreateModalVisible(true)}
               variant="primary"
@@ -739,6 +742,9 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     gap: designSystem.spacing[2],
+  },
+  headerLeftMobile: {
+    flexDirection: 'column',
   },
   actionButton: {
     alignSelf: 'flex-start',

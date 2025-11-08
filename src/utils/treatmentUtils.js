@@ -399,6 +399,29 @@ export const updateSchemaFrequency = (schemaId, newFrequency) => {
   // Créer le nouveau schéma (qui va s'ajouter à la liste)
   const newSchemaId = createSchema(oldSchema.medicationId, newFrequency);
 
+  // Transférer les prises d'aujourd'hui au nouveau schéma
+  const intakes = getIntakes();
+  const today = formatLocalDate(new Date());
+  const todayIntakes = intakes.filter(intake =>
+    intake.schemaId === schemaId &&
+    intake.dateTaken === today
+  );
+
+  if (todayIntakes.length > 0) {
+    todayIntakes.forEach(intake => {
+      intake.schemaId = newSchemaId;
+    });
+    saveIntakes(intakes);
+
+    // Recalculer l'adhérence du nouveau schéma avec les prises transférées
+    const updatedSchemas = getTherapeuticSchemas();
+    const newSchema = updatedSchemas.find(s => s.id === newSchemaId);
+    if (newSchema) {
+      newSchema.adherence = calculateAdherence(newSchema);
+      saveTherapeuticSchemas(updatedSchemas);
+    }
+  }
+
   return newSchemaId;
 };
 
