@@ -1,5 +1,5 @@
 ﻿import React from 'react';
-import { Platform, TouchableOpacity } from 'react-native';
+import { Platform, TouchableOpacity, View } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -8,6 +8,7 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import HomeScreen from '../screens/HomeScreen';
 import SurveyScreen from '../screens/SurveyScreen';
 import StatsScreen from '../screens/StatsScreen';
+import TreatmentScreen from '../screens/TreatmentScreen';
 import ExportScreen from '../screens/ExportScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import DailySurveyScreen from '../screens/DailySurveyScreen';
@@ -59,28 +60,58 @@ function MainTabs() {
           if (route.name === 'Accueil') iconName = 'home';
           if (route.name === 'Bilan') iconName = 'clipboard-text';
           if (route.name === 'Statistiques') iconName = 'chart-line';
-          if (route.name === 'Export') iconName = 'file-pdf-box';
+          if (route.name === 'Traitement') iconName = 'pill';
           if (route.name === 'Paramètres') iconName = 'cog';
           return <MaterialCommunityIcons name={iconName} size={26} color={color} />;
         },
-        headerRight: ({ tintColor }) => 
-          route.name !== 'Paramètres' ? (
-            <TouchableOpacity
-              onPress={() => navigation.navigate('Paramètres')}
-              style={{ marginRight: 16 }}
-              accessibilityRole="button"
-              accessibilityLabel="Paramètres"
-            >
-              <MaterialCommunityIcons name="cog" size={24} color={tintColor || designSystem.colors.text.primary} />
-            </TouchableOpacity>
-          ) : null
+        headerRight: ({ tintColor }) => (
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 16 }}>
+            {/* Icône Export (visible sur tous les écrans sauf Export) */}
+            {route.name !== 'Export' && (
+              <TouchableOpacity
+                onPress={() => navigation.navigate('Export')}
+                style={{ marginRight: 16 }}
+                accessibilityRole="button"
+                accessibilityLabel="Export PDF"
+              >
+                <MaterialCommunityIcons
+                  name="file-account"
+                  size={24}
+                  color={tintColor || designSystem.colors.text.primary}
+                />
+              </TouchableOpacity>
+            )}
+            {/* Icône Paramètres (visible sur tous les écrans sauf Paramètres) */}
+            {route.name !== 'Paramètres' && (
+              <TouchableOpacity
+                onPress={() => navigation.navigate('Paramètres')}
+                accessibilityRole="button"
+                accessibilityLabel="Paramètres"
+              >
+                <MaterialCommunityIcons
+                  name="cog"
+                  size={24}
+                  color={tintColor || designSystem.colors.text.primary}
+                />
+              </TouchableOpacity>
+            )}
+          </View>
+        )
       })}
     >
       <Tab.Screen name="Accueil" component={HomeScreen} />
       <Tab.Screen name="Bilan" component={SurveyScreen} />
       <Tab.Screen name="Statistiques" component={StatsScreen} />
-      <Tab.Screen name="Export" component={ExportScreen} />
+      <Tab.Screen name="Traitement" component={TreatmentScreen} />
       <Tab.Screen name="Paramètres" component={SettingsScreen} />
+      <Tab.Screen
+        name="Export"
+        component={ExportScreen}
+        options={{
+          tabBarButton: () => null, // Hide from tab bar
+          tabBarVisible: false,
+        }}
+      />
     </Tab.Navigator>
   );
 }

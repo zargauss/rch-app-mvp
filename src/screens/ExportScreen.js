@@ -5,6 +5,14 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import storage from '../utils/storage';
 import calculateLichtigerScore from '../utils/scoreCalculator';
 import { getSurveyDayKey } from '../utils/dayKey';
+import {
+  getMedications,
+  getTherapeuticSchemas,
+  getAllIntakes,
+  calculateAdherence,
+  checkOverdose,
+  formatFrequency
+} from '../utils/treatmentUtils';
 import AppText from '../components/ui/AppText';
 import AppCard from '../components/ui/AppCard';
 import PrimaryButton from '../components/ui/PrimaryButton';
@@ -17,7 +25,10 @@ export default function ExportScreen() {
   const [scores, setScores] = useState([]);
   const [stools, setStools] = useState([]);
   const [surveys, setSurveys] = useState([]);
-  const [treatments, setTreatments] = useState([]);
+  const [treatments, setTreatments] = useState([]); // Old treatment data (deprecated)
+  const [medications, setMedications] = useState([]);
+  const [schemas, setSchemas] = useState([]);
+  const [intakes, setIntakes] = useState([]);
   const [ibdiskHistory, setIbdiskHistory] = useState([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState('complet'); // complet, 90, 30, 7
@@ -63,11 +74,24 @@ export default function ExportScreen() {
     console.log('📦 Export - Surveys loaded:', Object.keys(surveysData));
     console.log('📦 Export - Survey details:', surveysData);
 
-    // Charger les traitements
+    // Charger les anciens traitements (pour rétrocompatibilité)
     const treatmentsJson = storage.getString('treatments');
     const treatmentsData = treatmentsJson ? JSON.parse(treatmentsJson) : [];
     setTreatments(treatmentsData);
-    console.log('📦 Export - Treatments loaded:', treatmentsData.length, 'treatments');
+    console.log('📦 Export - Old Treatments loaded:', treatmentsData.length, 'treatments');
+
+    // Charger les nouveaux traitements
+    const medicationsData = getMedications();
+    setMedications(medicationsData);
+    console.log('📦 Export - Medications loaded:', medicationsData.length, 'medications');
+
+    const schemasData = getTherapeuticSchemas();
+    setSchemas(schemasData);
+    console.log('📦 Export - Schemas loaded:', schemasData.length, 'schemas');
+
+    const intakesData = getAllIntakes();
+    setIntakes(intakesData);
+    console.log('📦 Export - Intakes loaded:', intakesData.length, 'intakes');
 
     // Charger les questionnaires IBDisk
     const ibdiskJson = storage.getString('ibdiskHistory');
@@ -885,30 +909,104 @@ export default function ExportScreen() {
         </div>
 
         <div class="details-section">
-          <div class="details-title">Historique des Traitements</div>
-          ${filteredTreatments.length > 0 ? `
+          <div class="details-title">Observance Thérapeutique</div>
+          ${schemas.length > 0 ? `
             <table>
               <thead>
                 <tr>
-                  <th>Date et heure</th>
-                  <th>Nom du traitement</th>
+                  <th>Traitement</th>
+                  <th>Fréquence</th>
+                  <th>Période</th>
+                  <th>Attendu</th>
+                  <th>Pris</th>
+                  <th>Observance</th>
                 </tr>
               </thead>
               <tbody>
-                ${filteredTreatments.sort((a, b) => b.timestamp - a.timestamp).map(treatment => {
-                  const date = new Date(treatment.timestamp);
-                  const dateStr = date.toLocaleDateString('fr-FR');
-                  const timeStr = date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-                  return `
+                ${schemas.map(schema => {
+                  const medication = medications.find(m => m.id === schema.medicationId);
+                  if (!medication) return '';
+
+                  const startDate = new Date(schema.startDate).toLocaleDateString('fr-FR');
+                  const endDate = schema.endDate ? new Date(schema.endDate).toLocaleDateString('fr-FR') : 'Actif';
+                  const period = schema.endDate ? \`\${startDate} → \${endDate}\` : \`Depuis \${startDate}\`;
+
+                  // Calculer l'observance
+                  const adherence = calculateAdherence(schema);
+                  const { hasOverdose, excess } = checkOverdose(schema);
+
+                  // Calculer le nombre de prises attendues et prises
+                  const schemaIntakes = intakes.filter(i => i.schemaId === schema.id);
+                  const actualIntakes = schemaIntakes.reduce((sum, intake) => sum + intake.doses, 0);
+
+                  const start = new Date(schema.startDate);
+                  const end = schema.endDate ? new Date(schema.endDate) : new Date();
+                  const daysDuration = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+
+                  let expectedIntakes = 0;
+                  if (schema.frequency.type === 'daily') {
+                    expectedIntakes = daysDuration * schema.frequency.dosesPerDay;
+                  } else if (schema.frequency.type === 'interval') {
+                    expectedIntakes = Math.floor(daysDuration / schema.frequency.intervalDays) + 1;
+                  }
+
+                  const adherenceColor = adherence >= 90 ? '#16A34A' : adherence >= 70 ? '#F59E0B' : '#DC2626';
+                  const adherenceText = hasOverdose ? \`\${adherence}% (+\${excess})\` : \`\${adherence}%\`;
+
+                  return \`
                     <tr>
-                      <td>${dateStr} à ${timeStr}</td>
-                      <td style="font-weight: 600;">${treatment.name}</td>
+                      <td style="font-weight: 600;">\${medication.name}</td>
+                      <td>\${formatFrequency(schema.frequency)}</td>
+                      <td style="font-size: 10px;">\${period}</td>
+                      <td style="text-align: center;">\${expectedIntakes}</td>
+                      <td style="text-align: center;">\${actualIntakes}</td>
+                      <td style="text-align: center; font-weight: 700; color: \${adherenceColor};">
+                        \${adherenceText}
+                        \${hasOverdose ? '<br><span style="font-size: 9px; color: #DC2626;">⚠️ Surdosage</span>' : ''}
+                      </td>
                     </tr>
-                  `;
+                  \`;
                 }).join('')}
               </tbody>
             </table>
-          ` : '<div class="no-data">Aucun traitement enregistré pour cette période</div>'}
+          ` : '<div class="no-data">Aucun traitement enregistré</div>'}
+        </div>
+
+        <div class="details-section">
+          <div class="details-title">Prises Libres (Hors Schéma)</div>
+          ${(() => {
+            const freeIntakes = intakes.filter(i => i.isFreeIntake);
+            if (freeIntakes.length === 0) {
+              return '<div class="no-data">Aucune prise libre enregistrée</div>';
+            }
+
+            return \`
+              <table>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Traitement</th>
+                    <th>Doses</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  \${freeIntakes.sort((a, b) => new Date(b.dateTaken) - new Date(a.dateTaken)).map(intake => {
+                    const medication = medications.find(m => m.id === intake.medicationId);
+                    if (!medication) return '';
+
+                    const date = new Date(intake.dateTaken).toLocaleDateString('fr-FR');
+                    return \`
+                      <tr>
+                        <td>\${date}</td>
+                        <td style="font-weight: 600;">\${medication.name}</td>
+                        <td style="text-align: center;">\${intake.doses}</td>
+                      </tr>
+                    \`;
+                  }).join('')}
+                </tbody>
+              </table>
+            \`;
+          })()}
         </div>
 
         <div style="page-break-after: always;"></div>

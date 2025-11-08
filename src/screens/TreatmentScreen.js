@@ -1,0 +1,695 @@
+import React, { useState, useCallback } from 'react';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Platform, Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { useFocusEffect } from '@react-navigation/native';
+import AppText from '../components/ui/AppText';
+import PrimaryButton from '../components/ui/PrimaryButton';
+import EmptyState from '../components/ui/EmptyState';
+import TreatmentCard from '../components/treatment/TreatmentCard';
+import CreateSchemaModal from '../components/treatment/CreateSchemaModal';
+import EditSchemaModal from '../components/treatment/EditSchemaModal';
+import AddFreeIntakeModal from '../components/treatment/AddFreeIntakeModal';
+import DateTimeInput, { isValidDate } from '../components/ui/DateTimeInput';
+import { Portal, Modal } from 'react-native-paper';
+import AppCard from '../components/ui/AppCard';
+import designSystem from '../theme/designSystem';
+import {
+  getActiveTherapeuticSchemas,
+  getAllIntakes,
+  getMedications,
+  findMedicationById,
+  recordIntake,
+  updateIntake,
+  deleteIntake,
+  stopSchema,
+  getTodayIntakesCount,
+  isIntervalIntakeDone
+} from '../utils/treatmentUtils';
+import { buttonPressFeedback } from '../utils/haptics';
+
+const TreatmentScreen = () => {
+  const [activeTab, setActiveTab] = useState('active'); // 'active' | 'history'
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  // Modals
+  const [createModalVisible, setCreateModalVisible] = useState(false);
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [freeIntakeModalVisible, setFreeIntakeModalVisible] = useState(false);
+  const [intervalConfirmVisible, setIntervalConfirmVisible] = useState(false);
+  const [editIntakeModalVisible, setEditIntakeModalVisible] = useState(false);
+
+  // Selected items
+  const [selectedSchema, setSelectedSchema] = useState(null);
+  const [selectedMedication, setSelectedMedication] = useState(null);
+  const [pendingIntervalIntake, setPendingIntervalIntake] = useState(null);
+  const [selectedIntake, setSelectedIntake] = useState(null);
+
+  // Interval confirmation
+  const [intervalDateInput, setIntervalDateInput] = useState('');
+
+  // Edit intake
+  const [editDoses, setEditDoses] = useState('1');
+  const [editDateInput, setEditDateInput] = useState('');
+
+  // Refresh data when screen is focused
+  useFocusEffect(
+    useCallback(() => {
+      setRefreshKey(prev => prev + 1);
+    }, [])
+  );
+
+  const refresh = () => {
+    setRefreshKey(prev => prev + 1);
+  };
+
+  // Get active schemas with medications
+  const getActiveSchemasWithMeds = () => {
+    const activeSchemas = getActiveTherapeuticSchemas();
+    const medications = getMedications();
+
+    return activeSchemas
+      .map(schema => {
+        const medication = medications.find(m => m.id === schema.medicationId);
+        return medication ? { schema, medication } : null;
+      })
+      .filter(Boolean)
+      .sort((a, b) => a.medication.name.localeCompare(b.medication.name));
+  };
+
+  // Get all intakes with metadata, grouped by date
+  const getIntakesHistory = () => {
+    const intakes = getAllIntakes();
+    const medications = getMedications();
+
+    const intakesWithMeta = intakes.map(intake => {
+      const medication = medications.find(m => m.id === intake.medicationId);
+      return {
+        ...intake,
+        medicationName: medication?.name || 'Médicament inconnu',
+        dateTaken: new Date(intake.dateTaken)
+      };
+    });
+
+    // Sort by date descending
+    intakesWithMeta.sort((a, b) => b.dateTaken - a.dateTaken);
+
+    // Group by date
+    const grouped = {};
+    intakesWithMeta.forEach(intake => {
+      const dateKey = intake.dateTaken.toLocaleDateString('fr-FR');
+      if (!grouped[dateKey]) {
+        grouped[dateKey] = [];
+      }
+      grouped[dateKey].push(intake);
+    });
+
+    return grouped;
+  };
+
+  // Handle daily intake checkbox
+  const handleCheckDaily = (schema, medication) => {
+    recordIntake(schema.medicationId, 1, new Date(), false);
+    buttonPressFeedback();
+    refresh();
+  };
+
+  // Handle interval intake checkbox
+  const handleCheckInterval = (schema, medication) => {
+    // Ask for confirmation with date
+    setPendingIntervalIntake({ schema, medication });
+    const today = new Date();
+    setIntervalDateInput(today.toLocaleDateString('fr-FR'));
+    setIntervalConfirmVisible(true);
+  };
+
+  // Confirm interval intake
+  const confirmIntervalIntake = () => {
+    if (!pendingIntervalIntake) return;
+
+    if (!isValidDate(intervalDateInput)) {
+      alert('Date invalide');
+      return;
+    }
+
+    const [day, month, year] = intervalDateInput.split('/');
+    const dateTaken = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+
+    recordIntake(pendingIntervalIntake.schema.medicationId, 1, dateTaken, false);
+    buttonPressFeedback();
+    setIntervalConfirmVisible(false);
+    setPendingIntervalIntake(null);
+    refresh();
+  };
+
+  // Handle edit schema
+  const handleEdit = (schema, medication) => {
+    setSelectedSchema(schema);
+    setSelectedMedication(medication);
+    setEditModalVisible(true);
+  };
+
+  // Handle stop schema
+  const handleStop = (schema, medication) => {
+    const confirmMessage = `Voulez-vous vraiment arrêter le traitement "${medication.name}" ?`;
+
+    if (Platform.OS === 'web') {
+      if (window.confirm(confirmMessage)) {
+        stopSchema(schema.id);
+        buttonPressFeedback();
+        refresh();
+      }
+    } else {
+      Alert.alert(
+        'Confirmation',
+        confirmMessage,
+        [
+          { text: 'Annuler', style: 'cancel' },
+          {
+            text: 'Arrêter',
+            style: 'destructive',
+            onPress: () => {
+              stopSchema(schema.id);
+              buttonPressFeedback();
+              refresh();
+            }
+          }
+        ]
+      );
+    }
+  };
+
+  // Handle edit intake
+  const handleEditIntake = (intake) => {
+    setSelectedIntake(intake);
+    setEditDoses(intake.doses.toString());
+    setEditDateInput(intake.dateTaken.toLocaleDateString('fr-FR'));
+    setEditIntakeModalVisible(true);
+  };
+
+  // Save edited intake
+  const saveEditedIntake = () => {
+    if (!selectedIntake) return;
+
+    if (!isValidDate(editDateInput)) {
+      alert('Date invalide');
+      return;
+    }
+
+    const dosesNum = parseInt(editDoses);
+    if (isNaN(dosesNum) || dosesNum < 1) {
+      alert('Le nombre de doses doit être au moins 1');
+      return;
+    }
+
+    const [day, month, year] = editDateInput.split('/');
+    const dateTaken = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+
+    updateIntake(selectedIntake.id, dosesNum, dateTaken);
+    buttonPressFeedback();
+    setEditIntakeModalVisible(false);
+    setSelectedIntake(null);
+    refresh();
+  };
+
+  // Handle delete intake
+  const handleDeleteIntake = (intake) => {
+    const confirmMessage = `Supprimer cette prise de ${intake.medicationName} ?`;
+
+    if (Platform.OS === 'web') {
+      if (window.confirm(confirmMessage)) {
+        deleteIntake(intake.id);
+        buttonPressFeedback();
+        refresh();
+      }
+    } else {
+      Alert.alert(
+        'Confirmation',
+        confirmMessage,
+        [
+          { text: 'Annuler', style: 'cancel' },
+          {
+            text: 'Supprimer',
+            style: 'destructive',
+            onPress: () => {
+              deleteIntake(intake.id);
+              buttonPressFeedback();
+              refresh();
+            }
+          }
+        ]
+      );
+    }
+  };
+
+  // Render active schemas
+  const renderActiveSchemas = () => {
+    const activeSchemas = getActiveSchemasWithMeds();
+
+    if (activeSchemas.length === 0) {
+      return (
+        <EmptyState
+          healthIcon="pill"
+          title="Aucun traitement actif"
+          message="Ajoutez votre premier traitement pour commencer le suivi"
+        />
+      );
+    }
+
+    return (
+      <>
+        {activeSchemas.map(({ schema, medication }) => (
+          <TreatmentCard
+            key={schema.id}
+            schema={schema}
+            medication={medication}
+            onCheckDaily={handleCheckDaily}
+            onCheckInterval={handleCheckInterval}
+            onEdit={handleEdit}
+            onStop={handleStop}
+          />
+        ))}
+      </>
+    );
+  };
+
+  // Render history
+  const renderHistory = () => {
+    const groupedIntakes = getIntakesHistory();
+    const dates = Object.keys(groupedIntakes);
+
+    if (dates.length === 0) {
+      return (
+        <EmptyState
+          healthIcon="empty"
+          title="Aucune prise enregistrée"
+          message="Les prises de traitement apparaîtront ici"
+        />
+      );
+    }
+
+    return (
+      <>
+        {dates.map(dateKey => (
+          <View key={dateKey} style={styles.historyGroup}>
+            <AppText variant="h4" style={styles.historyDate}>
+              {dateKey}
+            </AppText>
+            {groupedIntakes[dateKey].map(intake => (
+              <AppCard key={intake.id} style={styles.historyCard}>
+                <View style={styles.historyCardHeader}>
+                  <View style={styles.historyCardLeft}>
+                    <MaterialCommunityIcons
+                      name="pill"
+                      size={20}
+                      color={designSystem.colors.primary[500]}
+                    />
+                    <View style={styles.historyCardText}>
+                      <AppText variant="bodyLarge" style={styles.historyMedName}>
+                        {intake.medicationName}
+                      </AppText>
+                      <AppText variant="labelSmall" style={styles.historyDoses}>
+                        {intake.doses} dose{intake.doses > 1 ? 's' : ''}
+                        {intake.isFreeIntake && ' • Prise libre'}
+                      </AppText>
+                    </View>
+                  </View>
+                  <View style={styles.historyActions}>
+                    <TouchableOpacity
+                      onPress={() => handleEditIntake(intake)}
+                      style={styles.historyActionButton}
+                    >
+                      <MaterialCommunityIcons
+                        name="pencil"
+                        size={20}
+                        color={designSystem.colors.primary[500]}
+                      />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => handleDeleteIntake(intake)}
+                      style={styles.historyActionButton}
+                    >
+                      <MaterialCommunityIcons
+                        name="delete"
+                        size={20}
+                        color={designSystem.colors.health.danger.main}
+                      />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </AppCard>
+            ))}
+          </View>
+        ))}
+      </>
+    );
+  };
+
+  return (
+    <SafeAreaView style={styles.container} edges={['bottom']}>
+      {/* Header with tabs */}
+      <View style={styles.header}>
+        <View style={styles.tabBar}>
+          <TouchableOpacity
+            onPress={() => {
+              setActiveTab('active');
+              buttonPressFeedback();
+            }}
+            style={[styles.tab, activeTab === 'active' && styles.tabActive]}
+          >
+            <AppText
+              variant="bodyLarge"
+              style={[styles.tabText, activeTab === 'active' && styles.tabTextActive]}
+            >
+              Schémas actifs
+            </AppText>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => {
+              setActiveTab('history');
+              buttonPressFeedback();
+            }}
+            style={[styles.tab, activeTab === 'history' && styles.tabActive]}
+          >
+            <AppText
+              variant="bodyLarge"
+              style={[styles.tabText, activeTab === 'history' && styles.tabTextActive]}
+            >
+              Historique
+            </AppText>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Content */}
+      <ScrollView
+        style={styles.content}
+        contentContainerStyle={styles.contentContainer}
+        showsVerticalScrollIndicator={false}
+      >
+        {activeTab === 'active' ? renderActiveSchemas() : renderHistory()}
+
+        {/* Add free intake button (only in active tab) */}
+        {activeTab === 'active' && (
+          <PrimaryButton
+            onPress={() => setFreeIntakeModalVisible(true)}
+            variant="neutral"
+            size="medium"
+            outlined
+            style={styles.freeIntakeButton}
+            icon="plus"
+          >
+            Ajouter une prise manuelle
+          </PrimaryButton>
+        )}
+      </ScrollView>
+
+      {/* Floating action button for new schema */}
+      {activeTab === 'active' && (
+        <TouchableOpacity
+          onPress={() => setCreateModalVisible(true)}
+          style={styles.fab}
+        >
+          <MaterialCommunityIcons name="plus" size={28} color="#FFFFFF" />
+        </TouchableOpacity>
+      )}
+
+      {/* Modals */}
+      <CreateSchemaModal
+        visible={createModalVisible}
+        onDismiss={() => setCreateModalVisible(false)}
+        onSuccess={refresh}
+      />
+
+      <EditSchemaModal
+        visible={editModalVisible}
+        schema={selectedSchema}
+        medication={selectedMedication}
+        onDismiss={() => {
+          setEditModalVisible(false);
+          setSelectedSchema(null);
+          setSelectedMedication(null);
+        }}
+        onSuccess={refresh}
+      />
+
+      <AddFreeIntakeModal
+        visible={freeIntakeModalVisible}
+        onDismiss={() => setFreeIntakeModalVisible(false)}
+        onSuccess={refresh}
+      />
+
+      {/* Interval confirmation modal */}
+      <Portal>
+        <Modal
+          visible={intervalConfirmVisible}
+          onDismiss={() => setIntervalConfirmVisible(false)}
+          contentContainerStyle={styles.modalContainer}
+        >
+          <AppCard style={styles.modalCard}>
+            <AppText variant="h3" style={styles.modalTitle}>
+              Date de prise
+            </AppText>
+            <AppText variant="body" style={styles.modalText}>
+              Confirmez la date de prise du traitement :
+            </AppText>
+            <View style={styles.modalSection}>
+              <DateTimeInput
+                dateValue={intervalDateInput}
+                onDateChange={setIntervalDateInput}
+                dateLabel="Date (DD/MM/YYYY)"
+              />
+            </View>
+            <View style={styles.modalActions}>
+              <PrimaryButton
+                onPress={confirmIntervalIntake}
+                variant="primary"
+                size="medium"
+                style={styles.modalButton}
+              >
+                Confirmer
+              </PrimaryButton>
+              <PrimaryButton
+                onPress={() => setIntervalConfirmVisible(false)}
+                variant="neutral"
+                size="medium"
+                outlined
+                style={styles.modalButton}
+              >
+                Annuler
+              </PrimaryButton>
+            </View>
+          </AppCard>
+        </Modal>
+      </Portal>
+
+      {/* Edit intake modal */}
+      <Portal>
+        <Modal
+          visible={editIntakeModalVisible}
+          onDismiss={() => {
+            setEditIntakeModalVisible(false);
+            setSelectedIntake(null);
+          }}
+          contentContainerStyle={styles.modalContainer}
+        >
+          <AppCard style={styles.modalCard}>
+            <AppText variant="h3" style={styles.modalTitle}>
+              Modifier la prise
+            </AppText>
+
+            <View style={styles.modalSection}>
+              <AppText style={styles.fieldLabel}>Nombre de doses</AppText>
+              <View style={styles.input}>
+                <AppText>{editDoses}</AppText>
+              </View>
+            </View>
+
+            <View style={styles.modalSection}>
+              <AppText style={styles.fieldLabel}>Date de prise</AppText>
+              <DateTimeInput
+                dateValue={editDateInput}
+                onDateChange={setEditDateInput}
+                dateLabel="Date (DD/MM/YYYY)"
+              />
+            </View>
+
+            <View style={styles.modalActions}>
+              <PrimaryButton
+                onPress={saveEditedIntake}
+                variant="primary"
+                size="medium"
+                style={styles.modalButton}
+              >
+                Enregistrer
+              </PrimaryButton>
+              <PrimaryButton
+                onPress={() => {
+                  setEditIntakeModalVisible(false);
+                  setSelectedIntake(null);
+                }}
+                variant="neutral"
+                size="medium"
+                outlined
+                style={styles.modalButton}
+              >
+                Annuler
+              </PrimaryButton>
+            </View>
+          </AppCard>
+        </Modal>
+      </Portal>
+    </SafeAreaView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: designSystem.colors.background.primary,
+  },
+  header: {
+    paddingHorizontal: designSystem.spacing[4],
+    paddingTop: designSystem.spacing[4],
+    paddingBottom: designSystem.spacing[3],
+  },
+  tabBar: {
+    flexDirection: 'row',
+    backgroundColor: designSystem.colors.background.secondary,
+    borderRadius: designSystem.borderRadius.xl,
+    padding: designSystem.spacing[1],
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: designSystem.spacing[3],
+    borderRadius: designSystem.borderRadius.lg,
+    alignItems: 'center',
+  },
+  tabActive: {
+    backgroundColor: designSystem.colors.primary[500],
+  },
+  tabText: {
+    color: designSystem.colors.text.secondary,
+    fontWeight: '600',
+  },
+  tabTextActive: {
+    color: '#FFFFFF',
+  },
+  content: {
+    flex: 1,
+  },
+  contentContainer: {
+    padding: designSystem.spacing[4],
+  },
+  freeIntakeButton: {
+    marginTop: designSystem.spacing[4],
+  },
+  fab: {
+    position: 'absolute',
+    bottom: designSystem.spacing[6],
+    right: designSystem.spacing[6],
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: designSystem.colors.primary[500],
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...designSystem.shadows.xl,
+  },
+  historyGroup: {
+    marginBottom: designSystem.spacing[5],
+  },
+  historyDate: {
+    color: designSystem.colors.text.primary,
+    fontWeight: '700',
+    marginBottom: designSystem.spacing[3],
+    fontSize: 18,
+  },
+  historyCard: {
+    marginBottom: designSystem.spacing[3],
+    padding: designSystem.spacing[4],
+  },
+  historyCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  historyCardLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: designSystem.spacing[3],
+    flex: 1,
+  },
+  historyCardText: {
+    flex: 1,
+  },
+  historyMedName: {
+    color: designSystem.colors.text.primary,
+    fontWeight: '600',
+    marginBottom: designSystem.spacing[1],
+  },
+  historyDoses: {
+    color: designSystem.colors.text.secondary,
+  },
+  historyActions: {
+    flexDirection: 'row',
+    gap: designSystem.spacing[2],
+  },
+  historyActionButton: {
+    width: 44,
+    height: 44,
+    borderRadius: designSystem.borderRadius.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
+    margin: designSystem.spacing[4],
+    maxHeight: '90%',
+  },
+  modalCard: {
+    backgroundColor: designSystem.colors.background.tertiary,
+    borderWidth: 1,
+    borderColor: designSystem.colors.border.light,
+    ...designSystem.shadows.xl,
+    overflow: 'hidden',
+    padding: designSystem.spacing[5],
+  },
+  modalTitle: {
+    color: designSystem.colors.text.primary,
+    marginBottom: designSystem.spacing[4],
+    textAlign: 'center',
+    fontSize: 20,
+    lineHeight: 28,
+  },
+  modalText: {
+    color: designSystem.colors.text.secondary,
+    marginBottom: designSystem.spacing[4],
+    textAlign: 'center',
+  },
+  modalSection: {
+    marginBottom: designSystem.spacing[4],
+  },
+  fieldLabel: {
+    fontSize: designSystem.typography.fontSize.sm,
+    fontWeight: designSystem.typography.fontWeight.semiBold,
+    color: designSystem.colors.text.secondary,
+    marginBottom: designSystem.spacing[3],
+  },
+  input: {
+    backgroundColor: designSystem.colors.background.secondary,
+    borderRadius: designSystem.borderRadius.md,
+    padding: designSystem.spacing[3],
+    borderWidth: 1,
+    borderColor: designSystem.colors.border.light,
+  },
+  modalActions: {
+    flexDirection: 'column',
+    gap: designSystem.spacing[3],
+    marginTop: designSystem.spacing[4],
+  },
+  modalButton: {
+    width: '100%',
+  },
+});
+
+export default TreatmentScreen;
