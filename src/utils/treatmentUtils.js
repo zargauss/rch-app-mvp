@@ -389,16 +389,18 @@ export const updateSchemaFrequency = (schemaId, newFrequency) => {
 
   if (!oldSchema) return null;
 
-  // Clore l'ancien schéma
+  // Clore l'ancien schéma hier pour que le nouveau commence aujourd'hui
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
-  oldSchema.endDate = formatLocalDate(yesterday); // Utiliser la date locale
+  oldSchema.endDate = formatLocalDate(yesterday);
   oldSchema.adherence = calculateAdherence(oldSchema);
 
-  // Créer le nouveau schéma
+  // Sauvegarder d'abord la fermeture de l'ancien schéma
+  saveTherapeuticSchemas(schemas);
+
+  // Créer le nouveau schéma (qui va s'ajouter à la liste)
   const newSchemaId = createSchema(oldSchema.medicationId, newFrequency);
 
-  saveTherapeuticSchemas(schemas);
   return newSchemaId;
 };
 
@@ -616,4 +618,13 @@ export const getAllIntakes = () => {
 export const getActiveTherapeuticSchemas = () => {
   const schemas = getTherapeuticSchemas();
   return schemas.filter(schema => !schema.endDate);
+};
+
+/**
+ * Récupère uniquement les schémas thérapeutiques historiques (avec endDate)
+ * @returns {Array}
+ */
+export const getHistoricalTherapeuticSchemas = () => {
+  const schemas = getTherapeuticSchemas();
+  return schemas.filter(schema => schema.endDate);
 };

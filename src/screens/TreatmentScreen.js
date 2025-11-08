@@ -16,6 +16,7 @@ import AppCard from '../components/ui/AppCard';
 import designSystem from '../theme/designSystem';
 import {
   getActiveTherapeuticSchemas,
+  getHistoricalTherapeuticSchemas,
   getAllIntakes,
   getMedications,
   findMedicationById,
@@ -26,12 +27,14 @@ import {
   getTodayIntakesCount,
   isIntervalIntakeDone,
   findLastTodayIntake,
-  findLastIntervalIntake
+  findLastIntervalIntake,
+  formatFrequency
 } from '../utils/treatmentUtils';
 import { buttonPressFeedback } from '../utils/haptics';
 
 const TreatmentScreen = () => {
   const [activeTab, setActiveTab] = useState('active'); // 'active' | 'history'
+  const [historyView, setHistoryView] = useState('intakes'); // 'intakes' | 'schemas'
   const [refreshKey, setRefreshKey] = useState(0);
 
   // Modals
@@ -297,8 +300,8 @@ const TreatmentScreen = () => {
     );
   };
 
-  // Render history
-  const renderHistory = () => {
+  // Render history of intakes
+  const renderIntakesHistory = () => {
     const groupedIntakes = getIntakesHistory();
     const dates = Object.keys(groupedIntakes);
 
@@ -369,6 +372,82 @@ const TreatmentScreen = () => {
     );
   };
 
+  // Render history of schemas
+  const renderSchemasHistory = () => {
+    const historicalSchemas = getHistoricalTherapeuticSchemas();
+    const medications = getMedications();
+
+    const schemasWithMeds = historicalSchemas
+      .map(schema => {
+        const medication = medications[schema.medicationId];
+        return medication ? { schema, medication } : null;
+      })
+      .filter(Boolean)
+      .sort((a, b) => new Date(b.schema.endDate) - new Date(a.schema.endDate));
+
+    if (schemasWithMeds.length === 0) {
+      return (
+        <EmptyState
+          healthIcon="empty"
+          title="Aucun schéma archivé"
+          message="Les anciens schémas thérapeutiques apparaîtront ici"
+        />
+      );
+    }
+
+    return (
+      <>
+        {schemasWithMeds.map(({ schema, medication }) => {
+          const startDate = new Date(schema.startDate).toLocaleDateString('fr-FR');
+          const endDate = new Date(schema.endDate).toLocaleDateString('fr-FR');
+          const adherence = schema.adherence || 0;
+
+          const adherenceColor = adherence >= 90
+            ? designSystem.colors.health.success.main
+            : adherence >= 70
+            ? designSystem.colors.health.warning.main
+            : designSystem.colors.health.danger.main;
+
+          return (
+            <AppCard key={schema.id} style={styles.historyCard}>
+              <View style={styles.schemaHistoryHeader}>
+                <MaterialCommunityIcons
+                  name="file-document"
+                  size={24}
+                  color={designSystem.colors.primary[500]}
+                />
+                <View style={styles.schemaHistoryText}>
+                  <AppText variant="h4" style={styles.schemaHistoryName}>
+                    {medication.name}
+                  </AppText>
+                  <AppText variant="labelSmall" style={styles.schemaHistoryFrequency}>
+                    {formatFrequency(schema.frequency)}
+                  </AppText>
+                  <AppText variant="labelSmall" style={styles.schemaHistoryPeriod}>
+                    Du {startDate} au {endDate}
+                  </AppText>
+                </View>
+              </View>
+              <View style={styles.schemaHistoryFooter}>
+                <AppText variant="labelSmall" style={styles.schemaHistoryLabel}>
+                  Observance :
+                </AppText>
+                <AppText variant="bodyLarge" style={[styles.schemaHistoryAdherence, { color: adherenceColor }]}>
+                  {adherence}%
+                </AppText>
+              </View>
+            </AppCard>
+          );
+        })}
+      </>
+    );
+  };
+
+  // Render history (with switch)
+  const renderHistory = () => {
+    return historyView === 'intakes' ? renderIntakesHistory() : renderSchemasHistory();
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
       {/* Header with action buttons and history link (only in active view) */}
@@ -414,7 +493,7 @@ const TreatmentScreen = () => {
 
       {/* Header with back button (only in history view) */}
       {activeTab === 'history' && (
-        <View style={styles.header}>
+        <View style={styles.headerHistory}>
           <TouchableOpacity
             onPress={() => {
               setActiveTab('active');
@@ -430,8 +509,51 @@ const TreatmentScreen = () => {
             <AppText style={styles.backButtonText}>Retour</AppText>
           </TouchableOpacity>
           <AppText variant="h3" style={styles.historyTitle}>
-            Historique des prises
+            Historique
           </AppText>
+          {/* Switch entre Prises et Schémas */}
+          <View style={styles.historySwitchContainer}>
+            <TouchableOpacity
+              onPress={() => {
+                setHistoryView('intakes');
+                buttonPressFeedback();
+              }}
+              style={[
+                styles.historySwitchButton,
+                historyView === 'intakes' && styles.historySwitchButtonActive
+              ]}
+            >
+              <AppText
+                variant="labelSmall"
+                style={[
+                  styles.historySwitchText,
+                  historyView === 'intakes' && styles.historySwitchTextActive
+                ]}
+              >
+                Prises
+              </AppText>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => {
+                setHistoryView('schemas');
+                buttonPressFeedback();
+              }}
+              style={[
+                styles.historySwitchButton,
+                historyView === 'schemas' && styles.historySwitchButtonActive
+              ]}
+            >
+              <AppText
+                variant="labelSmall"
+                style={[
+                  styles.historySwitchText,
+                  historyView === 'schemas' && styles.historySwitchTextActive
+                ]}
+              >
+                Schémas
+              </AppText>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
 
@@ -605,6 +727,11 @@ const styles = StyleSheet.create({
     fontSize: designSystem.typography.fontSize.sm,
     fontWeight: designSystem.typography.fontWeight.semiBold,
   },
+  headerHistory: {
+    paddingHorizontal: designSystem.spacing[4],
+    paddingTop: designSystem.spacing[3],
+    paddingBottom: designSystem.spacing[3],
+  },
   backButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -620,6 +747,29 @@ const styles = StyleSheet.create({
     color: designSystem.colors.text.primary,
     fontSize: 22,
     fontWeight: '700',
+    marginBottom: designSystem.spacing[3],
+  },
+  historySwitchContainer: {
+    flexDirection: 'row',
+    backgroundColor: designSystem.colors.background.secondary,
+    borderRadius: designSystem.borderRadius.lg,
+    padding: designSystem.spacing[1],
+  },
+  historySwitchButton: {
+    flex: 1,
+    paddingVertical: designSystem.spacing[2],
+    borderRadius: designSystem.borderRadius.md,
+    alignItems: 'center',
+  },
+  historySwitchButtonActive: {
+    backgroundColor: designSystem.colors.primary[500],
+  },
+  historySwitchText: {
+    color: designSystem.colors.text.secondary,
+    fontWeight: '600',
+  },
+  historySwitchTextActive: {
+    color: '#FFFFFF',
   },
   content: {
     flex: 1,
@@ -673,6 +823,44 @@ const styles = StyleSheet.create({
     borderRadius: designSystem.borderRadius.md,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  schemaHistoryHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: designSystem.spacing[3],
+    marginBottom: designSystem.spacing[3],
+  },
+  schemaHistoryText: {
+    flex: 1,
+  },
+  schemaHistoryName: {
+    color: designSystem.colors.text.primary,
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: designSystem.spacing[1],
+  },
+  schemaHistoryFrequency: {
+    color: designSystem.colors.text.secondary,
+    marginBottom: designSystem.spacing[1],
+  },
+  schemaHistoryPeriod: {
+    color: designSystem.colors.text.tertiary,
+    fontSize: 12,
+  },
+  schemaHistoryFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: designSystem.spacing[3],
+    borderTopWidth: 1,
+    borderTopColor: designSystem.colors.border.light,
+  },
+  schemaHistoryLabel: {
+    color: designSystem.colors.text.secondary,
+  },
+  schemaHistoryAdherence: {
+    fontSize: 18,
+    fontWeight: '700',
   },
   modalContainer: {
     margin: designSystem.spacing[4],
