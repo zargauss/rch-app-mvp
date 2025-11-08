@@ -213,18 +213,26 @@ const EditSchemaModal = ({ visible, schema, medication, onDismiss, onSuccess }) 
 
     if (freqChanged) {
       // Validation
+      const newErrors = { ...errors };
+      let hasError = false;
+
       if (frequencyType === 'daily') {
         const doses = parseInt(dosesPerDay);
         if (isNaN(doses) || doses < 1 || doses > 10) {
-          alert('Le nombre de prises par jour doit être entre 1 et 10');
-          return;
+          newErrors.dosesPerDay = 'Le nombre de prises par jour doit être entre 1 et 10';
+          hasError = true;
         }
       } else {
         const interval = parseInt(intervalDays);
         if (isNaN(interval) || interval < 1 || interval > 365) {
-          alert('L\'intervalle doit être entre 1 et 365 jours');
-          return;
+          newErrors.intervalDays = 'L\'intervalle doit être entre 1 et 365 jours';
+          hasError = true;
         }
+      }
+
+      if (hasError) {
+        setErrors(newErrors);
+        return;
       }
 
       // Créer la nouvelle fréquence
@@ -418,7 +426,11 @@ const EditSchemaModal = ({ visible, schema, medication, onDismiss, onSuccess }) 
                   mode="outlined"
                   style={styles.input}
                   outlineStyle={{ borderRadius: designSystem.borderRadius.md }}
+                  error={!!errors.dosesPerDay}
                 />
+                <HelperText type="error" visible={!!errors.dosesPerDay}>
+                  {errors.dosesPerDay}
+                </HelperText>
               </View>
             )}
 
@@ -433,7 +445,11 @@ const EditSchemaModal = ({ visible, schema, medication, onDismiss, onSuccess }) 
                   mode="outlined"
                   style={styles.input}
                   outlineStyle={{ borderRadius: designSystem.borderRadius.md }}
+                  error={!!errors.intervalDays}
                 />
+                <HelperText type="error" visible={!!errors.intervalDays}>
+                  {errors.intervalDays}
+                </HelperText>
               </View>
             )}
 

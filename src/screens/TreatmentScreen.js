@@ -11,7 +11,7 @@ import CreateSchemaModal from '../components/treatment/CreateSchemaModal';
 import EditSchemaModal from '../components/treatment/EditSchemaModal';
 import AddFreeIntakeModal from '../components/treatment/AddFreeIntakeModal';
 import DateTimeInput, { isValidDate } from '../components/ui/DateTimeInput';
-import { Portal, Modal, TextInput } from 'react-native-paper';
+import { Portal, Modal, TextInput, HelperText } from 'react-native-paper';
 import AppCard from '../components/ui/AppCard';
 import designSystem from '../theme/designSystem';
 import {
@@ -59,6 +59,10 @@ const TreatmentScreen = () => {
   // Edit intake
   const [editDoses, setEditDoses] = useState('1');
   const [editDateInput, setEditDateInput] = useState('');
+  const [editIntakeErrors, setEditIntakeErrors] = useState({
+    doses: '',
+    date: ''
+  });
 
   // Refresh data when screen is focused
   useFocusEffect(
@@ -212,6 +216,7 @@ const TreatmentScreen = () => {
     setSelectedIntake(intake);
     setEditDoses(intake.doses.toString());
     setEditDateInput(intake.dateTaken.toLocaleDateString('fr-FR'));
+    setEditIntakeErrors({ doses: '', date: '' });
     setEditIntakeModalVisible(true);
   };
 
@@ -219,14 +224,23 @@ const TreatmentScreen = () => {
   const saveEditedIntake = () => {
     if (!selectedIntake) return;
 
+    const newErrors = { doses: '', date: '' };
+    let hasError = false;
+
     if (!isValidDate(editDateInput)) {
-      alert('Date invalide');
-      return;
+      newErrors.date = 'Date invalide (format: JJ/MM/AAAA)';
+      hasError = true;
     }
 
     const dosesNum = parseInt(editDoses);
     if (isNaN(dosesNum) || dosesNum < 1) {
-      alert('Le nombre de doses doit être au moins 1');
+      newErrors.doses = 'Le nombre de doses doit être au moins 1';
+      hasError = true;
+    }
+
+    setEditIntakeErrors(newErrors);
+
+    if (hasError) {
       return;
     }
 
@@ -366,7 +380,10 @@ const TreatmentScreen = () => {
                     </View>
                     <View style={styles.historyActions}>
                       <TouchableOpacity
-                        onPress={() => handleEditIntake(medGroup.intakes[0])}
+                        onPress={() => handleEditIntake({
+                          ...medGroup.intakes[0],
+                          doses: medGroup.totalDoses
+                        })}
                         style={styles.historyActionButton}
                       >
                         <MaterialCommunityIcons
@@ -698,7 +715,11 @@ const TreatmentScreen = () => {
                 mode="outlined"
                 style={styles.textInput}
                 outlineStyle={{ borderRadius: designSystem.borderRadius.md }}
+                error={!!editIntakeErrors.doses}
               />
+              <HelperText type="error" visible={!!editIntakeErrors.doses}>
+                {editIntakeErrors.doses}
+              </HelperText>
             </View>
 
             <View style={styles.modalSection}>
@@ -708,6 +729,9 @@ const TreatmentScreen = () => {
                 onDateChange={setEditDateInput}
                 dateLabel="Date (DD/MM/YYYY)"
               />
+              <HelperText type="error" visible={!!editIntakeErrors.date}>
+                {editIntakeErrors.date}
+              </HelperText>
             </View>
 
             <View style={styles.modalActions}>
