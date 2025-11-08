@@ -5,6 +5,33 @@ import storage from './storage';
  */
 
 // ========================================
+// HELPERS - Utilitaires
+// ========================================
+
+/**
+ * Formate une date en YYYY-MM-DD (local, pas UTC)
+ * @param {Date} date
+ * @returns {string}
+ */
+const formatLocalDate = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+/**
+ * Normalise une date à minuit (00:00:00.000)
+ * @param {Date} date
+ * @returns {Date}
+ */
+const normalizeDateToMidnight = (date) => {
+  const normalized = new Date(date);
+  normalized.setHours(0, 0, 0, 0);
+  return normalized;
+};
+
+// ========================================
 // GETTERS - Récupération des données
 // ========================================
 
@@ -50,19 +77,21 @@ export const saveIntakes = (intakes) => {
  */
 export const calculateAdherence = (schema) => {
   const intakes = getIntakes();
-  const startDate = new Date(schema.startDate);
-  const endDate = schema.endDate ? new Date(schema.endDate) : new Date();
+
+  // Normaliser les dates à minuit pour éviter les problèmes d'heures
+  const startDate = normalizeDateToMidnight(new Date(schema.startDate));
+  const endDate = normalizeDateToMidnight(schema.endDate ? new Date(schema.endDate) : new Date());
 
   // Récupérer toutes les prises de ce médicament dans la période du schéma
   const schemaIntakes = intakes.filter(intake => {
-    const intakeDate = new Date(intake.timestamp);
+    const intakeDate = normalizeDateToMidnight(new Date(intake.timestamp));
     return intake.medicationId === schema.medicationId &&
            intakeDate >= startDate &&
            intakeDate <= endDate;
   });
 
-  // Calculer le nombre de prises prévues
-  const daysDuration = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
+  // Calculer le nombre de jours (en normalisant à minuit)
+  const daysDuration = Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
   let expectedIntakes = 0;
 
   if (schema.frequency.type === 'daily') {
@@ -88,17 +117,19 @@ export const calculateAdherence = (schema) => {
  */
 export const checkOverdose = (schema) => {
   const intakes = getIntakes();
-  const startDate = new Date(schema.startDate);
-  const endDate = schema.endDate ? new Date(schema.endDate) : new Date();
+
+  // Normaliser les dates à minuit
+  const startDate = normalizeDateToMidnight(new Date(schema.startDate));
+  const endDate = normalizeDateToMidnight(schema.endDate ? new Date(schema.endDate) : new Date());
 
   const schemaIntakes = intakes.filter(intake => {
-    const intakeDate = new Date(intake.timestamp);
+    const intakeDate = normalizeDateToMidnight(new Date(intake.timestamp));
     return intake.medicationId === schema.medicationId &&
            intakeDate >= startDate &&
            intakeDate <= endDate;
   });
 
-  const daysDuration = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
+  const daysDuration = Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
   let expectedIntakes = 0;
 
   if (schema.frequency.type === 'daily') {
@@ -319,7 +350,7 @@ export const createSchema = (medicationId, frequency) => {
   const newSchema = {
     id: `schema-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
     medicationId,
-    startDate: new Date().toISOString().split('T')[0],
+    startDate: formatLocalDate(new Date()), // Utiliser la date locale
     endDate: null,
     frequency,
     adherence: 0
@@ -340,7 +371,7 @@ export const stopSchema = (schemaId) => {
   const schema = schemas.find(s => s.id === schemaId);
 
   if (schema) {
-    schema.endDate = new Date().toISOString().split('T')[0];
+    schema.endDate = formatLocalDate(new Date()); // Utiliser la date locale
     schema.adherence = calculateAdherence(schema);
     saveTherapeuticSchemas(schemas);
   }
@@ -361,7 +392,7 @@ export const updateSchemaFrequency = (schemaId, newFrequency) => {
   // Clore l'ancien schéma
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
-  oldSchema.endDate = yesterday.toISOString().split('T')[0];
+  oldSchema.endDate = formatLocalDate(yesterday); // Utiliser la date locale
   oldSchema.adherence = calculateAdherence(oldSchema);
 
   // Créer le nouveau schéma
@@ -420,7 +451,7 @@ export const recordIntake = (medicationId, doses, dateTaken, isFree = false) => 
     timestamp: dateTaken.getTime(),
     isFree,
     doses,
-    dateTaken: dateTaken.toISOString().split('T')[0]
+    dateTaken: formatLocalDate(dateTaken) // Utiliser la date locale au lieu de UTC
   };
 
   intakes.push(newIntake);
@@ -449,7 +480,7 @@ export const updateIntake = (intakeId, updates) => {
     if (updates.doses) intake.doses = updates.doses;
     if (updates.dateTaken) {
       intake.timestamp = updates.dateTaken.getTime();
-      intake.dateTaken = updates.dateTaken.toISOString().split('T')[0];
+      intake.dateTaken = formatLocalDate(updates.dateTaken); // Utiliser la date locale
     }
 
     saveIntakes(intakes);
@@ -512,6 +543,42 @@ export const formatFrequency = (frequency) => {
 export const getAllMedicationNames = () => {
   const medications = getMedications();
   return Object.values(medications).map(m => m.name).sort();
+};
+
+/**
+ * Trouve la dernière prise d'aujourd'hui pour un schéma
+ * @param {string} schemaId - ID du schéma
+ * @returns {object|null}
+ */
+export const findLastTodayIntake = (schemaId) => {
+  const intakes = getIntakes();
+  const today = formatLocalDate(new Date());
+
+  const todayIntakes = intakes.filter(intake =>
+    intake.schemaId === schemaId &&
+    intake.dateTaken === today
+  );
+
+  // Trier par timestamp décroissant et prendre le premier
+  todayIntakes.sort((a, b) => b.timestamp - a.timestamp);
+  return todayIntakes[0] || null;
+};
+
+/**
+ * Trouve la dernière prise d'intervalle pour un schéma
+ * @param {string} schemaId - ID du schéma
+ * @returns {object|null}
+ */
+export const findLastIntervalIntake = (schemaId) => {
+  const intakes = getIntakes();
+
+  const intervalIntakes = intakes.filter(intake =>
+    intake.schemaId === schemaId
+  );
+
+  // Trier par timestamp décroissant et prendre le premier
+  intervalIntakes.sort((a, b) => b.timestamp - a.timestamp);
+  return intervalIntakes[0] || null;
 };
 
 /**

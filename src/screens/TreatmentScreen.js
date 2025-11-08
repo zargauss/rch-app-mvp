@@ -24,7 +24,9 @@ import {
   deleteIntake,
   stopSchema,
   getTodayIntakesCount,
-  isIntervalIntakeDone
+  isIntervalIntakeDone,
+  findLastTodayIntake,
+  findLastIntervalIntake
 } from '../utils/treatmentUtils';
 import { buttonPressFeedback } from '../utils/haptics';
 
@@ -114,6 +116,16 @@ const TreatmentScreen = () => {
     refresh();
   };
 
+  // Handle daily intake uncheck
+  const handleUncheckDaily = (schema, medication) => {
+    const lastIntake = findLastTodayIntake(schema.id);
+    if (lastIntake) {
+      deleteIntake(lastIntake.id);
+      buttonPressFeedback();
+      refresh();
+    }
+  };
+
   // Handle interval intake checkbox
   const handleCheckInterval = (schema, medication) => {
     // Ask for confirmation with date
@@ -121,6 +133,16 @@ const TreatmentScreen = () => {
     const today = new Date();
     setIntervalDateInput(today.toLocaleDateString('fr-FR'));
     setIntervalConfirmVisible(true);
+  };
+
+  // Handle interval intake uncheck
+  const handleUncheckInterval = (schema, medication) => {
+    const lastIntake = findLastIntervalIntake(schema.id);
+    if (lastIntake) {
+      deleteIntake(lastIntake.id);
+      buttonPressFeedback();
+      refresh();
+    }
   };
 
   // Confirm interval intake
@@ -264,7 +286,9 @@ const TreatmentScreen = () => {
             schema={schema}
             medication={medication}
             onCheckDaily={handleCheckDaily}
+            onUncheckDaily={handleUncheckDaily}
             onCheckInterval={handleCheckInterval}
+            onUncheckInterval={handleUncheckInterval}
             onEdit={handleEdit}
             onStop={handleStop}
           />
@@ -347,9 +371,30 @@ const TreatmentScreen = () => {
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
-      {/* Header with history button (only in active view) */}
+      {/* Header with action buttons and history link (only in active view) */}
       {activeTab === 'active' && (
         <View style={styles.header}>
+          <View style={styles.headerLeft}>
+            <PrimaryButton
+              onPress={() => setCreateModalVisible(true)}
+              variant="primary"
+              size="small"
+              icon="plus"
+              style={styles.actionButton}
+            >
+              Schéma thérapeutique
+            </PrimaryButton>
+            <PrimaryButton
+              onPress={() => setFreeIntakeModalVisible(true)}
+              variant="neutral"
+              size="small"
+              outlined
+              icon="plus"
+              style={styles.actionButton}
+            >
+              Prise d'un médicament
+            </PrimaryButton>
+          </View>
           <TouchableOpacity
             onPress={() => {
               setActiveTab('history');
@@ -357,12 +402,12 @@ const TreatmentScreen = () => {
             }}
             style={styles.historyButton}
           >
+            <AppText style={styles.historyButtonText}>Historique</AppText>
             <MaterialCommunityIcons
-              name="history"
+              name="chevron-right"
               size={20}
               color={designSystem.colors.primary[500]}
             />
-            <AppText style={styles.historyButtonText}>Historique</AppText>
           </TouchableOpacity>
         </View>
       )}
@@ -397,31 +442,7 @@ const TreatmentScreen = () => {
         showsVerticalScrollIndicator={false}
       >
         {activeTab === 'active' ? renderActiveSchemas() : renderHistory()}
-
-        {/* Add free intake button (only in active tab) */}
-        {activeTab === 'active' && (
-          <PrimaryButton
-            onPress={() => setFreeIntakeModalVisible(true)}
-            variant="neutral"
-            size="medium"
-            outlined
-            style={styles.freeIntakeButton}
-            icon="plus"
-          >
-            Ajouter une prise manuelle
-          </PrimaryButton>
-        )}
       </ScrollView>
-
-      {/* Floating action button for new schema */}
-      {activeTab === 'active' && (
-        <TouchableOpacity
-          onPress={() => setCreateModalVisible(true)}
-          style={styles.fab}
-        >
-          <MaterialCommunityIcons name="plus" size={28} color="#FFFFFF" />
-        </TouchableOpacity>
-      )}
 
       {/* Modals */}
       <CreateSchemaModal
@@ -559,18 +580,25 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: designSystem.spacing[4],
-    paddingTop: designSystem.spacing[2],
+    paddingTop: designSystem.spacing[3],
     paddingBottom: designSystem.spacing[3],
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  headerLeft: {
+    flex: 1,
+    gap: designSystem.spacing[2],
+  },
+  actionButton: {
+    alignSelf: 'flex-start',
   },
   historyButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: designSystem.spacing[2],
+    gap: designSystem.spacing[1],
     paddingVertical: designSystem.spacing[2],
-    paddingHorizontal: designSystem.spacing[3],
-    backgroundColor: designSystem.colors.background.secondary,
-    borderRadius: designSystem.borderRadius.md,
-    alignSelf: 'flex-start',
+    paddingHorizontal: designSystem.spacing[2],
   },
   historyButtonText: {
     color: designSystem.colors.primary[500],
@@ -598,23 +626,7 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     padding: designSystem.spacing[4],
-    paddingBottom: Platform.OS === 'ios' ? 120 : 100, // Space for tab bar + FAB
-  },
-  freeIntakeButton: {
-    marginTop: designSystem.spacing[4],
-    marginBottom: designSystem.spacing[4],
-  },
-  fab: {
-    position: 'absolute',
-    bottom: Platform.OS === 'ios' ? 108 : 92, // Above tab bar (88px iOS, 72px Android)
-    right: designSystem.spacing[6],
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: designSystem.colors.primary[500],
-    justifyContent: 'center',
-    alignItems: 'center',
-    ...designSystem.shadows.xl,
+    paddingBottom: Platform.OS === 'ios' ? 120 : 100, // Space for tab bar
   },
   historyGroup: {
     marginBottom: designSystem.spacing[5],

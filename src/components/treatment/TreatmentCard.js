@@ -20,7 +20,9 @@ const TreatmentCard = ({
   schema,
   medication,
   onCheckDaily,
+  onUncheckDaily,
   onCheckInterval,
+  onUncheckInterval,
   onEdit,
   onStop
 }) => {
@@ -46,15 +48,23 @@ const TreatmentCard = ({
     const boxes = [];
     for (let i = 0; i < totalDoses; i++) {
       const isChecked = i < todayCount;
+      const isLastChecked = i === todayCount - 1; // Dernière case cochée
       boxes.push(
         <TouchableOpacity
           key={i}
-          onPress={() => !isChecked && onCheckDaily(schema, medication)}
+          onPress={() => {
+            if (isLastChecked) {
+              // Décocher la dernière case cochée
+              onUncheckDaily(schema, medication);
+            } else if (!isChecked) {
+              // Cocher une case non cochée
+              onCheckDaily(schema, medication);
+            }
+          }}
           style={[
             styles.checkbox,
             isChecked && styles.checkboxChecked
           ]}
-          disabled={isChecked}
         >
           {isChecked && (
             <MaterialCommunityIcons name="check" size={16} color="#FFFFFF" />
@@ -143,13 +153,20 @@ const TreatmentCard = ({
               Prochaine prise : {nextDate?.toLocaleDateString('fr-FR')}
             </AppText>
             <TouchableOpacity
-              onPress={() => !isDone && onCheckInterval(schema, medication)}
+              onPress={() => {
+                if (isDone) {
+                  // Décocher
+                  onUncheckInterval(schema, medication);
+                } else {
+                  // Cocher
+                  onCheckInterval(schema, medication);
+                }
+              }}
               style={[
                 styles.checkbox,
                 styles.checkboxLarge,
                 isDone && styles.checkboxChecked
               ]}
-              disabled={isDone}
             >
               {isDone && (
                 <MaterialCommunityIcons name="check" size={20} color="#FFFFFF" />
