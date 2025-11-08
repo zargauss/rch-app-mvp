@@ -82,10 +82,10 @@ export const calculateAdherence = (schema) => {
   const startDate = normalizeDateToMidnight(new Date(schema.startDate));
   const endDate = normalizeDateToMidnight(schema.endDate ? new Date(schema.endDate) : new Date());
 
-  // Récupérer toutes les prises de ce médicament dans la période du schéma
+  // Récupérer toutes les prises de ce schéma spécifique dans la période
   const schemaIntakes = intakes.filter(intake => {
     const intakeDate = normalizeDateToMidnight(new Date(intake.timestamp));
-    return intake.medicationId === schema.medicationId &&
+    return intake.schemaId === schema.id &&
            intakeDate >= startDate &&
            intakeDate <= endDate;
   });
@@ -124,7 +124,7 @@ export const checkOverdose = (schema) => {
 
   const schemaIntakes = intakes.filter(intake => {
     const intakeDate = normalizeDateToMidnight(new Date(intake.timestamp));
-    return intake.medicationId === schema.medicationId &&
+    return intake.schemaId === schema.id &&
            intakeDate >= startDate &&
            intakeDate <= endDate;
   });
@@ -218,7 +218,7 @@ export const getTodayIntakesCount = (schema) => {
   const endOfDay = startOfDay + 24 * 60 * 60 * 1000;
 
   const todayIntakes = intakes.filter(intake =>
-    intake.medicationId === schema.medicationId &&
+    intake.schemaId === schema.id &&
     intake.timestamp >= startOfDay &&
     intake.timestamp < endOfDay
   );
@@ -389,10 +389,8 @@ export const updateSchemaFrequency = (schemaId, newFrequency) => {
 
   if (!oldSchema) return null;
 
-  // Clore l'ancien schéma hier pour que le nouveau commence aujourd'hui
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  oldSchema.endDate = formatLocalDate(yesterday);
+  // Clore l'ancien schéma aujourd'hui
+  oldSchema.endDate = formatLocalDate(new Date());
   oldSchema.adherence = calculateAdherence(oldSchema);
 
   // Sauvegarder d'abord la fermeture de l'ancien schéma

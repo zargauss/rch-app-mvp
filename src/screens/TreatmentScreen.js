@@ -317,57 +317,78 @@ const TreatmentScreen = () => {
 
     return (
       <>
-        {dates.map(dateKey => (
-          <View key={dateKey} style={styles.historyGroup}>
-            <AppText variant="h4" style={styles.historyDate}>
-              {dateKey}
-            </AppText>
-            {groupedIntakes[dateKey].map(intake => (
-              <AppCard key={intake.id} style={styles.historyCard}>
-                <View style={styles.historyCardHeader}>
-                  <View style={styles.historyCardLeft}>
-                    <MaterialCommunityIcons
-                      name="pill"
-                      size={20}
-                      color={designSystem.colors.primary[500]}
-                    />
-                    <View style={styles.historyCardText}>
-                      <AppText variant="bodyLarge" style={styles.historyMedName}>
-                        {intake.medicationName}
-                      </AppText>
-                      <AppText variant="labelSmall" style={styles.historyDoses}>
-                        {intake.doses} dose{intake.doses > 1 ? 's' : ''}
-                        {intake.isFreeIntake && ' • Prise libre'}
-                      </AppText>
-                    </View>
-                  </View>
-                  <View style={styles.historyActions}>
-                    <TouchableOpacity
-                      onPress={() => handleEditIntake(intake)}
-                      style={styles.historyActionButton}
-                    >
+        {dates.map(dateKey => {
+          // Group intakes by medication for this date
+          const intakesByMed = {};
+          groupedIntakes[dateKey].forEach(intake => {
+            if (!intakesByMed[intake.medicationId]) {
+              intakesByMed[intake.medicationId] = {
+                medicationId: intake.medicationId,
+                medicationName: intake.medicationName,
+                totalDoses: 0,
+                intakes: [],
+                hasFreeIntake: false
+              };
+            }
+            intakesByMed[intake.medicationId].totalDoses += intake.doses;
+            intakesByMed[intake.medicationId].intakes.push(intake);
+            if (intake.isFreeIntake) {
+              intakesByMed[intake.medicationId].hasFreeIntake = true;
+            }
+          });
+
+          return (
+            <View key={dateKey} style={styles.historyGroup}>
+              <AppText variant="h4" style={styles.historyDate}>
+                {dateKey}
+              </AppText>
+              {Object.values(intakesByMed).map(medGroup => (
+                <AppCard key={medGroup.medicationId} style={styles.historyCard}>
+                  <View style={styles.historyCardHeader}>
+                    <View style={styles.historyCardLeft}>
                       <MaterialCommunityIcons
-                        name="pencil"
+                        name="pill"
                         size={20}
                         color={designSystem.colors.primary[500]}
                       />
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={() => handleDeleteIntake(intake)}
-                      style={styles.historyActionButton}
-                    >
-                      <MaterialCommunityIcons
-                        name="delete"
-                        size={20}
-                        color={designSystem.colors.health.danger.main}
-                      />
-                    </TouchableOpacity>
+                      <View style={styles.historyCardText}>
+                        <AppText variant="bodyLarge" style={styles.historyMedName}>
+                          {medGroup.medicationName}
+                        </AppText>
+                        <AppText variant="labelSmall" style={styles.historyDoses}>
+                          {medGroup.totalDoses} dose{medGroup.totalDoses > 1 ? 's' : ''}
+                          {medGroup.hasFreeIntake && ' • Prise libre'}
+                        </AppText>
+                      </View>
+                    </View>
+                    <View style={styles.historyActions}>
+                      <TouchableOpacity
+                        onPress={() => handleEditIntake(medGroup.intakes[0])}
+                        style={styles.historyActionButton}
+                      >
+                        <MaterialCommunityIcons
+                          name="pencil"
+                          size={20}
+                          color={designSystem.colors.primary[500]}
+                        />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => handleDeleteIntake(medGroup.intakes[0])}
+                        style={styles.historyActionButton}
+                      >
+                        <MaterialCommunityIcons
+                          name="delete"
+                          size={20}
+                          color={designSystem.colors.health.danger.main}
+                        />
+                      </TouchableOpacity>
+                    </View>
                   </View>
-                </View>
-              </AppCard>
-            ))}
-          </View>
-        ))}
+                </AppCard>
+              ))}
+            </View>
+          );
+        })}
       </>
     );
   };
@@ -409,34 +430,40 @@ const TreatmentScreen = () => {
             : designSystem.colors.health.danger.main;
 
           return (
-            <AppCard key={schema.id} style={styles.historyCard}>
-              <View style={styles.schemaHistoryHeader}>
-                <MaterialCommunityIcons
-                  name="file-document"
-                  size={24}
-                  color={designSystem.colors.primary[500]}
-                />
-                <View style={styles.schemaHistoryText}>
-                  <AppText variant="h4" style={styles.schemaHistoryName}>
-                    {medication.name}
+            <TouchableOpacity
+              key={schema.id}
+              onPress={() => handleEdit(schema, medication)}
+              activeOpacity={0.7}
+            >
+              <AppCard style={styles.historyCard}>
+                <View style={styles.schemaHistoryHeader}>
+                  <MaterialCommunityIcons
+                    name="file-document"
+                    size={24}
+                    color={designSystem.colors.primary[500]}
+                  />
+                  <View style={styles.schemaHistoryText}>
+                    <AppText variant="h4" style={styles.schemaHistoryName}>
+                      {medication.name}
+                    </AppText>
+                    <AppText variant="labelSmall" style={styles.schemaHistoryFrequency}>
+                      {formatFrequency(schema.frequency)}
+                    </AppText>
+                    <AppText variant="labelSmall" style={styles.schemaHistoryPeriod}>
+                      Du {startDate} au {endDate}
+                    </AppText>
+                  </View>
+                </View>
+                <View style={styles.schemaHistoryFooter}>
+                  <AppText variant="labelSmall" style={styles.schemaHistoryLabel}>
+                    Observance :
                   </AppText>
-                  <AppText variant="labelSmall" style={styles.schemaHistoryFrequency}>
-                    {formatFrequency(schema.frequency)}
-                  </AppText>
-                  <AppText variant="labelSmall" style={styles.schemaHistoryPeriod}>
-                    Du {startDate} au {endDate}
+                  <AppText variant="bodyLarge" style={[styles.schemaHistoryAdherence, { color: adherenceColor }]}>
+                    {adherence}%
                   </AppText>
                 </View>
-              </View>
-              <View style={styles.schemaHistoryFooter}>
-                <AppText variant="labelSmall" style={styles.schemaHistoryLabel}>
-                  Observance :
-                </AppText>
-                <AppText variant="bodyLarge" style={[styles.schemaHistoryAdherence, { color: adherenceColor }]}>
-                  {adherence}%
-                </AppText>
-              </View>
-            </AppCard>
+              </AppCard>
+            </TouchableOpacity>
           );
         })}
       </>
@@ -710,6 +737,7 @@ const styles = StyleSheet.create({
   },
   headerLeft: {
     flex: 1,
+    flexDirection: 'row',
     gap: designSystem.spacing[2],
   },
   actionButton: {

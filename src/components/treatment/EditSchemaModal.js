@@ -7,13 +7,21 @@ import PrimaryButton from '../ui/PrimaryButton';
 import designSystem from '../../theme/designSystem';
 import {
   renameMedication,
-  updateSchemaFrequency
+  updateSchemaFrequency,
+  updateHistoricalSchema,
+  saveTherapeuticSchemas,
+  getTherapeuticSchemas,
+  calculateAdherence
 } from '../../utils/treatmentUtils';
+import { isValidDate } from '../ui/DateTimeInput';
 import { buttonPressFeedback } from '../../utils/haptics';
 
 /**
- * Modal pour modifier un schéma thérapeutique actif
- * Permet de modifier le nom (mise à jour partout) ou la fréquence (nouveau schéma)
+ * Modal pour modifier un schéma thérapeutique (actif ou historique)
+ * Permet de modifier :
+ * - Le nom du médicament (mise à jour partout)
+ * - La fréquence (crée un nouveau schéma, clôture l'ancien)
+ * - Les dates de début et de fin (pour schémas historiques)
  */
 
 const EditSchemaModal = ({ visible, schema, medication, onDismiss, onSuccess }) => {
@@ -21,6 +29,8 @@ const EditSchemaModal = ({ visible, schema, medication, onDismiss, onSuccess }) 
   const [frequencyType, setFrequencyType] = useState('daily');
   const [dosesPerDay, setDosesPerDay] = useState('1');
   const [intervalDays, setIntervalDays] = useState('7');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
 
   React.useEffect(() => {
     if (visible && schema && medication) {
@@ -31,6 +41,18 @@ const EditSchemaModal = ({ visible, schema, medication, onDismiss, onSuccess }) 
         setDosesPerDay(schema.frequency.dosesPerDay.toString());
       } else {
         setIntervalDays(schema.frequency.intervalDays.toString());
+      }
+
+      // Initialiser les dates (convertir YYYY-MM-DD en DD/MM/YYYY)
+      if (schema.startDate) {
+        const [year, month, day] = schema.startDate.split('-');
+        setStartDate(`${day}/${month}/${year}`);
+      }
+      if (schema.endDate) {
+        const [year, month, day] = schema.endDate.split('-');
+        setEndDate(`${day}/${month}/${year}`);
+      } else {
+        setEndDate('');
       }
     }
   }, [visible, schema, medication]);
@@ -49,17 +71,47 @@ const EditSchemaModal = ({ visible, schema, medication, onDismiss, onSuccess }) 
     }
   };
 
+  const hasDateChanged = () => {
+    // Convertir les dates DD/MM/YYYY en YYYY-MM-DD pour comparer
+    const convertToISO = (ddmmyyyy) => {
+      if (!ddmmyyyy || ddmmyyyy.length < 10) return null;
+      const [day, month, year] = ddmmyyyy.split('/');
+      return `${year}-${month}-${day}`;
+    };
+
+    const newStart = convertToISO(startDate);
+    const newEnd = convertToISO(endDate);
+
+    if (newStart && newStart !== schema?.startDate) return true;
+    if (schema?.endDate && newEnd !== schema?.endDate) return true;
+    if (!schema?.endDate && newEnd) return true;
+
+    return false;
+  };
+
   const handleSave = () => {
     if (!medicationName.trim()) {
       alert('Veuillez entrer le nom du médicament');
       return;
     }
 
+    // Valider les dates
+    if (!isValidDate(startDate)) {
+      alert('Date de début invalide');
+      return;
+    }
+
+    if (schema?.endDate && endDate && !isValidDate(endDate)) {
+      alert('Date de fin invalide');
+      return;
+    }
+
     // Vérifier si la fréquence a changé
     const freqChanged = hasFrequencyChanged();
     const nameChanged = hasNameChanged();
+    const dateChanged = hasDateChanged();
 
-    if (!freqChanged && !nameChanged) {
+    if (!freqChanged && !nameChanged && !dateChanged) {
       onDismiss();
       return;
     }
@@ -98,6 +150,7 @@ const EditSchemaModal = ({ visible, schema, medication, onDismiss, onSuccess }) 
 
   const handleFrequencyUpdate = () => {
     const freqChanged = hasFrequencyChanged();
+    const dateChanged = hasDateChanged();
 
     if (freqChanged) {
       // Validation
@@ -122,6 +175,28 @@ const EditSchemaModal = ({ visible, schema, medication, onDismiss, onSuccess }) 
 
       // Modifier le schéma (clôt l'ancien, crée un nouveau)
       updateSchemaFrequency(schema.id, newFrequency);
+    } else if (dateChanged) {
+      // Si seules les dates ont changé, mettre à jour le schéma directement
+      const convertToISO = (ddmmyyyy) => {
+        if (!ddmmyyyy || ddmmyyyy.length < 10) return null;
+        const [day, month, year] = ddmmyyyy.split('/');
+        return `${year}-${month}-${day}`;
+      };
+
+      const updates = {};
+      const newStart = convertToISO(startDate);
+      const newEnd = convertToISO(endDate);
+
+      if (newStart && newStart !== schema.startDate) {
+        updates.startDate = newStart;
+      }
+      if (schema.endDate && newEnd !== schema.endDate) {
+        updates.endDate = newEnd;
+      }
+
+      if (Object.keys(updates).length > 0) {
+        updateHistoricalSchema(schema.id, updates);
+      }
     }
 
     buttonPressFeedback();
@@ -156,6 +231,62 @@ const EditSchemaModal = ({ visible, schema, medication, onDismiss, onSuccess }) 
                 </AppText>
               )}
             </View>
+
+            {/* Date de début */}
+            <View style={styles.section}>
+              <AppText style={styles.fieldLabel}>Date de début</AppText>
+              <TextInput
+                value={startDate}
+                onChangeText={(text) => {
+                  // Auto-format with /
+                  const numbers = text.replace(/\D/g, '');
+                  const limited = numbers.slice(0, 8);
+                  let formatted = '';
+                  if (limited.length <= 2) {
+                    formatted = limited;
+                  } else if (limited.length <= 4) {
+                    formatted = `${limited.slice(0, 2)}/${limited.slice(2)}`;
+                  } else {
+                    formatted = `${limited.slice(0, 2)}/${limited.slice(2, 4)}/${limited.slice(4)}`;
+                  }
+                  setStartDate(formatted);
+                }}
+                mode="outlined"
+                style={styles.input}
+                outlineStyle={{ borderRadius: designSystem.borderRadius.md }}
+                placeholder="JJ/MM/AAAA"
+                keyboardType="numeric"
+              />
+            </View>
+
+            {/* Date de fin (si schéma historique) */}
+            {schema?.endDate && (
+              <View style={styles.section}>
+                <AppText style={styles.fieldLabel}>Date de fin</AppText>
+                <TextInput
+                  value={endDate}
+                  onChangeText={(text) => {
+                    // Auto-format with /
+                    const numbers = text.replace(/\D/g, '');
+                    const limited = numbers.slice(0, 8);
+                    let formatted = '';
+                    if (limited.length <= 2) {
+                      formatted = limited;
+                    } else if (limited.length <= 4) {
+                      formatted = `${limited.slice(0, 2)}/${limited.slice(2)}`;
+                    } else {
+                      formatted = `${limited.slice(0, 2)}/${limited.slice(2, 4)}/${limited.slice(4)}`;
+                    }
+                    setEndDate(formatted);
+                  }}
+                  mode="outlined"
+                  style={styles.input}
+                  outlineStyle={{ borderRadius: designSystem.borderRadius.md }}
+                  placeholder="JJ/MM/AAAA"
+                  keyboardType="numeric"
+                />
+              </View>
+            )}
 
             {/* Type de fréquence */}
             <View style={styles.section}>
