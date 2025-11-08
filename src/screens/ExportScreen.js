@@ -929,7 +929,7 @@ export default function ExportScreen() {
 
                   const startDate = new Date(schema.startDate).toLocaleDateString('fr-FR');
                   const endDate = schema.endDate ? new Date(schema.endDate).toLocaleDateString('fr-FR') : 'Actif';
-                  const period = schema.endDate ? \`\${startDate} → \${endDate}\` : \`Depuis \${startDate}\`;
+                  const period = schema.endDate ? (startDate + ' → ' + endDate) : ('Depuis ' + startDate);
 
                   // Calculer l'observance
                   const adherence = calculateAdherence(schema);
@@ -951,21 +951,19 @@ export default function ExportScreen() {
                   }
 
                   const adherenceColor = adherence >= 90 ? '#16A34A' : adherence >= 70 ? '#F59E0B' : '#DC2626';
-                  const adherenceText = hasOverdose ? \`\${adherence}% (+\${excess})\` : \`\${adherence}%\`;
+                  const adherenceText = hasOverdose ? (adherence + '% (+' + excess + ')') : (adherence + '%');
 
-                  return \`
-                    <tr>
-                      <td style="font-weight: 600;">\${medication.name}</td>
-                      <td>\${formatFrequency(schema.frequency)}</td>
-                      <td style="font-size: 10px;">\${period}</td>
-                      <td style="text-align: center;">\${expectedIntakes}</td>
-                      <td style="text-align: center;">\${actualIntakes}</td>
-                      <td style="text-align: center; font-weight: 700; color: \${adherenceColor};">
-                        \${adherenceText}
-                        \${hasOverdose ? '<br><span style="font-size: 9px; color: #DC2626;">⚠️ Surdosage</span>' : ''}
-                      </td>
-                    </tr>
-                  \`;
+                  return '<tr>' +
+                    '<td style="font-weight: 600;">' + medication.name + '</td>' +
+                    '<td>' + formatFrequency(schema.frequency) + '</td>' +
+                    '<td style="font-size: 10px;">' + period + '</td>' +
+                    '<td style="text-align: center;">' + expectedIntakes + '</td>' +
+                    '<td style="text-align: center;">' + actualIntakes + '</td>' +
+                    '<td style="text-align: center; font-weight: 700; color: ' + adherenceColor + ';">' +
+                      adherenceText +
+                      (hasOverdose ? '<br><span style="font-size: 9px; color: #DC2626;">⚠️ Surdosage</span>' : '') +
+                    '</td>' +
+                  '</tr>';
                 }).join('')}
               </tbody>
             </table>
@@ -980,32 +978,28 @@ export default function ExportScreen() {
               return '<div class="no-data">Aucune prise libre enregistrée</div>';
             }
 
-            return \`
-              <table>
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Traitement</th>
-                    <th>Doses</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  \${freeIntakes.sort((a, b) => new Date(b.dateTaken) - new Date(a.dateTaken)).map(intake => {
-                    const medication = medications.find(m => m.id === intake.medicationId);
-                    if (!medication) return '';
+            const rows = freeIntakes.sort((a, b) => new Date(b.dateTaken) - new Date(a.dateTaken)).map(intake => {
+              const medication = medications.find(m => m.id === intake.medicationId);
+              if (!medication) return '';
 
-                    const date = new Date(intake.dateTaken).toLocaleDateString('fr-FR');
-                    return \`
-                      <tr>
-                        <td>\${date}</td>
-                        <td style="font-weight: 600;">\${medication.name}</td>
-                        <td style="text-align: center;">\${intake.doses}</td>
-                      </tr>
-                    \`;
-                  }).join('')}
-                </tbody>
-              </table>
-            \`;
+              const date = new Date(intake.dateTaken).toLocaleDateString('fr-FR');
+              return '<tr>' +
+                '<td>' + date + '</td>' +
+                '<td style="font-weight: 600;">' + medication.name + '</td>' +
+                '<td style="text-align: center;">' + intake.doses + '</td>' +
+              '</tr>';
+            }).join('');
+
+            return '<table>' +
+              '<thead>' +
+                '<tr>' +
+                  '<th>Date</th>' +
+                  '<th>Traitement</th>' +
+                  '<th>Doses</th>' +
+                '</tr>' +
+              '</thead>' +
+              '<tbody>' + rows + '</tbody>' +
+            '</table>';
           })()}
         </div>
 
