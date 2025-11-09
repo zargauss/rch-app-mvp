@@ -125,14 +125,23 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
     }
   };
 
-  const getAnimatedStyle = (animation, yOffset) => {
+  const getAnimatedStyle = (animation, angle) => {
+    const distance = 80; // Distance from center in pixels
+    const angleRad = (angle * Math.PI) / 180;
+
     return {
       opacity: animation,
       transform: [
         {
+          translateX: animation.interpolate({
+            inputRange: [0, 1],
+            outputRange: [0, distance * Math.sin(angleRad)],
+          }),
+        },
+        {
           translateY: animation.interpolate({
             inputRange: [0, 1],
-            outputRange: [0, yOffset],
+            outputRange: [0, -distance * Math.cos(angleRad)],
           }),
         },
         {
@@ -279,11 +288,11 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
           {/* Boutons secondaires */}
           {isOpen && (
             <>
-              {/* Note - en haut */}
+              {/* Note - en haut à gauche (-45°) */}
               <Animated.View
                 style={[
                   styles.secondaryButtonWrapper,
-                  getAnimatedStyle(animation1, -170),
+                  getAnimatedStyle(animation1, -45),
                 ]}
               >
                 <TouchableOpacity
@@ -300,11 +309,11 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
                 </View>
               </Animated.View>
 
-              {/* Symptôme - au milieu */}
+              {/* Symptôme - en haut au centre (0°) */}
               <Animated.View
                 style={[
                   styles.secondaryButtonWrapper,
-                  getAnimatedStyle(animation2, -110),
+                  getAnimatedStyle(animation2, 0),
                 ]}
               >
                 <TouchableOpacity
@@ -321,11 +330,11 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
                 </View>
               </Animated.View>
 
-              {/* Selle - en bas (le plus proche) */}
+              {/* Selle - en haut à droite (45°) */}
               <Animated.View
                 style={[
                   styles.secondaryButtonWrapper,
-                  getAnimatedStyle(animation3, -50),
+                  getAnimatedStyle(animation3, 45),
                 ]}
               >
                 <TouchableOpacity
@@ -450,8 +459,9 @@ const styles = StyleSheet.create({
   },
   secondaryButtonWrapper: {
     position: 'absolute',
-    bottom: 68,
+    bottom: 8, // Aligné avec le bouton central (qui a marginBottom: 8)
     alignItems: 'center',
+    justifyContent: 'center',
     zIndex: 3,
   },
   secondaryButton: {
