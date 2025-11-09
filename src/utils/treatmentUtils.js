@@ -217,13 +217,20 @@ export const getTodayIntakesCount = (schema) => {
   const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
   const endOfDay = startOfDay + 24 * 60 * 60 * 1000;
 
+  console.log('[getTodayIntakesCount] schema.id:', schema.id, 'medicationId:', schema.medicationId);
+  console.log('[getTodayIntakesCount] All intakes:', intakes.map(i => ({ id: i.id, medicationId: i.medicationId, schemaId: i.schemaId, doses: i.doses, timestamp: i.timestamp })));
+
   const todayIntakes = intakes.filter(intake =>
     intake.schemaId === schema.id &&
     intake.timestamp >= startOfDay &&
     intake.timestamp < endOfDay
   );
 
-  return todayIntakes.reduce((sum, intake) => sum + intake.doses, 0);
+  console.log('[getTodayIntakesCount] Filtered todayIntakes:', todayIntakes);
+  const count = todayIntakes.reduce((sum, intake) => sum + intake.doses, 0);
+  console.log('[getTodayIntakesCount] Returning count:', count);
+
+  return count;
 };
 
 /**
@@ -473,17 +480,23 @@ export const recordIntake = (medicationId, doses, dateTaken) => {
   const schemas = getTherapeuticSchemas();
   const dateStr = formatLocalDate(dateTaken);
 
+  console.log('[recordIntake] medicationId:', medicationId, 'doses:', doses, 'dateStr:', dateStr);
+
   // Trouver le schéma actif pour ce médicament
   const activeSchema = schemas.find(s =>
     s.medicationId === medicationId && !s.endDate
   );
 
+  console.log('[recordIntake] activeSchema found:', !!activeSchema, 'schemaId:', activeSchema?.id);
+
   // Chercher si une entrée existe déjà pour ce médicament ce jour
   const existingIntake = findIntakeByMedicationAndDate(medicationId, dateStr);
 
   if (existingIntake) {
+    console.log('[recordIntake] Found existing intake, current doses:', existingIntake.doses, 'schemaId:', existingIntake.schemaId);
     // Incrémenter les doses
     existingIntake.doses += doses;
+    console.log('[recordIntake] After increment, doses:', existingIntake.doses);
     existingIntake.timestamp = dateTaken.getTime(); // Mettre à jour timestamp
 
     // Mettre à jour le schemaId si c'est une prise via schéma
@@ -492,6 +505,7 @@ export const recordIntake = (medicationId, doses, dateTaken) => {
     }
 
     saveIntakes(intakes);
+    console.log('[recordIntake] Saved to storage');
 
     // Mettre à jour l'observance
     if (activeSchema) {

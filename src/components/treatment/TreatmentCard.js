@@ -35,6 +35,8 @@ const TreatmentCard = ({
   const todayCount = isDaily ? getTodayIntakesCount(schema) : 0;
   const totalDoses = isDaily ? schema.frequency.dosesPerDay : 1;
 
+  console.log('[TreatmentCard] Rendering for', medication.name, 'todayCount:', todayCount, 'totalDoses:', totalDoses, 'schemaId:', schema.id);
+
   // Pour les interval: vérifier si déjà pris et calculer retard
   const isDone = !isDaily && isIntervalIntakeDone(schema);
   const { nextDate, isLate, daysLate } = !isDaily ? getNextIntake(schema) : {};
