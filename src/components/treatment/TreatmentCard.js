@@ -48,16 +48,15 @@ const TreatmentCard = ({
     const boxes = [];
     for (let i = 0; i < totalDoses; i++) {
       const isChecked = i < todayCount;
-      const isLastChecked = i === todayCount - 1; // Dernière case cochée
       boxes.push(
         <TouchableOpacity
           key={i}
           onPress={() => {
-            if (isLastChecked) {
-              // Décocher la dernière case cochée
+            if (isChecked) {
+              // Si cochée, on décoche (décrémente)
               onUncheckDaily(schema, medication);
-            } else if (!isChecked) {
-              // Cocher une case non cochée
+            } else {
+              // Si décochée, on coche (incrémente)
               onCheckDaily(schema, medication);
             }
           }}
@@ -142,6 +141,11 @@ const TreatmentCard = ({
           <>
             <AppText variant="labelMedium" style={styles.label}>
               Aujourd'hui : {todayCount}/{totalDoses}
+              {todayCount > totalDoses && (
+                <AppText variant="labelMedium" style={styles.excessText}>
+                  {' '}(+{todayCount - totalDoses} en excès)
+                </AppText>
+              )}
             </AppText>
             <View style={styles.checkboxContainer}>
               {renderDailyCheckboxes()}
@@ -276,6 +280,10 @@ const styles = StyleSheet.create({
   label: {
     color: designSystem.colors.text.secondary,
     marginBottom: designSystem.spacing[3],
+  },
+  excessText: {
+    color: '#F59E0B',
+    fontWeight: '600',
   },
   checkboxContainer: {
     flexDirection: 'row',
