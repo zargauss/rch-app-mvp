@@ -458,17 +458,6 @@ export const updateHistoricalSchema = (schemaId, updates) => {
 // ========================================
 
 /**
- * Trouve une prise pour un médicament à une date donnée
- * @param {string} medicationId - ID du médicament
- * @param {string} dateStr - Date au format YYYY-MM-DD
- * @returns {object|null} - L'entrée de prise ou null
- */
-export const findIntakeByMedicationAndDate = (medicationId, dateStr) => {
-  const intakes = getIntakes();
-  return intakes.find(i => i.medicationId === medicationId && i.dateTaken === dateStr);
-};
-
-/**
  * Enregistre une prise de médicament (incrémente si existe déjà)
  * @param {string} medicationId - ID du médicament
  * @param {number} doses - Nombre de doses à ajouter
@@ -489,8 +478,8 @@ export const recordIntake = (medicationId, doses, dateTaken) => {
 
   console.log('[recordIntake] activeSchema found:', !!activeSchema, 'schemaId:', activeSchema?.id);
 
-  // Chercher si une entrée existe déjà pour ce médicament ce jour
-  const existingIntake = findIntakeByMedicationAndDate(medicationId, dateStr);
+  // Chercher si une entrée existe déjà pour ce médicament ce jour (dans LE MÊME tableau!)
+  const existingIntake = intakes.find(i => i.medicationId === medicationId && i.dateTaken === dateStr);
 
   if (existingIntake) {
     console.log('[recordIntake] Found existing intake, current doses:', existingIntake.doses, 'schemaId:', existingIntake.schemaId);
@@ -505,7 +494,7 @@ export const recordIntake = (medicationId, doses, dateTaken) => {
     }
 
     saveIntakes(intakes);
-    console.log('[recordIntake] Saved to storage');
+    console.log('[recordIntake] Saved to storage, intakes array:', intakes);
 
     // Mettre à jour l'observance
     if (activeSchema) {
@@ -546,7 +535,7 @@ export const recordIntake = (medicationId, doses, dateTaken) => {
  */
 export const decrementIntake = (medicationId, dateStr) => {
   const intakes = getIntakes();
-  const intake = findIntakeByMedicationAndDate(medicationId, dateStr);
+  const intake = intakes.find(i => i.medicationId === medicationId && i.dateTaken === dateStr);
 
   if (!intake) return false;
 
@@ -592,8 +581,8 @@ export const updateIntake = (intakeId, updates) => {
 
     // Si changement de date
     if (newDateStr !== oldDateStr) {
-      // Chercher si une entrée existe déjà à la nouvelle date
-      const existingAtNewDate = findIntakeByMedicationAndDate(intake.medicationId, newDateStr);
+      // Chercher si une entrée existe déjà à la nouvelle date (dans LE MÊME tableau!)
+      const existingAtNewDate = intakes.find(i => i.medicationId === intake.medicationId && i.dateTaken === newDateStr);
 
       if (existingAtNewDate && existingAtNewDate.id !== intake.id) {
         // Fusionner : ajouter les doses à l'entrée existante
