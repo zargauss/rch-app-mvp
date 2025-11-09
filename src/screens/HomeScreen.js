@@ -1,5 +1,5 @@
-﻿import React, { useMemo, useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Linking, TouchableOpacity, Platform, Alert } from 'react-native';
+﻿import React, { useMemo, useState, useEffect, useRef } from 'react';
+import { View, StyleSheet, ScrollView, Linking, TouchableOpacity, Platform, Alert, Animated } from 'react-native';
 import { Text, Button, Portal, Modal, Card, Switch, TextInput } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import HealthIcon from '../components/ui/HealthIcon';
@@ -69,10 +69,30 @@ export default function HomeScreen({ route }) {
   // États pour IBDisk
   const [ibdiskAvailable, setIbdiskAvailable] = useState(true);
   const [ibdiskDaysRemaining, setIbdiskDaysRemaining] = useState(0);
-  
+
   // États pour les actualités RSS
   const [rssArticles, setRssArticles] = useState([]);
   const [rssLoading, setRssLoading] = useState(true);
+
+  // États pour le tooltip du score
+  const [scoreTooltipVisible, setScoreTooltipVisible] = useState(false);
+  const tooltipOpacity = useRef(new Animated.Value(0)).current;
+  const tooltipScale = useRef(new Animated.Value(0.96)).current;
+
+  // Animation du tooltip
+  useEffect(() => {
+    if (scoreTooltipVisible) {
+      Animated.parallel([
+        Animated.timing(tooltipOpacity, { toValue: 1, duration: 140, useNativeDriver: true }),
+        Animated.spring(tooltipScale, { toValue: 1, speed: 20, bounciness: 6, useNativeDriver: true }),
+      ]).start();
+    } else {
+      Animated.parallel([
+        Animated.timing(tooltipOpacity, { toValue: 0, duration: 120, useNativeDriver: true }),
+        Animated.timing(tooltipScale, { toValue: 0.96, duration: 120, useNativeDriver: true }),
+      ]).start();
+    }
+  }, [scoreTooltipVisible, tooltipOpacity, tooltipScale]);
 
   const bristolDescriptions = useMemo(() => ({
     1: 'Noix dures séparées',
@@ -813,7 +833,7 @@ export default function HomeScreen({ route }) {
             {/* Selles */}
             <View style={[styles.todayStat, styles.todayStatLeft]}>
               <View style={styles.todayStatIcon}>
-                <MaterialCommunityIcons name="toilet" size={32} color="#4C4DDC" />
+                <MaterialCommunityIcons name="toilet" size={Platform.OS === 'web' ? 32 : 28} color="#4C4DDC" />
               </View>
               <View style={styles.todayStatContent}>
                 <AppText variant="labelMedium" style={styles.todayStatLabel}>
@@ -826,11 +846,17 @@ export default function HomeScreen({ route }) {
             </View>
 
             {/* Score */}
-            <View style={[styles.todayStat, styles.todayStatRight]}>
+            <View
+              style={[styles.todayStat, styles.todayStatRight]}
+              {...(Platform.OS === 'web' && {
+                onMouseEnter: () => setScoreTooltipVisible(true),
+                onMouseLeave: () => setScoreTooltipVisible(false),
+              })}
+            >
               <View style={styles.todayStatIcon}>
                 <MaterialCommunityIcons
                   name="chart-bar"
-                  size={32}
+                  size={Platform.OS === 'web' ? 32 : 28}
                   color={todayProvisionalScore !== null ? (todayProvisionalScore < 5 ? '#16A34A' : todayProvisionalScore <= 10 ? '#F59E0B' : '#DC2626') : '#A3A3A3'}
                 />
               </View>
@@ -839,21 +865,7 @@ export default function HomeScreen({ route }) {
                   <AppText variant="labelMedium" style={styles.todayStatLabel}>
                     Score
                   </AppText>
-                  <TouchableOpacity
-                    onPress={() => {
-                      if (Platform.OS === 'web') {
-                        alert('Le score est calculé selon l\'échelle de Lichtiger :\n\n• Fréquence des selles (0-3 pts)\n• Selles nocturnes (0-1 pt)\n• Présence de sang (0-3 pts)\n• Douleur abdominale (0-2 pts)\n• État général (0-2 pts)\n• Signes physiques (0-2 pts)\n\nTotal : 0-13 points\n0-4 : Rémission\n5-10 : Activité modérée\n> 10 : Activité sévère');
-                      } else {
-                        Alert.alert(
-                          'Calcul du score',
-                          'Le score est calculé selon l\'échelle de Lichtiger :\n\n• Fréquence des selles (0-3 pts)\n• Selles nocturnes (0-1 pt)\n• Présence de sang (0-3 pts)\n• Douleur abdominale (0-2 pts)\n• État général (0-2 pts)\n• Signes physiques (0-2 pts)\n\nTotal : 0-13 points\n0-4 : Rémission\n5-10 : Activité modérée\n> 10 : Activité sévère'
-                        );
-                      }
-                    }}
-                    style={styles.infoButton}
-                  >
-                    <MaterialCommunityIcons name="information-outline" size={16} color="#64748B" />
-                  </TouchableOpacity>
+                  <MaterialCommunityIcons name="information-outline" size={16} color="#64748B" />
                 </View>
                 <AppText variant="displayMedium" style={[
                   styles.todayStatValue,
@@ -866,6 +878,55 @@ export default function HomeScreen({ route }) {
                   {todayProvisionalScore !== null ? todayProvisionalScore : 'N/A'}
                 </AppText>
               </View>
+
+              {/* Tooltip au survol (web uniquement) */}
+              {Platform.OS === 'web' && scoreTooltipVisible && (
+                <>
+                  <Animated.View
+                    style={[
+                      styles.scoreTooltip,
+                      {
+                        opacity: tooltipOpacity,
+                        transform: [{ scale: tooltipScale }],
+                      },
+                    ]}
+                    pointerEvents="none"
+                  >
+                    <View style={styles.scoreTooltipHeader}>
+                      <MaterialCommunityIcons name="chart-line" size={14} color="#4C4DDC" />
+                      <AppText variant="labelSmall" style={styles.scoreTooltipTitle}>
+                        Score de Lichtiger
+                      </AppText>
+                    </View>
+                    <AppText variant="labelSmall" style={styles.scoreTooltipText}>
+                      Évalue l'activité de la maladie
+                    </AppText>
+                    <View style={styles.scoreTooltipScale}>
+                      <AppText variant="labelSmall" style={styles.scoreTooltipScaleItem}>
+                        • 0-4 : Rémission
+                      </AppText>
+                      <AppText variant="labelSmall" style={styles.scoreTooltipScaleItem}>
+                        • 5-10 : Modérée
+                      </AppText>
+                      <AppText variant="labelSmall" style={styles.scoreTooltipScaleItem}>
+                        • {'>'} 10 : Sévère
+                      </AppText>
+                    </View>
+                  </Animated.View>
+
+                  {/* Flèche du tooltip */}
+                  <Animated.View
+                    pointerEvents="none"
+                    style={[
+                      styles.scoreTooltipArrow,
+                      {
+                        opacity: tooltipOpacity,
+                        transform: [{ scale: tooltipScale }],
+                      },
+                    ]}
+                  />
+                </>
+              )}
             </View>
           </View>
         </AppCard>
@@ -1621,6 +1682,10 @@ const styles = StyleSheet.create({
   todayStatsRow: {
     flexDirection: 'row',
     gap: designSystem.spacing[3],
+    // Sur mobile, passer en colonne
+    ...(Platform.OS !== 'web' && {
+      flexDirection: 'column',
+    }),
   },
   todayStat: {
     flex: 1,
@@ -1632,12 +1697,19 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#E5E5F4',
     gap: designSystem.spacing[3],
+    // Sur mobile, ne pas étirer en hauteur
+    ...(Platform.OS !== 'web' && {
+      flex: 0,
+      width: '100%',
+      padding: designSystem.spacing[3], // Moins de padding sur mobile
+    }),
   },
   todayStatLeft: {
     // Style spécifique si besoin
   },
   todayStatRight: {
-    // Style spécifique si besoin
+    position: 'relative', // Pour positionner le tooltip
+    overflow: 'visible', // Pour que le tooltip puisse dépasser
   },
   todayStatIcon: {
     width: 56,
@@ -1646,6 +1718,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#EDEDFC',
     justifyContent: 'center',
     alignItems: 'center',
+    // Sur mobile, icône plus petite
+    ...(Platform.OS !== 'web' && {
+      width: 48,
+      height: 48,
+    }),
   },
   todayStatContent: {
     flex: 1,
@@ -1663,17 +1740,79 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: 32,
     lineHeight: 38,
+    // Sur mobile, valeur un peu plus petite
+    ...(Platform.OS !== 'web' && {
+      fontSize: 28,
+      lineHeight: 34,
+    }),
   },
   todayScoreHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
   },
-  infoButton: {
-    width: 20,
-    height: 20,
-    justifyContent: 'center',
+  scoreTooltip: {
+    position: 'absolute',
+    bottom: '100%',
+    left: '50%',
+    transform: [{ translateX: '-50%' }],
+    marginBottom: 12,
+    minWidth: 180,
+    maxWidth: 220,
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    borderWidth: 1,
+    borderColor: 'rgba(200, 200, 244, 0.6)',
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    ...(Platform.OS === 'web' && {
+      backdropFilter: 'blur(12px) saturate(180%)',
+      WebkitBackdropFilter: 'blur(12px) saturate(180%)',
+    }),
+  },
+  scoreTooltipArrow: {
+    position: 'absolute',
+    bottom: '100%',
+    left: '50%',
+    marginLeft: -5,
+    marginBottom: 2,
+    width: 10,
+    height: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    borderLeftWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: 'rgba(200, 200, 244, 0.6)',
+    transform: [{ rotate: '-45deg' }],
+    ...(Platform.OS === 'web' && {
+      backdropFilter: 'blur(12px) saturate(180%)',
+      WebkitBackdropFilter: 'blur(12px) saturate(180%)',
+    }),
+  },
+  scoreTooltipHeader: {
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
+  },
+  scoreTooltipTitle: {
+    color: '#101010',
+    fontWeight: '700',
+  },
+  scoreTooltipText: {
+    color: '#101010',
+    marginBottom: 6,
+  },
+  scoreTooltipScale: {
+    gap: 2,
+  },
+  scoreTooltipScaleItem: {
+    color: '#101010',
+    fontSize: 11,
+    lineHeight: 16,
   },
   scoreGood: {
     color: '#16A34A',
