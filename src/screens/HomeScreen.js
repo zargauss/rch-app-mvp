@@ -865,7 +865,9 @@ export default function HomeScreen({ route }) {
                   <AppText variant="labelMedium" style={styles.todayStatLabel}>
                     Score
                   </AppText>
-                  <MaterialCommunityIcons name="information-outline" size={16} color="#64748B" />
+                  {Platform.OS === 'web' && (
+                    <MaterialCommunityIcons name="information-outline" size={16} color="#64748B" />
+                  )}
                 </View>
                 <AppText variant="displayMedium" style={[
                   styles.todayStatValue,
@@ -1668,6 +1670,7 @@ const styles = StyleSheet.create({
   todaySection: {
     marginTop: designSystem.spacing[4],
     marginBottom: designSystem.spacing[6],
+    overflow: 'visible', // Pour permettre au tooltip de dépasser
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -1682,6 +1685,7 @@ const styles = StyleSheet.create({
   todayStatsRow: {
     flexDirection: 'row',
     gap: designSystem.spacing[3],
+    overflow: 'visible', // Pour permettre au tooltip de dépasser
     // Sur mobile, passer en colonne
     ...(Platform.OS !== 'web' && {
       flexDirection: 'column',
@@ -1753,13 +1757,12 @@ const styles = StyleSheet.create({
   },
   scoreTooltip: {
     position: 'absolute',
-    bottom: '100%',
-    left: '50%',
-    transform: [{ translateX: '-50%' }],
-    marginBottom: 12,
+    top: '100%',
+    right: 0,
+    marginTop: 8,
     minWidth: 180,
     maxWidth: 220,
-    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
     borderWidth: 1,
     borderColor: 'rgba(200, 200, 244, 0.6)',
     borderRadius: 10,
@@ -1769,6 +1772,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.12,
     shadowRadius: 12,
+    zIndex: 1000,
     ...(Platform.OS === 'web' && {
       backdropFilter: 'blur(12px) saturate(180%)',
       WebkitBackdropFilter: 'blur(12px) saturate(180%)',
@@ -1776,17 +1780,17 @@ const styles = StyleSheet.create({
   },
   scoreTooltipArrow: {
     position: 'absolute',
-    bottom: '100%',
-    left: '50%',
-    marginLeft: -5,
-    marginBottom: 2,
+    top: '100%',
+    right: 16,
+    marginTop: -1,
     width: 10,
     height: 10,
-    backgroundColor: 'rgba(255, 255, 255, 0.85)',
-    borderLeftWidth: 1,
-    borderBottomWidth: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRightWidth: 1,
+    borderTopWidth: 1,
     borderColor: 'rgba(200, 200, 244, 0.6)',
     transform: [{ rotate: '-45deg' }],
+    zIndex: 999,
     ...(Platform.OS === 'web' && {
       backdropFilter: 'blur(12px) saturate(180%)',
       WebkitBackdropFilter: 'blur(12px) saturate(180%)',
