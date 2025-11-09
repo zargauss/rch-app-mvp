@@ -26,9 +26,9 @@ import SegmentedControl from '../components/ui/SegmentedControl';
 import AnimatedListItem from '../components/ui/AnimatedListItem';
 import IBDiskChart from '../components/charts/IBDiskChart';
 import { deleteFeedback } from '../utils/haptics';
-import SpeedDialFAB from '../components/ui/SpeedDialFAB';
 import SymptomModal from '../components/modals/SymptomModal';
 import NoteModal from '../components/modals/NoteModal';
+import { useSpeedDial } from '../contexts/SpeedDialContext';
 import {
   getSymptoms,
   createSymptom,
@@ -49,6 +49,7 @@ export default function HomeScreen({ route }) {
   const navigation = useNavigation();
   const theme = useTheme();
   const { isModalVisible, openModal, closeModal } = useStoolModal();
+  const { registerHandlers } = useSpeedDial();
   const [bristol, setBristol] = useState(4);
   const [hasBlood, setHasBlood] = useState(false);
   const [dailyCount, setDailyCount] = useState(0);
@@ -307,6 +308,15 @@ export default function HomeScreen({ route }) {
       }
     }, [])
   );
+
+  // Enregistrer les handlers pour le Speed Dial dans la tab bar
+  useEffect(() => {
+    registerHandlers({
+      onStoolPress: showModal,
+      onSymptomPress: handleOpenSymptomModal,
+      onNotePress: handleOpenNoteModal,
+    });
+  }, []);
 
   const hideModal = () => {
     closeModal();
@@ -1717,13 +1727,6 @@ export default function HomeScreen({ route }) {
         }}
         onSave={handleSaveNote}
         initialData={editingNote}
-      />
-
-      {/* Speed Dial FAB */}
-      <SpeedDialFAB
-        onStoolPress={showModal}
-        onSymptomPress={handleOpenSymptomModal}
-        onNotePress={handleOpenNoteModal}
       />
     </View>
   );

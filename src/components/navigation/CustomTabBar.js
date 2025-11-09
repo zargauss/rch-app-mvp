@@ -1,23 +1,148 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { View, TouchableOpacity, StyleSheet, Platform, Animated } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import AppText from '../ui/AppText';
 import NotificationBadge from '../ui/NotificationBadge';
 import designSystem from '../../theme/designSystem';
 import { useStoolModal } from '../../contexts/StoolModalContext';
+import { useSpeedDial } from '../../contexts/SpeedDialContext';
 import { buttonPressFeedback } from '../../utils/haptics';
 import usePendingQuestionnaires from '../../hooks/usePendingQuestionnaires';
 import usePendingTreatments from '../../hooks/usePendingTreatments';
 
 export default function CustomTabBar({ state, descriptors, navigation }) {
   const { openModal } = useStoolModal();
+  const { handlers } = useSpeedDial();
   const { colors } = designSystem;
   const pendingQuestionnairesCount = usePendingQuestionnaires();
   const pendingTreatmentsCount = usePendingTreatments();
 
-  const handleAddStool = () => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  // Animations
+  const animation1 = useRef(new Animated.Value(0)).current;
+  const animation2 = useRef(new Animated.Value(0)).current;
+  const animation3 = useRef(new Animated.Value(0)).current;
+  const rotation = useRef(new Animated.Value(0)).current;
+  const backdropOpacity = useRef(new Animated.Value(0)).current;
+
+  const toggleOpen = () => {
     buttonPressFeedback();
+    setIsOpen(!isOpen);
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      Animated.parallel([
+        Animated.spring(animation1, {
+          toValue: 1,
+          useNativeDriver: true,
+          delay: 0,
+          speed: 20,
+          bounciness: 8,
+        }),
+        Animated.spring(animation2, {
+          toValue: 1,
+          useNativeDriver: true,
+          delay: 50,
+          speed: 20,
+          bounciness: 8,
+        }),
+        Animated.spring(animation3, {
+          toValue: 1,
+          useNativeDriver: true,
+          delay: 100,
+          speed: 20,
+          bounciness: 8,
+        }),
+        Animated.spring(rotation, {
+          toValue: 1,
+          useNativeDriver: true,
+          speed: 20,
+          bounciness: 6,
+        }),
+        Animated.timing(backdropOpacity, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      Animated.parallel([
+        Animated.timing(animation1, {
+          toValue: 0,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+        Animated.timing(animation2, {
+          toValue: 0,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+        Animated.timing(animation3, {
+          toValue: 0,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+        Animated.spring(rotation, {
+          toValue: 0,
+          useNativeDriver: true,
+          speed: 20,
+        }),
+        Animated.timing(backdropOpacity, {
+          toValue: 0,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [isOpen]);
+
+  const rotationInterpolate = rotation.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '45deg'],
+  });
+
+  const handleStoolPress = () => {
+    buttonPressFeedback();
+    setIsOpen(false);
     openModal();
+  };
+
+  const handleSymptomPress = () => {
+    buttonPressFeedback();
+    setIsOpen(false);
+    if (handlers.onSymptomPress) {
+      handlers.onSymptomPress();
+    }
+  };
+
+  const handleNotePress = () => {
+    buttonPressFeedback();
+    setIsOpen(false);
+    if (handlers.onNotePress) {
+      handlers.onNotePress();
+    }
+  };
+
+  const getAnimatedStyle = (animation, yOffset) => {
+    return {
+      opacity: animation,
+      transform: [
+        {
+          translateY: animation.interpolate({
+            inputRange: [0, 1],
+            outputRange: [0, yOffset],
+          }),
+        },
+        {
+          scale: animation.interpolate({
+            inputRange: [0, 1],
+            outputRange: [0, 1],
+          }),
+        },
+      ],
+    };
   };
 
   // Filtrer les routes pour exclure Paramètres de la tab bar
@@ -121,27 +246,121 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
 
   return (
     <View style={styles.container}>
+      {/* Backdrop */}
+      {isOpen && (
+        <Animated.View
+          style={[
+            styles.backdrop,
+            {
+              opacity: backdropOpacity.interpolate({
+                inputRange: [0, 1],
+                outputRange: [0, 0.5],
+              }),
+            },
+          ]}
+        >
+          <TouchableOpacity
+            style={StyleSheet.absoluteFill}
+            onPress={() => setIsOpen(false)}
+            activeOpacity={1}
+          />
+        </Animated.View>
+      )}
+
       <View style={styles.tabBar}>
         {/* Premier onglet (Accueil) */}
         {visibleRoutes[0] && renderTab(visibleRoutes[0], 0)}
-        
+
         {/* Deuxième onglet (Bilan) */}
         {visibleRoutes[1] && renderTab(visibleRoutes[1], 1)}
 
-        {/* Bouton central avec icône toilettes */}
-        <TouchableOpacity
-          style={styles.centralButton}
-          onPress={handleAddStool}
-          activeOpacity={0.8}
-          accessibilityRole="button"
-          accessibilityLabel="Ajouter une selle"
-        >
-          <MaterialCommunityIcons
-            name="toilet"
-            size={28}
-            color="#FFFFFF"
-          />
-        </TouchableOpacity>
+        {/* Conteneur pour le bouton central et les boutons secondaires */}
+        <View style={styles.centralButtonContainer}>
+          {/* Boutons secondaires */}
+          {isOpen && (
+            <>
+              {/* Note - en haut */}
+              <Animated.View
+                style={[
+                  styles.secondaryButtonWrapper,
+                  getAnimatedStyle(animation1, -170),
+                ]}
+              >
+                <TouchableOpacity
+                  style={[styles.secondaryButton, { backgroundColor: '#F59E0B' }]}
+                  onPress={handleNotePress}
+                  activeOpacity={0.8}
+                >
+                  <MaterialCommunityIcons name="note-text-outline" size={24} color="#FFFFFF" />
+                </TouchableOpacity>
+                <View style={styles.labelContainer}>
+                  <AppText variant="caption" style={styles.secondaryLabel}>
+                    Note
+                  </AppText>
+                </View>
+              </Animated.View>
+
+              {/* Symptôme - au milieu */}
+              <Animated.View
+                style={[
+                  styles.secondaryButtonWrapper,
+                  getAnimatedStyle(animation2, -110),
+                ]}
+              >
+                <TouchableOpacity
+                  style={[styles.secondaryButton, { backgroundColor: '#DC2626' }]}
+                  onPress={handleSymptomPress}
+                  activeOpacity={0.8}
+                >
+                  <MaterialCommunityIcons name="alert-circle-outline" size={24} color="#FFFFFF" />
+                </TouchableOpacity>
+                <View style={styles.labelContainer}>
+                  <AppText variant="caption" style={styles.secondaryLabel}>
+                    Symptôme
+                  </AppText>
+                </View>
+              </Animated.View>
+
+              {/* Selle - en bas (le plus proche) */}
+              <Animated.View
+                style={[
+                  styles.secondaryButtonWrapper,
+                  getAnimatedStyle(animation3, -50),
+                ]}
+              >
+                <TouchableOpacity
+                  style={[styles.secondaryButton, { backgroundColor: '#4C4DDC' }]}
+                  onPress={handleStoolPress}
+                  activeOpacity={0.8}
+                >
+                  <MaterialCommunityIcons name="toilet" size={24} color="#FFFFFF" />
+                </TouchableOpacity>
+                <View style={styles.labelContainer}>
+                  <AppText variant="caption" style={styles.secondaryLabel}>
+                    Selle
+                  </AppText>
+                </View>
+              </Animated.View>
+            </>
+          )}
+
+          {/* Bouton central avec icône + */}
+          <TouchableOpacity
+            style={styles.centralButton}
+            onPress={toggleOpen}
+            activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel={isOpen ? "Fermer le menu" : "Ouvrir le menu"}
+          >
+            <Animated.View style={{ transform: [{ rotate: rotationInterpolate }] }}>
+              <MaterialCommunityIcons
+                name="plus"
+                size={32}
+                color="#FFFFFF"
+              />
+            </Animated.View>
+          </TouchableOpacity>
+        </View>
 
         {/* Troisième onglet (Statistiques) */}
         {visibleRoutes[2] && renderTab(visibleRoutes[2], 2)}
@@ -160,6 +379,15 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
   },
+  backdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#000000',
+    zIndex: 1,
+  },
   tabBar: {
     flexDirection: 'row',
     height: Platform.OS === 'ios' ? 88 : 72,
@@ -171,6 +399,7 @@ const styles = StyleSheet.create({
     ...designSystem.shadows.xl,
     alignItems: 'center',
     justifyContent: 'space-around',
+    zIndex: 2,
   },
   tabItem: {
     flex: 1,
@@ -202,6 +431,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  centralButtonContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginHorizontal: 12,
+  },
   centralButton: {
     width: 60,
     height: 60,
@@ -209,9 +443,36 @@ const styles = StyleSheet.create({
     backgroundColor: designSystem.colors.primary[500],
     alignItems: 'center',
     justifyContent: 'center',
-    marginHorizontal: 12,
     marginBottom: 8,
     ...designSystem.shadows.lg,
     elevation: 8,
+    zIndex: 3,
+  },
+  secondaryButtonWrapper: {
+    position: 'absolute',
+    bottom: 68,
+    alignItems: 'center',
+    zIndex: 3,
+  },
+  secondaryButton: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...designSystem.shadows.md,
+    elevation: 6,
+  },
+  labelContainer: {
+    marginTop: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    borderRadius: 12,
+  },
+  secondaryLabel: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+    fontSize: 11,
   },
 });

@@ -6,6 +6,7 @@ import * as Notifications from 'expo-notifications';
 import theme from './src/theme/theme';
 import AppNavigator from './src/navigation/AppNavigator';
 import { StoolModalProvider } from './src/contexts/StoolModalContext';
+import { SpeedDialProvider } from './src/contexts/SpeedDialContext';
 
 // Import du script de mise à jour PWA
 import './src/utils/pwaUpdate';
@@ -79,7 +80,9 @@ export default function App() {
   return (
     <PaperProvider theme={theme}>
       <StoolModalProvider>
-        <AppNavigator ref={navigationRef} />
+        <SpeedDialProvider>
+          <AppNavigator ref={navigationRef} />
+        </SpeedDialProvider>
       </StoolModalProvider>
     </PaperProvider>
   );
