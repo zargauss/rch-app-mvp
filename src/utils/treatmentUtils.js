@@ -451,70 +451,170 @@ export const updateHistoricalSchema = (schemaId, updates) => {
 // ========================================
 
 /**
- * Enregistre une prise de médicament
+ * Trouve une prise pour un médicament à une date donnée
  * @param {string} medicationId - ID du médicament
- * @param {number} doses - Nombre de doses
+ * @param {string} dateStr - Date au format YYYY-MM-DD
+ * @returns {object|null} - L'entrée de prise ou null
+ */
+export const findIntakeByMedicationAndDate = (medicationId, dateStr) => {
+  const intakes = getIntakes();
+  return intakes.find(i => i.medicationId === medicationId && i.dateTaken === dateStr);
+};
+
+/**
+ * Enregistre une prise de médicament (incrémente si existe déjà)
+ * @param {string} medicationId - ID du médicament
+ * @param {number} doses - Nombre de doses à ajouter
  * @param {Date} dateTaken - Date de la prise
- * @param {boolean} isFree - Prise libre ou via schéma
  * @returns {string} - ID de la prise
  */
-export const recordIntake = (medicationId, doses, dateTaken, isFree = false) => {
+export const recordIntake = (medicationId, doses, dateTaken) => {
   const intakes = getIntakes();
   const schemas = getTherapeuticSchemas();
+  const dateStr = formatLocalDate(dateTaken);
 
   // Trouver le schéma actif pour ce médicament
   const activeSchema = schemas.find(s =>
     s.medicationId === medicationId && !s.endDate
   );
 
-  const newIntake = {
-    id: `intake-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-    medicationId,
-    schemaId: activeSchema ? activeSchema.id : null,
-    timestamp: dateTaken.getTime(),
-    isFree,
-    doses,
-    dateTaken: formatLocalDate(dateTaken) // Utiliser la date locale au lieu de UTC
-  };
+  // Chercher si une entrée existe déjà pour ce médicament ce jour
+  const existingIntake = findIntakeByMedicationAndDate(medicationId, dateStr);
 
-  intakes.push(newIntake);
+  if (existingIntake) {
+    // Incrémenter les doses
+    existingIntake.doses += doses;
+    existingIntake.timestamp = dateTaken.getTime(); // Mettre à jour timestamp
+
+    // Mettre à jour le schemaId si c'est une prise via schéma
+    if (activeSchema) {
+      existingIntake.schemaId = activeSchema.id;
+    }
+
+    saveIntakes(intakes);
+
+    // Mettre à jour l'observance
+    if (activeSchema) {
+      activeSchema.adherence = calculateAdherence(activeSchema);
+      saveTherapeuticSchemas(schemas);
+    }
+
+    return existingIntake.id;
+  } else {
+    // Créer nouvelle entrée
+    const newIntake = {
+      id: `intake-${medicationId}-${dateStr}`,
+      medicationId,
+      schemaId: activeSchema ? activeSchema.id : null,
+      timestamp: dateTaken.getTime(),
+      doses,
+      dateTaken: dateStr
+    };
+
+    intakes.push(newIntake);
+    saveIntakes(intakes);
+
+    // Mettre à jour l'observance du schéma actif
+    if (activeSchema) {
+      activeSchema.adherence = calculateAdherence(activeSchema);
+      saveTherapeuticSchemas(schemas);
+    }
+
+    return newIntake.id;
+  }
+};
+
+/**
+ * Décrémente une dose pour un médicament à une date donnée
+ * @param {string} medicationId - ID du médicament
+ * @param {string} dateStr - Date au format YYYY-MM-DD
+ * @returns {boolean} - true si décrémenté, false si pas d'entrée
+ */
+export const decrementIntake = (medicationId, dateStr) => {
+  const intakes = getIntakes();
+  const intake = findIntakeByMedicationAndDate(medicationId, dateStr);
+
+  if (!intake) return false;
+
+  intake.doses--;
+
+  if (intake.doses <= 0) {
+    // Supprimer l'entrée si doses = 0
+    const index = intakes.findIndex(i => i.id === intake.id);
+    if (index >= 0) {
+      intakes.splice(index, 1);
+    }
+  }
+
   saveIntakes(intakes);
 
-  // Mettre à jour l'observance du schéma actif
-  if (activeSchema) {
-    activeSchema.adherence = calculateAdherence(activeSchema);
+  // Recalculer l'observance
+  const schemas = getTherapeuticSchemas();
+  const relatedSchema = schemas.find(s => s.id === intake.schemaId);
+  if (relatedSchema) {
+    relatedSchema.adherence = calculateAdherence(relatedSchema);
     saveTherapeuticSchemas(schemas);
   }
 
-  return newIntake.id;
+  return true;
 };
 
 /**
  * Modifie une prise existante
  * @param {string} intakeId - ID de la prise
- * @param {object} updates - { medicationId?, doses?, dateTaken? }
+ * @param {object} updates - { doses?, dateTaken? }
  */
 export const updateIntake = (intakeId, updates) => {
   const intakes = getIntakes();
   const intake = intakes.find(i => i.id === intakeId);
 
-  if (intake) {
-    if (updates.medicationId) intake.medicationId = updates.medicationId;
-    if (updates.doses) intake.doses = updates.doses;
-    if (updates.dateTaken) {
-      intake.timestamp = updates.dateTaken.getTime();
-      intake.dateTaken = formatLocalDate(updates.dateTaken); // Utiliser la date locale
-    }
+  if (!intake) return;
 
-    saveIntakes(intakes);
+  const oldDateStr = intake.dateTaken;
+  const newDoses = updates.doses !== undefined ? updates.doses : intake.doses;
 
-    // Recalculer l'observance
-    const schemas = getTherapeuticSchemas();
-    const relatedSchema = schemas.find(s => s.id === intake.schemaId);
-    if (relatedSchema) {
-      relatedSchema.adherence = calculateAdherence(relatedSchema);
-      saveTherapeuticSchemas(schemas);
+  if (updates.dateTaken) {
+    const newDateStr = formatLocalDate(updates.dateTaken);
+
+    // Si changement de date
+    if (newDateStr !== oldDateStr) {
+      // Chercher si une entrée existe déjà à la nouvelle date
+      const existingAtNewDate = findIntakeByMedicationAndDate(intake.medicationId, newDateStr);
+
+      if (existingAtNewDate && existingAtNewDate.id !== intake.id) {
+        // Fusionner : ajouter les doses à l'entrée existante
+        existingAtNewDate.doses += newDoses;
+
+        // Supprimer l'ancienne entrée
+        const index = intakes.findIndex(i => i.id === intakeId);
+        if (index >= 0) {
+          intakes.splice(index, 1);
+        }
+      } else {
+        // Pas d'entrée existante, juste changer la date
+        intake.dateTaken = newDateStr;
+        intake.timestamp = updates.dateTaken.getTime();
+        intake.doses = newDoses;
+        // Mettre à jour l'ID pour refléter la nouvelle date
+        intake.id = `intake-${intake.medicationId}-${newDateStr}`;
+      }
+    } else {
+      // Juste changer les doses
+      intake.doses = newDoses;
     }
+  } else {
+    // Juste changer les doses
+    intake.doses = newDoses;
+  }
+
+  saveIntakes(intakes);
+
+  // Recalculer l'observance
+  const schemas = getTherapeuticSchemas();
+  const relatedSchema = schemas.find(s => s.id === intake.schemaId);
+  if (relatedSchema) {
+    relatedSchema.adherence = calculateAdherence(relatedSchema);
+    saveTherapeuticSchemas(schemas);
   }
 };
 

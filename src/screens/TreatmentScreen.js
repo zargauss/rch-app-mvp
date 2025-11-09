@@ -21,6 +21,7 @@ import {
   getMedications,
   findMedicationById,
   recordIntake,
+  decrementIntake,
   updateIntake,
   deleteIntake,
   stopSchema,
@@ -121,19 +122,20 @@ const TreatmentScreen = () => {
 
   // Handle daily intake checkbox
   const handleCheckDaily = (schema, medication) => {
-    recordIntake(schema.medicationId, 1, new Date(), false);
+    recordIntake(schema.medicationId, 1, new Date());
     buttonPressFeedback();
     refresh();
   };
 
   // Handle daily intake uncheck
   const handleUncheckDaily = (schema, medication) => {
-    const lastIntake = findLastTodayIntake(schema.id);
-    if (lastIntake) {
-      deleteIntake(lastIntake.id);
-      buttonPressFeedback();
-      refresh();
-    }
+    const today = new Date();
+    const todayStr = today.getFullYear() + '-' +
+                     String(today.getMonth() + 1).padStart(2, '0') + '-' +
+                     String(today.getDate()).padStart(2, '0');
+    decrementIntake(schema.medicationId, todayStr);
+    buttonPressFeedback();
+    refresh();
   };
 
   // Handle interval intake checkbox
@@ -149,7 +151,7 @@ const TreatmentScreen = () => {
   const handleUncheckInterval = (schema, medication) => {
     const lastIntake = findLastIntervalIntake(schema.id);
     if (lastIntake) {
-      deleteIntake(lastIntake.id);
+      decrementIntake(schema.medicationId, lastIntake.dateTaken);
       buttonPressFeedback();
       refresh();
     }
@@ -167,7 +169,7 @@ const TreatmentScreen = () => {
     const [day, month, year] = intervalDateInput.split('/');
     const dateTaken = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
 
-    recordIntake(pendingIntervalIntake.schema.medicationId, 1, dateTaken, false);
+    recordIntake(pendingIntervalIntake.schema.medicationId, 1, dateTaken);
     buttonPressFeedback();
     setIntervalConfirmVisible(false);
     setPendingIntervalIntake(null);
@@ -334,81 +336,56 @@ const TreatmentScreen = () => {
 
     return (
       <>
-        {dates.map(dateKey => {
-          // Group intakes by medication for this date
-          const intakesByMed = {};
-          groupedIntakes[dateKey].forEach(intake => {
-            if (!intakesByMed[intake.medicationId]) {
-              intakesByMed[intake.medicationId] = {
-                medicationId: intake.medicationId,
-                medicationName: intake.medicationName,
-                totalDoses: 0,
-                intakes: [],
-                hasFreeIntake: false
-              };
-            }
-            intakesByMed[intake.medicationId].totalDoses += intake.doses;
-            intakesByMed[intake.medicationId].intakes.push(intake);
-            if (intake.isFreeIntake) {
-              intakesByMed[intake.medicationId].hasFreeIntake = true;
-            }
-          });
-
-          return (
-            <View key={dateKey} style={styles.historyGroup}>
-              <AppText variant="h4" style={styles.historyDate}>
-                {dateKey}
-              </AppText>
-              {Object.values(intakesByMed).map(medGroup => (
-                <AppCard key={medGroup.medicationId} style={styles.historyCard}>
-                  <View style={styles.historyCardHeader}>
-                    <View style={styles.historyCardLeft}>
+        {dates.map(dateKey => (
+          <View key={dateKey} style={styles.historyGroup}>
+            <AppText variant="h4" style={styles.historyDate}>
+              {dateKey}
+            </AppText>
+            {groupedIntakes[dateKey].map(intake => (
+              <AppCard key={intake.id} style={styles.historyCard}>
+                <View style={styles.historyCardHeader}>
+                  <View style={styles.historyCardLeft}>
+                    <MaterialCommunityIcons
+                      name="pill"
+                      size={20}
+                      color={designSystem.colors.primary[500]}
+                    />
+                    <View style={styles.historyCardText}>
+                      <AppText variant="bodyLarge" style={styles.historyMedName}>
+                        {intake.medicationName}
+                      </AppText>
+                      <AppText variant="labelSmall" style={styles.historyDoses}>
+                        {intake.doses} dose{intake.doses > 1 ? 's' : ''}
+                      </AppText>
+                    </View>
+                  </View>
+                  <View style={styles.historyActions}>
+                    <TouchableOpacity
+                      onPress={() => handleEditIntake(intake)}
+                      style={styles.historyActionButton}
+                    >
                       <MaterialCommunityIcons
-                        name="pill"
+                        name="pencil"
                         size={20}
                         color={designSystem.colors.primary[500]}
                       />
-                      <View style={styles.historyCardText}>
-                        <AppText variant="bodyLarge" style={styles.historyMedName}>
-                          {medGroup.medicationName}
-                        </AppText>
-                        <AppText variant="labelSmall" style={styles.historyDoses}>
-                          {medGroup.totalDoses} dose{medGroup.totalDoses > 1 ? 's' : ''}
-                          {medGroup.hasFreeIntake && ' • Prise libre'}
-                        </AppText>
-                      </View>
-                    </View>
-                    <View style={styles.historyActions}>
-                      <TouchableOpacity
-                        onPress={() => handleEditIntake({
-                          ...medGroup.intakes[0],
-                          doses: medGroup.totalDoses
-                        })}
-                        style={styles.historyActionButton}
-                      >
-                        <MaterialCommunityIcons
-                          name="pencil"
-                          size={20}
-                          color={designSystem.colors.primary[500]}
-                        />
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        onPress={() => handleDeleteIntake(medGroup.intakes[0])}
-                        style={styles.historyActionButton}
-                      >
-                        <MaterialCommunityIcons
-                          name="delete"
-                          size={20}
-                          color={designSystem.colors.health.danger.main}
-                        />
-                      </TouchableOpacity>
-                    </View>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => handleDeleteIntake(intake)}
+                      style={styles.historyActionButton}
+                    >
+                      <MaterialCommunityIcons
+                        name="delete"
+                        size={20}
+                        color={designSystem.colors.health.danger.main}
+                      />
+                    </TouchableOpacity>
                   </View>
-                </AppCard>
-              ))}
-            </View>
-          );
-        })}
+                </View>
+              </AppCard>
+            ))}
+          </View>
+        ))}
       </>
     );
   };

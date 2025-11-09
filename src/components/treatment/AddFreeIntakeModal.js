@@ -85,7 +85,7 @@ const AddFreeIntakeModal = ({ visible, onDismiss, onSuccess }) => {
     const dateTaken = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
 
     // Enregistrer la prise
-    recordIntake(medicationId, dosesNum, dateTaken, true);
+    recordIntake(medicationId, dosesNum, dateTaken);
 
     buttonPressFeedback();
     onSuccess?.();
