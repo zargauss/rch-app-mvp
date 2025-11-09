@@ -8,7 +8,7 @@ import AppText from '../ui/AppText';
 import PrimaryButton from '../ui/PrimaryButton';
 import DateTimeInput, { isValidDate } from '../ui/DateTimeInput';
 import designSystem from '../../theme/designSystem';
-import { PREDEFINED_SYMPTOMS, INTENSITY_LABELS } from '../../utils/symptomsUtils';
+import { getAllSymptomSuggestions, INTENSITY_LABELS } from '../../utils/symptomsUtils';
 
 /**
  * Modale pour ajouter/éditer un symptôme
@@ -56,7 +56,9 @@ const SymptomModal = ({ visible, onDismiss, onSave, initialData = null }) => {
     setShowSuggestions(false);
   };
 
-  const filteredSuggestions = PREDEFINED_SYMPTOMS.filter(s =>
+  // Utiliser les suggestions incluant les symptômes personnalisés déjà utilisés
+  const allSuggestions = getAllSymptomSuggestions();
+  const filteredSuggestions = allSuggestions.filter(s =>
     s.toLowerCase().includes(symptomType.toLowerCase())
   );
 
@@ -131,8 +133,11 @@ const SymptomModal = ({ visible, onDismiss, onSave, initialData = null }) => {
                 {errors.symptomType}
               </HelperText>
 
-              {/* Suggestions */}
-              {showSuggestions && filteredSuggestions.length > 0 && (
+            </View>
+
+            {/* Suggestions - Position absolue pour ne pas modifier la taille de la modale */}
+            {showSuggestions && filteredSuggestions.length > 0 && (
+              <View style={styles.suggestionsOverlay}>
                 <View style={styles.suggestionsContainer}>
                   {filteredSuggestions.slice(0, 5).map((suggestion, index) => (
                     <TouchableOpacity
@@ -146,8 +151,8 @@ const SymptomModal = ({ visible, onDismiss, onSave, initialData = null }) => {
                     </TouchableOpacity>
                   ))}
                 </View>
-              )}
-            </View>
+              </View>
+            )}
 
             {/* Intensité */}
             <View style={styles.section}>
@@ -291,13 +296,21 @@ const styles = StyleSheet.create({
     backgroundColor: designSystem.colors.background.secondary,
     minHeight: 80,
   },
+  suggestionsOverlay: {
+    position: 'absolute',
+    top: 180, // Position juste en dessous du champ de symptôme
+    left: designSystem.spacing[5],
+    right: designSystem.spacing[5],
+    zIndex: 1000,
+    ...designSystem.shadows.lg,
+  },
   suggestionsContainer: {
-    marginTop: designSystem.spacing[2],
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#E5E5F4',
     backgroundColor: '#FFFFFF',
     overflow: 'hidden',
+    maxHeight: 200,
   },
   suggestionItem: {
     padding: designSystem.spacing[3],

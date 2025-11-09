@@ -288,7 +288,7 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
           {/* Boutons secondaires */}
           {isOpen && (
             <>
-              {/* Note - en haut à gauche (-45°) */}
+              {/* Selle - en haut à gauche (-45°) */}
               <Animated.View
                 style={[
                   styles.secondaryButtonWrapper,
@@ -296,15 +296,15 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
                 ]}
               >
                 <TouchableOpacity
-                  style={[styles.secondaryButton, { backgroundColor: '#F59E0B' }]}
-                  onPress={handleNotePress}
+                  style={[styles.secondaryButton, { backgroundColor: '#4C4DDC' }]}
+                  onPress={handleStoolPress}
                   activeOpacity={0.8}
                 >
-                  <MaterialCommunityIcons name="note-text-outline" size={24} color="#FFFFFF" />
+                  <MaterialCommunityIcons name="toilet" size={24} color="#FFFFFF" />
                 </TouchableOpacity>
                 <View style={styles.labelContainer}>
                   <AppText variant="caption" style={styles.secondaryLabel}>
-                    Note
+                    Selle
                   </AppText>
                 </View>
               </Animated.View>
@@ -330,7 +330,7 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
                 </View>
               </Animated.View>
 
-              {/* Selle - en haut à droite (45°) */}
+              {/* Note - en haut à droite (45°) */}
               <Animated.View
                 style={[
                   styles.secondaryButtonWrapper,
@@ -338,15 +338,15 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
                 ]}
               >
                 <TouchableOpacity
-                  style={[styles.secondaryButton, { backgroundColor: '#4C4DDC' }]}
-                  onPress={handleStoolPress}
+                  style={[styles.secondaryButton, { backgroundColor: '#F59E0B' }]}
+                  onPress={handleNotePress}
                   activeOpacity={0.8}
                 >
-                  <MaterialCommunityIcons name="toilet" size={24} color="#FFFFFF" />
+                  <MaterialCommunityIcons name="note-text-outline" size={24} color="#FFFFFF" />
                 </TouchableOpacity>
                 <View style={styles.labelContainer}>
                   <AppText variant="caption" style={styles.secondaryLabel}>
-                    Selle
+                    Note
                   </AppText>
                 </View>
               </Animated.View>

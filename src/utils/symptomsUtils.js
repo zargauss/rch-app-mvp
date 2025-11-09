@@ -194,3 +194,21 @@ export const groupSymptomsByDate = (symptoms) => {
 
   return grouped;
 };
+
+/**
+ * Récupère tous les symptômes pour l'autocomplete (prédéfinis + personnalisés déjà utilisés)
+ * @returns {Array} - Liste unique de symptômes triée alphabétiquement
+ */
+export const getAllSymptomSuggestions = () => {
+  const symptoms = getSymptoms();
+  const customSymptoms = symptoms
+    .filter(s => s.customType)
+    .map(s => s.customType);
+
+  // Créer un Set pour avoir des valeurs uniques
+  const uniqueCustomSymptoms = [...new Set(customSymptoms)];
+
+  // Combiner prédéfinis et personnalisés, puis trier
+  const allSymptoms = [...PREDEFINED_SYMPTOMS, ...uniqueCustomSymptoms];
+  return allSymptoms.sort((a, b) => a.localeCompare(b, 'fr'));
+};

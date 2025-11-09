@@ -530,11 +530,27 @@ export default function HomeScreen({ route }) {
     const isYesterday = date.toDateString() === yesterday.toDateString();
 
     const time = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
-    
+
     if (isToday) return `Aujourd'hui ${time}`;
     if (isYesterday) return `Hier ${time}`;
-    
+
     return `${date.getDate()}/${date.getMonth() + 1} ${time}`;
+  };
+
+  // Format date sans heure (pour symptômes et notes)
+  const formatCompactDateOnly = (timestamp) => {
+    const date = new Date(timestamp);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    const isToday = date.toDateString() === today.toDateString();
+    const isYesterday = date.toDateString() === yesterday.toDateString();
+
+    if (isToday) return `Aujourd'hui`;
+    if (isYesterday) return `Hier`;
+
+    return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
   };
 
   const getBristolColor = (bristol) => {
@@ -1262,7 +1278,7 @@ export default function HomeScreen({ route }) {
                             </AppText>
                             <View style={styles.symptomMeta}>
                               <AppText variant="labelSmall" style={styles.symptomDate}>
-                                {formatCompactDate(item.timestamp)}
+                                {formatCompactDateOnly(item.timestamp)}
                               </AppText>
                               <View style={styles.symptomIntensity}>
                                 <AppText variant="labelSmall" style={styles.symptomIntensityText}>
@@ -1312,7 +1328,7 @@ export default function HomeScreen({ route }) {
                             </View>
                             <View style={styles.noteMeta}>
                               <AppText variant="labelSmall" style={styles.noteDate}>
-                                {formatCompactDate(item.timestamp)}
+                                {formatCompactDateOnly(item.timestamp)}
                               </AppText>
                               {item.category && (
                                 <View style={styles.noteCategory}>

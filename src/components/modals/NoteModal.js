@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
-import { Portal, Modal, TextInput, Switch, HelperText } from 'react-native-paper';
+import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { Portal, Modal, TextInput, Switch, HelperText, Menu } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import AppCard from '../ui/AppCard';
 import AppText from '../ui/AppText';
 import PrimaryButton from '../ui/PrimaryButton';
 import DateTimeInput, { isValidDate } from '../ui/DateTimeInput';
-import SegmentedControl from '../ui/SegmentedControl';
 import designSystem from '../../theme/designSystem';
-import { NOTE_CATEGORIES, validateNoteContent } from '../../utils/notesUtils';
+import { NOTE_CATEGORIES, validateNoteContent, getCategoryLabel } from '../../utils/notesUtils';
 
 /**
  * Modale pour ajouter/éditer une note libre
@@ -19,6 +18,7 @@ const NoteModal = ({ visible, onDismiss, onSave, initialData = null }) => {
   const [sharedWithDoctor, setSharedWithDoctor] = useState(false);
   const [dateInput, setDateInput] = useState('');
   const [errors, setErrors] = useState({ content: '', date: '' });
+  const [menuVisible, setMenuVisible] = useState(false);
 
   // Initialiser avec les données existantes (mode édition)
   useEffect(() => {
@@ -87,11 +87,10 @@ const NoteModal = ({ visible, onDismiss, onSave, initialData = null }) => {
     });
   };
 
-  // Options pour le SegmentedControl des catégories
-  const categoryOptions = [
-    { value: null, label: 'Aucune' },
-    ...NOTE_CATEGORIES,
-  ];
+  const getCategoryDisplayText = () => {
+    if (!category) return 'Aucune';
+    return getCategoryLabel(category);
+  };
 
   return (
     <Portal>
@@ -134,11 +133,43 @@ const NoteModal = ({ visible, onDismiss, onSave, initialData = null }) => {
             {/* Catégorie */}
             <View style={styles.section}>
               <AppText style={styles.fieldLabel}>Catégorie (optionnel)</AppText>
-              <SegmentedControl
-                options={categoryOptions}
-                selectedValue={category}
-                onValueChange={setCategory}
-              />
+              <Menu
+                visible={menuVisible}
+                onDismiss={() => setMenuVisible(false)}
+                anchor={
+                  <TouchableOpacity
+                    style={styles.dropdownButton}
+                    onPress={() => setMenuVisible(true)}
+                  >
+                    <AppText variant="bodyMedium" style={styles.dropdownText}>
+                      {getCategoryDisplayText()}
+                    </AppText>
+                    <MaterialCommunityIcons
+                      name={menuVisible ? "chevron-up" : "chevron-down"}
+                      size={24}
+                      color={designSystem.colors.text.secondary}
+                    />
+                  </TouchableOpacity>
+                }
+              >
+                <Menu.Item
+                  onPress={() => {
+                    setCategory(null);
+                    setMenuVisible(false);
+                  }}
+                  title="Aucune"
+                />
+                {NOTE_CATEGORIES.map((cat) => (
+                  <Menu.Item
+                    key={cat.value}
+                    onPress={() => {
+                      setCategory(cat.value);
+                      setMenuVisible(false);
+                    }}
+                    title={cat.label}
+                  />
+                ))}
+              </Menu>
             </View>
 
             {/* Date */}
@@ -289,6 +320,20 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     width: '100%',
+  },
+  dropdownButton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: designSystem.colors.background.secondary,
+    borderRadius: designSystem.borderRadius.md,
+    padding: designSystem.spacing[4],
+    borderWidth: 1,
+    borderColor: designSystem.colors.border.light,
+  },
+  dropdownText: {
+    color: designSystem.colors.text.primary,
+    flex: 1,
   },
 });
 
