@@ -1671,6 +1671,8 @@ const styles = StyleSheet.create({
     marginTop: designSystem.spacing[4],
     marginBottom: designSystem.spacing[6],
     overflow: 'visible', // Pour permettre au tooltip de dépasser
+    zIndex: 100, // Pour que le tooltip passe au-dessus des autres cartes
+    position: 'relative', // Nécessaire pour que zIndex fonctionne
   },
   sectionHeader: {
     flexDirection: 'row',
