@@ -7,11 +7,13 @@ import designSystem from '../../theme/designSystem';
 import { useStoolModal } from '../../contexts/StoolModalContext';
 import { buttonPressFeedback } from '../../utils/haptics';
 import usePendingQuestionnaires from '../../hooks/usePendingQuestionnaires';
+import usePendingTreatments from '../../hooks/usePendingTreatments';
 
 export default function CustomTabBar({ state, descriptors, navigation }) {
   const { openModal } = useStoolModal();
   const { colors } = designSystem;
-  const pendingCount = usePendingQuestionnaires();
+  const pendingQuestionnairesCount = usePendingQuestionnaires();
+  const pendingTreatmentsCount = usePendingTreatments();
 
   const handleAddStool = () => {
     buttonPressFeedback();
@@ -67,9 +69,9 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
       iconName = 'chart-line';
       label = 'Stats';
     }
-    if (route.name === 'Export') {
-      iconName = 'file-pdf-box';
-      label = 'Export';
+    if (route.name === 'Traitement') {
+      iconName = 'pill';
+      label = 'Traitement';
     }
 
     return (
@@ -96,7 +98,11 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
             />
             {/* Badge pour l'onglet Bilan */}
             {route.name === 'Bilan' && (
-              <NotificationBadge count={pendingCount} size="medium" />
+              <NotificationBadge count={pendingQuestionnairesCount} size="medium" />
+            )}
+            {/* Badge pour l'onglet Traitement */}
+            {route.name === 'Traitement' && (
+              <NotificationBadge count={pendingTreatmentsCount} size="medium" />
             )}
           </View>
           <AppText
@@ -140,7 +146,7 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
         {/* Troisième onglet (Statistiques) */}
         {visibleRoutes[2] && renderTab(visibleRoutes[2], 2)}
 
-        {/* Quatrième onglet (Export) */}
+        {/* Quatrième onglet (Traitement) */}
         {visibleRoutes[3] && renderTab(visibleRoutes[3], 3)}
       </View>
     </View>

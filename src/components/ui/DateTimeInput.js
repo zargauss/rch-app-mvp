@@ -160,13 +160,13 @@ const DateTimeInput = ({
 
   return (
     <View style={[styles.mainContainer, containerStyle]}>
-      <View style={styles.inputsRow}>
+      <View style={[styles.inputsRow, !timeValue && !onTimeChange && styles.inputsRowSingle]}>
         <View style={styles.inputWrapper}>
           <TextInput
             label={dateLabel}
             value={dateValue}
             onChangeText={handleDateChange}
-            style={[styles.input, styles.dateInput]}
+            style={[styles.input, timeValue || onTimeChange ? styles.dateInput : styles.dateInputFull]}
             mode="outlined"
             outlineStyle={styles.outline}
             keyboardType="numeric"
@@ -177,23 +177,25 @@ const DateTimeInput = ({
             {dateValidation.message}
           </HelperText>
         </View>
-        
-        <View style={styles.inputWrapper}>
-          <TextInput
-            label={timeLabel}
-            value={timeValue}
-            onChangeText={handleTimeChange}
-            style={[styles.input, styles.timeInput]}
-            mode="outlined"
-            outlineStyle={styles.outline}
-            keyboardType="numeric"
-            placeholder="HH:MM"
-            error={!timeValidation.valid}
-          />
-          <HelperText type="error" visible={!timeValidation.valid} style={styles.helperText}>
-            {timeValidation.message}
-          </HelperText>
-        </View>
+
+        {(timeValue !== undefined || onTimeChange) && (
+          <View style={styles.inputWrapper}>
+            <TextInput
+              label={timeLabel}
+              value={timeValue}
+              onChangeText={handleTimeChange}
+              style={[styles.input, styles.timeInput]}
+              mode="outlined"
+              outlineStyle={styles.outline}
+              keyboardType="numeric"
+              placeholder="HH:MM"
+              error={!timeValidation.valid}
+            />
+            <HelperText type="error" visible={!timeValidation.valid} style={styles.helperText}>
+              {timeValidation.message}
+            </HelperText>
+          </View>
+        )}
       </View>
     </View>
   );
@@ -207,6 +209,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 16,
   },
+  inputsRowSingle: {
+    flexDirection: 'column',
+  },
   inputWrapper: {
     flex: 1,
   },
@@ -215,6 +220,9 @@ const styles = StyleSheet.create({
   },
   dateInput: {
     marginRight: 8,
+  },
+  dateInputFull: {
+    marginRight: 0,
   },
   timeInput: {
     marginLeft: 8,
