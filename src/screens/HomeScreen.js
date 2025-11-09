@@ -808,23 +808,65 @@ export default function HomeScreen({ route }) {
               Aujourd'hui
             </AppText>
           </View>
-          
-          <View style={styles.statsContainer}>
-            <StatCard
-              title="Selles aujourd'hui"
-              value={dailyCount.toString()}
-              subtitle="Enregistrements"
-              icon="toilet"
-              color="primary"
-            />
 
-            <StatCard
-              title="Score du jour"
-              value={todayProvisionalScore !== null ? todayProvisionalScore : 'N/A'}
-              subtitle="Provisoire"
-              icon="chart-bar"
-              color={todayProvisionalScore !== null ? (todayProvisionalScore < 5 ? 'success' : todayProvisionalScore <= 10 ? 'warning' : 'error') : 'info'}
-            />
+          <View style={styles.todayStatsRow}>
+            {/* Selles */}
+            <View style={[styles.todayStat, styles.todayStatLeft]}>
+              <View style={styles.todayStatIcon}>
+                <MaterialCommunityIcons name="toilet" size={32} color="#4C4DDC" />
+              </View>
+              <View style={styles.todayStatContent}>
+                <AppText variant="labelMedium" style={styles.todayStatLabel}>
+                  Selles
+                </AppText>
+                <AppText variant="displayMedium" style={styles.todayStatValue}>
+                  {dailyCount}
+                </AppText>
+              </View>
+            </View>
+
+            {/* Score */}
+            <View style={[styles.todayStat, styles.todayStatRight]}>
+              <View style={styles.todayStatIcon}>
+                <MaterialCommunityIcons
+                  name="chart-bar"
+                  size={32}
+                  color={todayProvisionalScore !== null ? (todayProvisionalScore < 5 ? '#16A34A' : todayProvisionalScore <= 10 ? '#F59E0B' : '#DC2626') : '#A3A3A3'}
+                />
+              </View>
+              <View style={styles.todayStatContent}>
+                <View style={styles.todayScoreHeader}>
+                  <AppText variant="labelMedium" style={styles.todayStatLabel}>
+                    Score
+                  </AppText>
+                  <TouchableOpacity
+                    onPress={() => {
+                      if (Platform.OS === 'web') {
+                        alert('Le score est calculé selon l\'échelle de Lichtiger :\n\n• Fréquence des selles (0-3 pts)\n• Selles nocturnes (0-1 pt)\n• Présence de sang (0-3 pts)\n• Douleur abdominale (0-2 pts)\n• État général (0-2 pts)\n• Signes physiques (0-2 pts)\n\nTotal : 0-13 points\n0-4 : Rémission\n5-10 : Activité modérée\n> 10 : Activité sévère');
+                      } else {
+                        Alert.alert(
+                          'Calcul du score',
+                          'Le score est calculé selon l\'échelle de Lichtiger :\n\n• Fréquence des selles (0-3 pts)\n• Selles nocturnes (0-1 pt)\n• Présence de sang (0-3 pts)\n• Douleur abdominale (0-2 pts)\n• État général (0-2 pts)\n• Signes physiques (0-2 pts)\n\nTotal : 0-13 points\n0-4 : Rémission\n5-10 : Activité modérée\n> 10 : Activité sévère'
+                        );
+                      }
+                    }}
+                    style={styles.infoButton}
+                  >
+                    <MaterialCommunityIcons name="information-outline" size={16} color="#64748B" />
+                  </TouchableOpacity>
+                </View>
+                <AppText variant="displayMedium" style={[
+                  styles.todayStatValue,
+                  todayProvisionalScore !== null && (
+                    todayProvisionalScore < 5 ? styles.scoreGood :
+                    todayProvisionalScore <= 10 ? styles.scoreWarning :
+                    styles.scoreError
+                  )
+                ]}>
+                  {todayProvisionalScore !== null ? todayProvisionalScore : 'N/A'}
+                </AppText>
+              </View>
+            </View>
           </View>
         </AppCard>
 
@@ -1575,6 +1617,72 @@ const styles = StyleSheet.create({
   sectionTitle: {
     color: designSystem.colors.text.primary,
     fontWeight: '700',
+  },
+  todayStatsRow: {
+    flexDirection: 'row',
+    gap: designSystem.spacing[3],
+  },
+  todayStat: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: designSystem.borderRadius.lg,
+    padding: designSystem.spacing[4],
+    borderWidth: 2,
+    borderColor: '#E5E5F4',
+    gap: designSystem.spacing[3],
+  },
+  todayStatLeft: {
+    // Style spécifique si besoin
+  },
+  todayStatRight: {
+    // Style spécifique si besoin
+  },
+  todayStatIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: designSystem.borderRadius.md,
+    backgroundColor: '#EDEDFC',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  todayStatContent: {
+    flex: 1,
+  },
+  todayStatLabel: {
+    color: designSystem.colors.text.secondary,
+    fontWeight: '600',
+    marginBottom: 4,
+    textTransform: 'uppercase',
+    fontSize: 11,
+    letterSpacing: 0.5,
+  },
+  todayStatValue: {
+    color: designSystem.colors.text.primary,
+    fontWeight: '700',
+    fontSize: 32,
+    lineHeight: 38,
+  },
+  todayScoreHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  infoButton: {
+    width: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  scoreGood: {
+    color: '#16A34A',
+  },
+  scoreWarning: {
+    color: '#F59E0B',
+  },
+  scoreError: {
+    color: '#DC2626',
   },
   emptyTodayState: {
     paddingVertical: designSystem.spacing[6],
