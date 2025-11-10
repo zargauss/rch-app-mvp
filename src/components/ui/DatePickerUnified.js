@@ -1,10 +1,15 @@
 import React, { useState } from 'react';
 import { Platform, View, StyleSheet, TouchableOpacity } from 'react-native';
-import DatePicker from 'react-native-date-picker';
 import DateTimeInput from './DateTimeInput';
 import AppText from './AppText';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import designSystem from '../../theme/designSystem';
+
+// Import conditionnel : react-native-date-picker uniquement sur mobile
+let DatePicker = null;
+if (Platform.OS !== 'web') {
+  DatePicker = require('react-native-date-picker').default;
+}
 
 /**
  * DatePickerUnified - Wrapper cross-platform pour date picker
@@ -102,25 +107,27 @@ const DatePickerUnified = ({
         />
       </TouchableOpacity>
 
-      <DatePicker
-        modal
-        open={open}
-        date={date || new Date()}
-        mode={mode}
-        locale="fr"
-        title={label || 'Sélectionner'}
-        confirmText="Confirmer"
-        cancelText="Annuler"
-        minimumDate={minimumDate}
-        maximumDate={maximumDate}
-        onConfirm={(selectedDate) => {
-          setOpen(false);
-          onDateChange(selectedDate);
-        }}
-        onCancel={() => {
-          setOpen(false);
-        }}
-      />
+      {DatePicker && (
+        <DatePicker
+          modal
+          open={open}
+          date={date || new Date()}
+          mode={mode}
+          locale="fr"
+          title={label || 'Sélectionner'}
+          confirmText="Confirmer"
+          cancelText="Annuler"
+          minimumDate={minimumDate}
+          maximumDate={maximumDate}
+          onConfirm={(selectedDate) => {
+            setOpen(false);
+            onDateChange(selectedDate);
+          }}
+          onCancel={() => {
+            setOpen(false);
+          }}
+        />
+      )}
     </View>
   );
 };

@@ -1,23 +1,10 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Calendar, LocaleConfig } from 'react-native-calendars';
 import AppCard from '../ui/AppCard';
 import AppText from '../ui/AppText';
 import SegmentedControl from '../ui/SegmentedControl';
 import designSystem from '../../theme/designSystem';
-
-// Configuration locale française
-LocaleConfig.locales['fr'] = {
-  monthNames: [
-    'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-    'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
-  ],
-  monthNamesShort: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'],
-  dayNames: ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'],
-  dayNamesShort: ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'],
-  today: "Aujourd'hui"
-};
-LocaleConfig.defaultLocale = 'fr';
 
 /**
  * Section Calendrier - Affiche un calendrier avec scores ou nombre de selles
@@ -29,6 +16,21 @@ const CalendarSection = ({
   scores,
   onDayPress,
 }) => {
+  // Configuration locale française pour le calendrier
+  useEffect(() => {
+    LocaleConfig.locales['fr'] = {
+      monthNames: [
+        'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+        'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
+      ],
+      monthNamesShort: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'],
+      dayNames: ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'],
+      dayNamesShort: ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'],
+      today: "Aujourd'hui"
+    };
+    LocaleConfig.defaultLocale = 'fr';
+  }, []);
+
   // Générer les données du calendrier selon le mode
   const markedDates = useMemo(() => {
     const marks = {};
