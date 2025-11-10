@@ -45,12 +45,6 @@ import {
   getCategoryLabel,
 } from '../utils/notesUtils';
 
-// Hooks personnalisés
-import { useHistoryData } from '../hooks/useHistoryData';
-import { useStoolManagement } from '../hooks/useStoolManagement';
-import { useSymptomManagement } from '../hooks/useSymptomManagement';
-import { useNoteManagement } from '../hooks/useNoteManagement';
-
 export default function HomeScreen({ route }) {
   const navigation = useNavigation();
   const theme = useTheme();
@@ -61,25 +55,36 @@ export default function HomeScreen({ route }) {
   const [dailyCount, setDailyCount] = useState(0);
   const [surveyCompleted, setSurveyCompleted] = useState(false);
   const [todayProvisionalScore, setTodayProvisionalScore] = useState(null);
-
+  
+  // États pour l'historique (depuis HistoryScreen)
+  const [stools, setStools] = useState([]);
+  const [scores, setScores] = useState([]);
+  const [treatments, setTreatments] = useState([]);
+  const [ibdiskHistory, setIbdiskHistory] = useState([]);
   const [currentIbdiskIndex, setCurrentIbdiskIndex] = useState(0);
   const [calendarMode, setCalendarMode] = useState('score');
   const [calendarMonthOffset, setCalendarMonthOffset] = useState(0);
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [editingStool, setEditingStool] = useState(null);
+  const [editBristol, setEditBristol] = useState(4);
+  const [editHasBlood, setEditHasBlood] = useState(false);
+  const [editDateInput, setEditDateInput] = useState('');
+  const [editTimeInput, setEditTimeInput] = useState('');
   const [dateInput, setDateInput] = useState('');
   const [timeInput, setTimeInput] = useState('');
-
+  
   // États pour la modale de traitement
   const [treatmentModalVisible, setTreatmentModalVisible] = useState(false);
   const [treatmentName, setTreatmentName] = useState('');
   const [treatmentDateInput, setTreatmentDateInput] = useState('');
   const [treatmentTimeInput, setTreatmentTimeInput] = useState('');
   const [treatmentSuggestions, setTreatmentSuggestions] = useState([]);
-
+  
   // État pour le Toast
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState('success');
-
+  
   // États pour IBDisk
   const [ibdiskAvailable, setIbdiskAvailable] = useState(true);
   const [ibdiskDaysRemaining, setIbdiskDaysRemaining] = useState(0);
@@ -93,38 +98,14 @@ export default function HomeScreen({ route }) {
   const tooltipOpacity = useRef(new Animated.Value(0)).current;
   const tooltipScale = useRef(new Animated.Value(0.96)).current;
 
+  // États pour symptômes et notes
+  const [symptoms, setSymptoms] = useState([]);
+  const [notes, setNotes] = useState([]);
+  const [symptomModalVisible, setSymptomModalVisible] = useState(false);
+  const [noteModalVisible, setNoteModalVisible] = useState(false);
+  const [editingSymptom, setEditingSymptom] = useState(null);
+  const [editingNote, setEditingNote] = useState(null);
   const [historyFilter, setHistoryFilter] = useState('all'); // 'all', 'stools', 'symptoms', 'notes'
-
-  // Hook pour gérer les données d'historique
-  const historyData = useHistoryData();
-  const { stools, scores, treatments, ibdiskHistory, symptoms, notes, loadHistoryData } = historyData;
-
-  // Toast helper
-  const showToast = (message, type = 'success') => {
-    setToastMessage(message);
-    setToastType(type);
-    setToastVisible(true);
-  };
-
-  // Hook pour gérer les selles
-  const stoolManagement = useStoolManagement({
-    onDataChange: () => {
-      loadHistoryData();
-      setDailyCount(computeTodayCount());
-    }
-  });
-
-  // Hook pour gérer les symptômes
-  const symptomManagement = useSymptomManagement({
-    onDataChange: loadHistoryData,
-    showToast
-  });
-
-  // Hook pour gérer les notes
-  const noteManagement = useNoteManagement({
-    onDataChange: loadHistoryData,
-    showToast
-  });
 
   // Animation du tooltip
   useEffect(() => {
@@ -332,8 +313,8 @@ export default function HomeScreen({ route }) {
   useEffect(() => {
     registerHandlers({
       onStoolPress: showModal,
-      onSymptomPress: symptomManagement.handleOpenSymptomModal,
-      onNotePress: noteManagement.handleOpenNoteModal,
+      onSymptomPress: handleOpenSymptomModal,
+      onNotePress: handleOpenNoteModal,
     });
   }, []);
 
@@ -367,6 +348,176 @@ export default function HomeScreen({ route }) {
 
     const notesData = getNotes();
     setNotes(notesData.sort((a, b) => b.timestamp - a.timestamp));
+  };
+
+  // Handlers pour les symptômes
+  const handleOpenSymptomModal = () => {
+    setEditingSymptom(null);
+    setSymptomModalVisible(true);
+  };
+
+  const handleSaveSymptom = (data) => {
+    saveFeedback();
+    if (editingSymptom) {
+      // Mode édition
+      updateSymptom(editingSymptom.id, data);
+      showToast('✅ Symptôme mis à jour', 'success');
+    } else {
+      // Mode création
+      createSymptom(data.type, data.intensity, data.note, data.date);
+      showToast('✅ Symptôme enregistré', 'success');
+    }
+    setSymptomModalVisible(false);
+    setEditingSymptom(null);
+    loadHistoryData();
+  };
+
+  const handleEditSymptom = (symptom) => {
+    setEditingSymptom(symptom);
+    setSymptomModalVisible(true);
+  };
+
+  const handleDeleteSymptom = (symptomId) => {
+    const executeDelete = () => {
+      deleteFeedback();
+      deleteSymptom(symptomId);
+      loadHistoryData();
+      showToast('🗑️ Symptôme supprimé', 'success');
+    };
+
+    if (Platform.OS === 'web') {
+      if (window.confirm('Êtes-vous sûr de vouloir supprimer ce symptôme ?')) {
+        executeDelete();
+      }
+    } else {
+      Alert.alert(
+        'Supprimer le symptôme',
+        'Êtes-vous sûr de vouloir supprimer ce symptôme ?',
+        [
+          { text: 'Annuler', style: 'cancel' },
+          { text: 'Supprimer', onPress: executeDelete, style: 'destructive' }
+        ]
+      );
+    }
+  };
+
+  // Handlers pour les notes
+  const handleOpenNoteModal = () => {
+    setEditingNote(null);
+    setNoteModalVisible(true);
+  };
+
+  const handleSaveNote = (data) => {
+    saveFeedback();
+    if (editingNote) {
+      // Mode édition
+      updateNote(editingNote.id, data);
+      showToast('✅ Note mise à jour', 'success');
+    } else {
+      // Mode création
+      createNote(data.content, data.category, data.sharedWithDoctor, data.date);
+      showToast('✅ Note enregistrée', 'success');
+    }
+    setNoteModalVisible(false);
+    setEditingNote(null);
+    loadHistoryData();
+  };
+
+  const handleEditNote = (note) => {
+    setEditingNote(note);
+    setNoteModalVisible(true);
+  };
+
+  const handleDeleteNote = (noteId) => {
+    const executeDelete = () => {
+      deleteFeedback();
+      deleteNote(noteId);
+      loadHistoryData();
+      showToast('🗑️ Note supprimée', 'success');
+    };
+
+    if (Platform.OS === 'web') {
+      if (window.confirm('Êtes-vous sûr de vouloir supprimer cette note ?')) {
+        executeDelete();
+      }
+    } else {
+      Alert.alert(
+        'Supprimer la note',
+        'Êtes-vous sûr de vouloir supprimer cette note ?',
+        [
+          { text: 'Annuler', style: 'cancel' },
+          { text: 'Supprimer', onPress: executeDelete, style: 'destructive' }
+        ]
+      );
+    }
+  };
+
+  const handleDeleteStool = (stoolId) => {
+    const executeDelete = () => {
+      deleteFeedback();
+      const stoolsJson = storage.getString('dailySells');
+      const stools = stoolsJson ? JSON.parse(stoolsJson) : [];
+      const updated = stools.filter(s => s.id !== stoolId);
+      storage.set('dailySells', JSON.stringify(updated));
+      setStools(updated.sort((a, b) => b.timestamp - a.timestamp));
+      setDailyCount(computeTodayCount());
+    };
+
+    if (Platform.OS === 'web') {
+      if (window.confirm('Êtes-vous sûr de vouloir supprimer cette selle ?')) {
+        executeDelete();
+      }
+    } else {
+      Alert.alert(
+        'Supprimer la selle',
+        'Êtes-vous sûr de vouloir supprimer cette selle ?',
+        [
+          { text: 'Annuler', style: 'cancel' },
+          { text: 'Supprimer', onPress: executeDelete, style: 'destructive' }
+        ]
+      );
+    }
+  };
+
+  const handleEditStool = (stool) => {
+    setEditingStool(stool);
+    setEditBristol(stool.bristolScale);
+    setEditHasBlood(stool.hasBlood);
+    
+    const date = new Date(stool.timestamp);
+    const dateStr = date.toLocaleDateString('fr-FR');
+    const timeStr = date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    
+    setEditDateInput(dateStr);
+    setEditTimeInput(timeStr);
+    setEditModalVisible(true);
+  };
+
+  const hideEditModal = () => {
+    setEditModalVisible(false);
+    setEditingStool(null);
+  };
+
+  const handleSaveEdit = () => {
+    if (!editingStool) return;
+
+    const editDateTime = parseDateTime(editDateInput, editTimeInput);
+
+    const updatedStool = {
+      ...editingStool,
+      timestamp: editDateTime.getTime(),
+      bristolScale: Math.round(editBristol),
+      hasBlood: editHasBlood
+    };
+
+    const stoolsJson = storage.getString('dailySells');
+    const stools = stoolsJson ? JSON.parse(stoolsJson) : [];
+    const updated = stools.map(s => s.id === editingStool.id ? updatedStool : s);
+    storage.set('dailySells', JSON.stringify(updated));
+    setStools(updated.sort((a, b) => b.timestamp - a.timestamp));
+    setDailyCount(computeTodayCount());
+    saveFeedback();
+    hideEditModal();
   };
 
   const formatCompactDate = (timestamp) => {
@@ -1099,13 +1250,13 @@ export default function HomeScreen({ route }) {
                           </View>
                           <View style={styles.stoolActions}>
                             <TouchableOpacity
-                              onPress={() => stoolManagement.handleEditStool(item)}
+                              onPress={() => handleEditStool(item)}
                               style={styles.actionButton}
                             >
                               <MaterialCommunityIcons name="pencil" size={20} color="#4C4DDC" />
                             </TouchableOpacity>
                             <TouchableOpacity
-                              onPress={() => stoolManagement.handleDeleteStool(item.id)}
+                              onPress={() => handleDeleteStool(item.id)}
                               style={styles.actionButton}
                             >
                               <MaterialCommunityIcons name="delete" size={20} color="#DC2626" />
@@ -1143,13 +1294,13 @@ export default function HomeScreen({ route }) {
                           </View>
                           <View style={styles.stoolActions}>
                             <TouchableOpacity
-                              onPress={() => symptomManagement.handleEditSymptom(item)}
+                              onPress={() => handleEditSymptom(item)}
                               style={styles.actionButton}
                             >
                               <MaterialCommunityIcons name="pencil" size={20} color="#4C4DDC" />
                             </TouchableOpacity>
                             <TouchableOpacity
-                              onPress={() => symptomManagement.handleDeleteSymptom(item.id)}
+                              onPress={() => handleDeleteSymptom(item.id)}
                               style={styles.actionButton}
                             >
                               <MaterialCommunityIcons name="delete" size={20} color="#DC2626" />
@@ -1198,13 +1349,13 @@ export default function HomeScreen({ route }) {
                           </View>
                           <View style={styles.stoolActions}>
                             <TouchableOpacity
-                              onPress={() => noteManagement.handleEditNote(item)}
+                              onPress={() => handleEditNote(item)}
                               style={styles.actionButton}
                             >
                               <MaterialCommunityIcons name="pencil" size={20} color="#4C4DDC" />
                             </TouchableOpacity>
                             <TouchableOpacity
-                              onPress={() => noteManagement.handleDeleteNote(item.id)}
+                              onPress={() => handleDeleteNote(item.id)}
                               style={styles.actionButton}
                             >
                               <MaterialCommunityIcons name="delete" size={20} color="#DC2626" />
@@ -1403,7 +1554,7 @@ export default function HomeScreen({ route }) {
 
       {/* Modal d'édition de selle */}
       <Portal>
-        <Modal visible={stoolManagement.editModalVisible} onDismiss={stoolManagement.hideEditModal} contentContainerStyle={styles.modalContainer}>
+        <Modal visible={editModalVisible} onDismiss={hideEditModal} contentContainerStyle={styles.modalContainer}>
           <AppCard style={styles.modalCard}>
             <ScrollView showsVerticalScrollIndicator={false}>
               <AppText variant="h2" style={styles.modalTitle}>
@@ -1413,10 +1564,10 @@ export default function HomeScreen({ route }) {
               <View style={styles.dateTimeSection}>
                 <AppText style={styles.fieldLabel}>Date et heure</AppText>
                 <DateTimeInput
-                  dateValue={stoolManagement.editDateInput}
-                  timeValue={stoolManagement.editTimeInput}
-                  onDateChange={stoolManagement.setEditDateInput}
-                  onTimeChange={stoolManagement.setEditTimeInput}
+                  dateValue={editDateInput}
+                  timeValue={editTimeInput}
+                  onDateChange={setEditDateInput}
+                  onTimeChange={setEditTimeInput}
                   dateLabel="Date (DD/MM/YYYY)"
                   timeLabel="Heure (HH:MM)"
                 />
@@ -1431,15 +1582,15 @@ export default function HomeScreen({ route }) {
                   minimumValue={1}
                   maximumValue={7}
                   step={1}
-                  value={stoolManagement.editBristol}
-                  onValueChange={stoolManagement.setEditBristol}
+                  value={editBristol}
+                  onValueChange={setEditBristol}
                   style={styles.slider}
                   minimumTrackTintColor={theme.colors.primary}
                   maximumTrackTintColor={theme.colors.outline}
                   thumbStyle={{ backgroundColor: theme.colors.primary }}
                 />
                 <AppText variant="labelMedium" style={styles.bristolHint}>
-                  Sélection: {stoolManagement.editBristol} — {bristolDescriptions[editBristol]}
+                  Sélection: {editBristol} — {bristolDescriptions[editBristol]}
                 </AppText>
               </View>
 
@@ -1447,10 +1598,10 @@ export default function HomeScreen({ route }) {
                 <View style={styles.switchRow}>
                   <AppText variant="bodyLarge">Présence de sang</AppText>
                   <Switch
-                    value={stoolManagement.editHasBlood}
+                    value={editHasBlood}
                     onValueChange={(value) => {
                       toggleFeedback();
-                      stoolManagement.setEditHasBlood(value);
+                      setEditHasBlood(value);
                     }}
                     color={theme.colors.error}
                   />
@@ -1459,7 +1610,7 @@ export default function HomeScreen({ route }) {
 
               <View style={styles.modalActions}>
                 <PrimaryButton
-                  onPress={stoolManagement.handleSaveEdit}
+                  onPress={handleSaveEdit}
                   style={styles.saveButton}
                   variant="primary"
                   size="medium"
@@ -1574,18 +1725,24 @@ export default function HomeScreen({ route }) {
 
       {/* Modal de symptôme */}
       <SymptomModal
-        visible={symptomManagement.symptomModalVisible}
-        onDismiss={symptomManagement.handleCloseSymptomModal}
-        onSave={symptomManagement.handleSaveSymptom}
-        initialData={symptomManagement.editingSymptom}
+        visible={symptomModalVisible}
+        onDismiss={() => {
+          setSymptomModalVisible(false);
+          setEditingSymptom(null);
+        }}
+        onSave={handleSaveSymptom}
+        initialData={editingSymptom}
       />
 
       {/* Modal de note */}
       <NoteModal
-        visible={noteManagement.noteModalVisible}
-        onDismiss={noteManagement.handleCloseNoteModal}
-        onSave={noteManagement.handleSaveNote}
-        initialData={noteManagement.editingNote}
+        visible={noteModalVisible}
+        onDismiss={() => {
+          setNoteModalVisible(false);
+          setEditingNote(null);
+        }}
+        onSave={handleSaveNote}
+        initialData={editingNote}
       />
     </View>
   );
