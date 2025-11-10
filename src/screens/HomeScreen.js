@@ -1433,7 +1433,7 @@ export default function HomeScreen({ route }) {
                   Enregistrer
                 </PrimaryButton>
                 <PrimaryButton
-                  onPress={hideEditModal}
+                  onPress={stoolManagement.hideEditModal}
                   style={styles.cancelButton}
                   variant="neutral"
                   size="medium"
