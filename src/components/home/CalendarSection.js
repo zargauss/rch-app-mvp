@@ -1,10 +1,18 @@
 import React, { useMemo, useEffect } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { Calendar, LocaleConfig } from 'react-native-calendars';
+import { View, StyleSheet, Platform } from 'react-native';
 import AppCard from '../ui/AppCard';
 import AppText from '../ui/AppText';
 import SegmentedControl from '../ui/SegmentedControl';
 import designSystem from '../../theme/designSystem';
+
+// Import conditionnel : react-native-calendars uniquement sur mobile
+let Calendar = null;
+let LocaleConfig = null;
+if (Platform.OS !== 'web') {
+  const calendars = require('react-native-calendars');
+  Calendar = calendars.Calendar;
+  LocaleConfig = calendars.LocaleConfig;
+}
 
 /**
  * Section Calendrier - Affiche un calendrier avec scores ou nombre de selles
@@ -16,19 +24,21 @@ const CalendarSection = ({
   scores,
   onDayPress,
 }) => {
-  // Configuration locale française pour le calendrier
+  // Configuration locale française pour le calendrier (mobile uniquement)
   useEffect(() => {
-    LocaleConfig.locales['fr'] = {
-      monthNames: [
-        'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-        'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
-      ],
-      monthNamesShort: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'],
-      dayNames: ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'],
-      dayNamesShort: ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'],
-      today: "Aujourd'hui"
-    };
-    LocaleConfig.defaultLocale = 'fr';
+    if (LocaleConfig) {
+      LocaleConfig.locales['fr'] = {
+        monthNames: [
+          'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+          'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
+        ],
+        monthNamesShort: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'],
+        dayNames: ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'],
+        dayNamesShort: ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'],
+        today: "Aujourd'hui"
+      };
+      LocaleConfig.defaultLocale = 'fr';
+    }
   }, []);
 
   // Générer les données du calendrier selon le mode
@@ -139,32 +149,43 @@ const CalendarSection = ({
         />
       </View>
 
-      <Calendar
-        markingType={'custom'}
-        markedDates={markedDates}
-        onDayPress={onDayPress}
-        theme={{
-          backgroundColor: designSystem.colors.background.tertiary,
-          calendarBackground: designSystem.colors.background.tertiary,
-          textSectionTitleColor: designSystem.colors.text.secondary,
-          selectedDayBackgroundColor: designSystem.colors.primary[500],
-          selectedDayTextColor: '#FFFFFF',
-          todayTextColor: designSystem.colors.primary[500],
-          dayTextColor: designSystem.colors.text.primary,
-          textDisabledColor: designSystem.colors.text.tertiary,
-          dotColor: designSystem.colors.primary[500],
-          selectedDotColor: '#FFFFFF',
-          arrowColor: designSystem.colors.primary[500],
-          monthTextColor: designSystem.colors.text.primary,
-          textDayFontWeight: '500',
-          textMonthFontWeight: '700',
-          textDayHeaderFontWeight: '600',
-          textDayFontSize: 14,
-          textMonthFontSize: 16,
-          textDayHeaderFontSize: 12,
-        }}
-        style={styles.calendar}
-      />
+      {Calendar ? (
+        <Calendar
+          markingType={'custom'}
+          markedDates={markedDates}
+          onDayPress={onDayPress}
+          theme={{
+            backgroundColor: designSystem.colors.background.tertiary,
+            calendarBackground: designSystem.colors.background.tertiary,
+            textSectionTitleColor: designSystem.colors.text.secondary,
+            selectedDayBackgroundColor: designSystem.colors.primary[500],
+            selectedDayTextColor: '#FFFFFF',
+            todayTextColor: designSystem.colors.primary[500],
+            dayTextColor: designSystem.colors.text.primary,
+            textDisabledColor: designSystem.colors.text.tertiary,
+            dotColor: designSystem.colors.primary[500],
+            selectedDotColor: '#FFFFFF',
+            arrowColor: designSystem.colors.primary[500],
+            monthTextColor: designSystem.colors.text.primary,
+            textDayFontWeight: '500',
+            textMonthFontWeight: '700',
+            textDayHeaderFontWeight: '600',
+            textDayFontSize: 14,
+            textMonthFontSize: 16,
+            textDayHeaderFontSize: 12,
+          }}
+          style={styles.calendar}
+        />
+      ) : (
+        <View style={styles.webCalendarPlaceholder}>
+          <AppText variant="bodyLarge" style={styles.placeholderText}>
+            📅 Calendrier disponible sur l'application mobile
+          </AppText>
+          <AppText variant="bodySmall" style={styles.placeholderSubtext}>
+            Le calendrier interactif sera bientôt disponible sur la version web
+          </AppText>
+        </View>
+      )}
 
       {/* Légende */}
       <View style={styles.legend}>
@@ -205,6 +226,23 @@ const styles = StyleSheet.create({
   },
   calendar: {
     borderRadius: designSystem.borderRadius.md,
+  },
+  webCalendarPlaceholder: {
+    padding: designSystem.spacing[6],
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: designSystem.colors.background.secondary,
+    borderRadius: designSystem.borderRadius.md,
+    minHeight: 200,
+  },
+  placeholderText: {
+    color: designSystem.colors.text.primary,
+    textAlign: 'center',
+    marginBottom: designSystem.spacing[2],
+  },
+  placeholderSubtext: {
+    color: designSystem.colors.text.tertiary,
+    textAlign: 'center',
   },
   legend: {
     flexDirection: 'row',
