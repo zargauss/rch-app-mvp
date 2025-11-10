@@ -154,31 +154,32 @@ const TreatmentCard = ({
             </View>
           </>
         ) : (
-          <View style={styles.intervalSection}>
-            <AppText variant="labelMedium" style={styles.label}>
-              Prochaine prise : {nextDate?.toLocaleDateString('fr-FR')}
-            </AppText>
-            <TouchableOpacity
-              onPress={() => {
-                if (isDone) {
-                  // Décocher
-                  onUncheckInterval(schema, medication);
-                } else {
-                  // Cocher
-                  onCheckInterval(schema, medication);
-                }
-              }}
-              style={[
-                styles.checkbox,
-                styles.checkboxLarge,
-                isDone && styles.checkboxChecked
-              ]}
-            >
-              {isDone && (
-                <MaterialCommunityIcons name="check" size={20} color="#FFFFFF" />
-              )}
-            </TouchableOpacity>
-          </View>
+          <>
+            {isDone ? (
+              // Dose déjà prise - Afficher seulement la prochaine date
+              <View style={styles.nextDoseInfo}>
+                <AppText variant="labelMedium" style={styles.label}>
+                  Prochaine prise : {nextDate?.toLocaleDateString('fr-FR')}
+                </AppText>
+              </View>
+            ) : (
+              // Dose à prendre - Afficher la checkbox
+              <View style={styles.intervalSection}>
+                <AppText variant="labelMedium" style={styles.label}>
+                  À prendre aujourd'hui
+                </AppText>
+                <TouchableOpacity
+                  onPress={() => onCheckInterval(schema, medication)}
+                  style={[
+                    styles.checkbox,
+                    styles.checkboxLarge
+                  ]}
+                >
+                  <MaterialCommunityIcons name="check" size={20} color="transparent" />
+                </TouchableOpacity>
+              </View>
+            )}
+          </>
         )}
       </View>
 
@@ -313,6 +314,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  nextDoseInfo: {
+    paddingVertical: designSystem.spacing[2],
   },
   observanceSection: {
     flexDirection: 'row',

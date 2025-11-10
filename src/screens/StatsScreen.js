@@ -283,11 +283,11 @@ export default function StatsScreen() {
             <View style={styles.titleRow}>
               <MaterialCommunityIcons name="chart-timeline-variant" size={28} color="#4C4DDC" style={{ marginRight: 12 }} />
               <AppText variant="headlineLarge" style={styles.chartTitle}>
-                {dataType === 'score' ? 'Évolution du Score et % Selles sanglantes' : 'Évolution des Selles'}
+                {dataType === 'score' ? 'Évolution des indicateurs' : 'Évolution des Selles'}
               </AppText>
             </View>
             <AppText variant="bodyMedium" style={styles.chartSubtitle}>
-              {dataType === 'score' ? 'Tendance sur la période sélectionnée' : 'Nombre de selles par jour sur la période'}
+              {dataType === 'score' ? 'Score Lichtiger et pourcentage de selles sanglantes' : 'Nombre de selles par jour sur la période'}
             </AppText>
 
             {Platform.OS === 'web' ? (

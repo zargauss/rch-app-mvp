@@ -62,9 +62,6 @@ const CalendarSection = ({
         </TouchableOpacity>
 
         <View style={styles.monthTitleContainer}>
-          <AppText variant="headlineLarge" style={styles.calendarMonth}>
-            {monthNames[month]} {year}
-          </AppText>
           {isCurrentMonth && (
             <View style={styles.currentMonthBadge}>
               <AppText variant="labelSmall" style={styles.currentMonthText}>
@@ -72,6 +69,9 @@ const CalendarSection = ({
               </AppText>
             </View>
           )}
+          <AppText variant="headlineLarge" style={styles.calendarMonth}>
+            {monthNames[month]} {year}
+          </AppText>
         </View>
 
         <TouchableOpacity
@@ -176,20 +176,22 @@ const styles = StyleSheet.create({
     marginBottom: designSystem.spacing[4],
   },
   monthTitleContainer: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     alignItems: 'center',
-    gap: designSystem.spacing[2],
+    gap: designSystem.spacing[1],
   },
   calendarMonth: {
     fontSize: 20,
     fontWeight: '700',
     color: '#101010',
+    textAlign: 'center',
   },
   currentMonthBadge: {
     backgroundColor: '#E0E7FF',
     paddingHorizontal: designSystem.spacing[2],
     paddingVertical: 4,
     borderRadius: designSystem.borderRadius.full,
+    marginBottom: designSystem.spacing[1],
   },
   currentMonthText: {
     color: '#4C4DDC',
