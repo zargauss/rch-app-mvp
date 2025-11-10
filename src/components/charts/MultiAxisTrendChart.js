@@ -5,9 +5,10 @@ import designSystem from '../../theme/designSystem';
 
 const MultiAxisTrendChart = ({ scoreData, bloodPercentageData, labels }) => {
   const { width } = Dimensions.get('window');
-  const chartWidth = Math.min(width - 40, 700);
-  const chartHeight = 220; // Hauteur pour chaque graphique
-  const padding = { top: 20, right: 20, bottom: 40, left: 50 };
+  // Ajuster pour les marges de la card (spacing[4] * 2 = 32px) + padding interne (40px)
+  const chartWidth = Math.min(width - 80, 650);
+  const chartHeight = 220;
+  const padding = { top: 20, right: 15, bottom: 40, left: 40 };
 
   const innerWidth = chartWidth - padding.left - padding.right;
   const innerHeight = chartHeight - padding.top - padding.bottom;
@@ -135,9 +136,9 @@ const MultiAxisTrendChart = ({ scoreData, bloodPercentageData, labels }) => {
                 strokeDasharray={line.value === 0 ? "0" : "3 3"}
               />
               <text
-                x={padding.left - 12}
+                x={padding.left - 8}
                 y={line.y + 4}
-                fontSize="11"
+                fontSize="10"
                 fill="#6B7280"
                 textAnchor="end"
                 fontWeight="500"
@@ -245,9 +246,9 @@ const MultiAxisTrendChart = ({ scoreData, bloodPercentageData, labels }) => {
                 strokeDasharray={line.value === 0 ? "0" : "3 3"}
               />
               <text
-                x={padding.left - 12}
+                x={padding.left - 8}
                 y={line.y + 4}
-                fontSize="11"
+                fontSize="10"
                 fill="#DC2626"
                 textAnchor="end"
                 fontWeight="500"
@@ -331,9 +332,13 @@ const MultiAxisTrendChart = ({ scoreData, bloodPercentageData, labels }) => {
 const styles = StyleSheet.create({
   container: {
     paddingVertical: designSystem.spacing[4],
+    alignItems: 'center',
+    width: '100%',
   },
   chartSection: {
     marginBottom: designSystem.spacing[6],
+    width: '100%',
+    alignItems: 'center',
   },
   secondChart: {
     marginTop: designSystem.spacing[2],
@@ -343,6 +348,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: designSystem.spacing[3],
     paddingLeft: designSystem.spacing[2],
+    width: '100%',
   },
   legendDot: {
     width: 12,
@@ -359,7 +365,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   svg: {
-    overflow: 'visible',
+    overflow: 'hidden',
   },
   emptyContainer: {
     height: 280,
