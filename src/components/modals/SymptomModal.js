@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Platform, TouchableOpacity } from 'react-native';
 import { Portal, Modal, TextInput, HelperText } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import Slider from '@react-native-community/slider';
+import AppSlider from '../ui/AppSlider';
 import AppCard from '../ui/AppCard';
 import AppText from '../ui/AppText';
 import PrimaryButton from '../ui/PrimaryButton';
@@ -165,7 +165,7 @@ const SymptomModal = ({ visible, onDismiss, onSave, initialData = null }) => {
                   {INTENSITY_LABELS[intensity]}
                 </AppText>
               </View>
-              <Slider
+              <AppSlider
                 minimumValue={0}
                 maximumValue={5}
                 step={1}
@@ -174,7 +174,7 @@ const SymptomModal = ({ visible, onDismiss, onSave, initialData = null }) => {
                 style={styles.slider}
                 minimumTrackTintColor={getIntensityColorHex(intensity)}
                 maximumTrackTintColor="#E5E5F4"
-                thumbTintColor={getIntensityColorHex(intensity)}
+                thumbStyle={{ backgroundColor: getIntensityColorHex(intensity) }}
               />
               <View style={styles.intensityLabels}>
                 <AppText variant="labelSmall" style={styles.intensityLabelText}>0 - Aucune</AppText>

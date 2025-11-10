@@ -4,7 +4,6 @@ import { Text, Button, RadioButton, Switch } from 'react-native-paper';
 import AppText from '../components/ui/AppText';
 import PrimaryButton from '../components/ui/PrimaryButton';
 import AppCard from '../components/ui/AppCard';
-import Slider from '@react-native-community/slider';
 import storage from '../utils/storage';
 import { getSurveyDayKey } from '../utils/dayKey';
 import { useNavigation } from '@react-navigation/native';

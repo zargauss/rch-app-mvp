@@ -16,7 +16,7 @@ import EmptyState from '../components/ui/EmptyState';
 import StoolListItem from '../components/history/StoolListItem';
 import TreatmentListItem from '../components/history/TreatmentListItem';
 import { useTheme } from 'react-native-paper';
-import Slider from '@react-native-community/slider';
+import AppSlider from '../components/ui/AppSlider';
 import IBDiskChart from '../components/charts/IBDiskChart';
 import designSystem from '../theme/designSystem';
 import AnimatedListItem from '../components/ui/AnimatedListItem';
@@ -693,7 +693,7 @@ export default function HistoryScreen({ navigation }) {
                 Consistance (Bristol)
               </AppText>
               <View style={styles.sliderContainer}>
-                <Slider
+                <AppSlider
                   style={styles.slider}
                   minimumValue={1}
                   maximumValue={7}

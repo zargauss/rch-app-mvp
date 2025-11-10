@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import Slider from '@react-native-community/slider';
+import AppSlider from '../components/ui/AppSlider';
 import AppText from '../components/ui/AppText';
 import AppCard from '../components/ui/AppCard';
 import PrimaryButton from '../components/ui/PrimaryButton';
@@ -278,7 +278,7 @@ const IBDiskQuestionnaireScreen = () => {
             </View>
           </View>
           
-          <Slider
+          <AppSlider
             style={styles.slider}
             minimumValue={0}
             maximumValue={10}
@@ -287,7 +287,7 @@ const IBDiskQuestionnaireScreen = () => {
             onValueChange={(value) => handleAnswerChange(Math.round(value))}
             minimumTrackTintColor="#059669"
             maximumTrackTintColor="#E2E8F0"
-            thumbTintColor="#059669"
+            thumbStyle={{ backgroundColor: "#059669" }}
           />
           
           {/* Marqueurs de l'échelle */}

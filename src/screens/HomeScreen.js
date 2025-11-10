@@ -3,7 +3,6 @@ import { View, StyleSheet, ScrollView, Linking, Platform, Animated } from 'react
 import { Portal, Modal } from 'react-native-paper';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useTheme } from 'react-native-paper';
-import Slider from '@react-native-community/slider';
 
 // Components
 import AppCard from '../components/ui/AppCard';
@@ -13,6 +12,7 @@ import Toast from '../components/ui/Toast';
 import DateTimeInput, { isValidDate, isValidTime } from '../components/ui/DateTimeInput';
 import SymptomModal from '../components/modals/SymptomModal';
 import NoteModal from '../components/modals/NoteModal';
+import BristolScaleSlider from '../components/ui/BristolScaleSlider';
 
 // Home sections
 import TodaySection from '../components/home/TodaySection';
@@ -404,10 +404,7 @@ export default function HomeScreen({ route }) {
 
               <View style={styles.bristolSection}>
                 <AppText style={styles.fieldLabel}>Consistance (Bristol)</AppText>
-                <Slider
-                  minimumValue={1}
-                  maximumValue={7}
-                  step={1}
+                <BristolScaleSlider
                   value={bristol}
                   onValueChange={setBristol}
                   style={styles.slider}
@@ -471,10 +468,7 @@ export default function HomeScreen({ route }) {
 
               <View style={styles.bristolSection}>
                 <AppText style={styles.fieldLabel}>Consistance (Bristol)</AppText>
-                <Slider
-                  minimumValue={1}
-                  maximumValue={7}
-                  step={1}
+                <BristolScaleSlider
                   value={stoolManagement.editBristol}
                   onValueChange={stoolManagement.setEditBristol}
                   style={styles.slider}
