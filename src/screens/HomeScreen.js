@@ -1405,7 +1405,7 @@ export default function HomeScreen({ route }) {
                   thumbStyle={{ backgroundColor: theme.colors.primary }}
                 />
                 <AppText variant="labelMedium" style={styles.bristolHint}>
-                  Sélection: {stoolManagement.editBristol} — {bristolDescriptions[editBristol]}
+                  Sélection: {stoolManagement.editBristol} — {bristolDescriptions[stoolManagement.editBristol]}
                 </AppText>
               </View>
 
