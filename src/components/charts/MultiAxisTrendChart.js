@@ -1,61 +1,41 @@
 import React, { useMemo } from 'react';
 import { View, StyleSheet, Dimensions } from 'react-native';
 import AppText from '../ui/AppText';
+import designSystem from '../../theme/designSystem';
 
 const MultiAxisTrendChart = ({ scoreData, bloodPercentageData, labels }) => {
   const { width } = Dimensions.get('window');
-  const chartWidth = Math.min(width - 40, 600);
-  const chartHeight = 280;
-  const padding = { top: 30, right: 50, bottom: 50, left: 50 };
-  
+  const chartWidth = Math.min(width - 40, 700);
+  const chartHeight = 220; // Hauteur pour chaque graphique
+  const padding = { top: 20, right: 20, bottom: 40, left: 50 };
+
   const innerWidth = chartWidth - padding.left - padding.right;
   const innerHeight = chartHeight - padding.top - padding.bottom;
 
-  // Calculer les points pour le score Lichtiger (axe Y gauche, 0-20)
+  // === GRAPHIQUE 1 : SCORE LICHTIGER ===
   const scorePoints = useMemo(() => {
     const validData = scoreData.filter(d => d !== null);
     if (validData.length === 0) return [];
 
-    const maxScore = 20; // Échelle fixe pour le score
+    const maxScore = 20;
     const minScore = 0;
 
     return scoreData.map((value, index) => {
       if (value === null) return null;
 
-      const x = padding.left + (index / (scoreData.length - 1)) * innerWidth;
+      const x = padding.left + (index / Math.max(scoreData.length - 1, 1)) * innerWidth;
       const y = padding.top + innerHeight - ((value - minScore) / (maxScore - minScore)) * innerHeight;
 
-      // Déterminer la couleur selon le score
-      let color = '#4C4DDC'; // Color 01 - Principal
-      if (value >= 10) color = '#101010'; // Color 03 - Noir pour alertes
-      else if (value >= 4) color = '#4C4DDC'; // Color 01
+      let color = '#10B981'; // Vert pour bon score
+      if (value >= 10) color = '#DC2626'; // Rouge pour score élevé
+      else if (value >= 5) color = '#F59E0B'; // Orange pour score moyen
 
       return { x, y, value, color, index };
     }).filter(p => p !== null);
   }, [scoreData, innerWidth, innerHeight, padding]);
 
-  // Calculer les points pour le % de sang (axe Y droit, 0-100%)
-  const bloodPoints = useMemo(() => {
-    const validData = bloodPercentageData.filter(d => d !== null);
-    if (validData.length === 0) return [];
-
-    const maxPercentage = 100; // Échelle fixe pour le pourcentage
-    const minPercentage = 0;
-
-    return bloodPercentageData.map((value, index) => {
-      if (value === null) return null;
-
-      const x = padding.left + (index / (bloodPercentageData.length - 1)) * innerWidth;
-      const y = padding.top + innerHeight - ((value - minPercentage) / (maxPercentage - minPercentage)) * innerHeight;
-
-      return { x, y, value, color: '#DC2626', index }; // Rouge pastel pour le sang
-    }).filter(p => p !== null);
-  }, [bloodPercentageData, innerWidth, innerHeight, padding]);
-
-  // Créer le chemin SVG pour la ligne du score
   const scoreLinePath = useMemo(() => {
     if (scorePoints.length < 2) return '';
-    
     let path = `M ${scorePoints[0].x} ${scorePoints[0].y}`;
     for (let i = 1; i < scorePoints.length; i++) {
       path += ` L ${scorePoints[i].x} ${scorePoints[i].y}`;
@@ -63,10 +43,26 @@ const MultiAxisTrendChart = ({ scoreData, bloodPercentageData, labels }) => {
     return path;
   }, [scorePoints]);
 
-  // Créer le chemin SVG pour la ligne du pourcentage de sang
+  // === GRAPHIQUE 2 : % SELLES SANGLANTES ===
+  const bloodPoints = useMemo(() => {
+    const validData = bloodPercentageData.filter(d => d !== null);
+    if (validData.length === 0) return [];
+
+    const maxPercentage = 100;
+    const minPercentage = 0;
+
+    return bloodPercentageData.map((value, index) => {
+      if (value === null) return null;
+
+      const x = padding.left + (index / Math.max(bloodPercentageData.length - 1, 1)) * innerWidth;
+      const y = padding.top + innerHeight - ((value - minPercentage) / (maxPercentage - minPercentage)) * innerHeight;
+
+      return { x, y, value, index };
+    }).filter(p => p !== null);
+  }, [bloodPercentageData, innerWidth, innerHeight, padding]);
+
   const bloodLinePath = useMemo(() => {
     if (bloodPoints.length < 2) return '';
-    
     let path = `M ${bloodPoints[0].x} ${bloodPoints[0].y}`;
     for (let i = 1; i < bloodPoints.length; i++) {
       path += ` L ${bloodPoints[i].x} ${bloodPoints[i].y}`;
@@ -74,26 +70,13 @@ const MultiAxisTrendChart = ({ scoreData, bloodPercentageData, labels }) => {
     return path;
   }, [bloodPoints]);
 
-
-  // Grille horizontale pour le score (axe Y gauche)
-  const scoreGridLines = [0, 5, 10, 15, 20].map(value => {
-    const y = padding.top + innerHeight - ((value / 20) * innerHeight);
-    return { value, y };
-  });
-
-  // Grille horizontale pour le pourcentage (axe Y droit)
-  const bloodGridLines = [0, 25, 50, 75, 100].map(value => {
-    const y = padding.top + innerHeight - ((value / 100) * innerHeight);
-    return { value, y };
-  });
-
-  // Labels d'axe X
+  // Labels d'axe X (partagés)
   const xLabels = useMemo(() => {
     const step = Math.ceil(labels.length / 6);
     return labels
       .map((label, index) => {
         if (index % step !== 0 && index !== labels.length - 1) return null;
-        const x = padding.left + (index / (labels.length - 1)) * innerWidth;
+        const x = padding.left + (index / Math.max(labels.length - 1, 1)) * innerWidth;
         return { label, x, index };
       })
       .filter(l => l !== null);
@@ -109,40 +92,53 @@ const MultiAxisTrendChart = ({ scoreData, bloodPercentageData, labels }) => {
     );
   }
 
+  // Grilles
+  const scoreGridLines = [0, 5, 10, 15, 20].map(value => {
+    const y = padding.top + innerHeight - ((value / 20) * innerHeight);
+    return { value, y };
+  });
+
+  const bloodGridLines = [0, 25, 50, 75, 100].map(value => {
+    const y = padding.top + innerHeight - ((value / 100) * innerHeight);
+    return { value, y };
+  });
+
   return (
     <View style={styles.container}>
-      <svg width={chartWidth} height={chartHeight} style={styles.svg}>
-        <defs>
-          {/* Gradient pour l'aire du score */}
-          <linearGradient id="scoreAreaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#4C4DDC" stopOpacity="0.2" />
-            <stop offset="100%" stopColor="#4C4DDC" stopOpacity="0.05" />
-          </linearGradient>
-          {/* Gradient pour l'aire du sang */}
-          <linearGradient id="bloodAreaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#DC2626" stopOpacity="0.15" />
-            <stop offset="100%" stopColor="#DC2626" stopOpacity="0.05" />
-          </linearGradient>
-        </defs>
+      {/* GRAPHIQUE 1 : Score Lichtiger */}
+      <View style={styles.chartSection}>
+        <View style={styles.chartHeader}>
+          <View style={styles.legendDot} />
+          <AppText variant="labelLarge" style={styles.chartLabel}>
+            Score Lichtiger (0-20)
+          </AppText>
+        </View>
 
-        {/* Grille horizontale pour le score (axe Y gauche) */}
-        <g>
+        <svg width={chartWidth} height={chartHeight} style={styles.svg}>
+          <defs>
+            <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#4C4DDC" stopOpacity="0.15" />
+              <stop offset="100%" stopColor="#4C4DDC" stopOpacity="0.02" />
+            </linearGradient>
+          </defs>
+
+          {/* Grille */}
           {scoreGridLines.map((line, index) => (
-            <g key={`score-${index}`}>
+            <g key={`score-grid-${index}`}>
               <line
                 x1={padding.left}
                 y1={line.y}
                 x2={chartWidth - padding.right}
                 y2={line.y}
-                stroke="#EDEDFC"
+                stroke="#E5E7EB"
                 strokeWidth="1"
-                strokeDasharray="2 2"
+                strokeDasharray={line.value === 0 ? "0" : "3 3"}
               />
               <text
-                x={padding.left - 10}
+                x={padding.left - 12}
                 y={line.y + 4}
-                fontSize="10"
-                fill="#101010"
+                fontSize="11"
+                fill="#6B7280"
                 textAnchor="end"
                 fontWeight="500"
               >
@@ -150,12 +146,95 @@ const MultiAxisTrendChart = ({ scoreData, bloodPercentageData, labels }) => {
               </text>
             </g>
           ))}
-        </g>
 
-        {/* Grille horizontale pour le pourcentage (axe Y droit) */}
-        <g>
+          {/* Aire sous la courbe */}
+          {scorePoints.length >= 2 && (() => {
+            let areaPath = `M ${scorePoints[0].x} ${chartHeight - padding.bottom}`;
+            areaPath += ` L ${scorePoints[0].x} ${scorePoints[0].y}`;
+            for (let i = 1; i < scorePoints.length; i++) {
+              areaPath += ` L ${scorePoints[i].x} ${scorePoints[i].y}`;
+            }
+            areaPath += ` L ${scorePoints[scorePoints.length - 1].x} ${chartHeight - padding.bottom} Z`;
+            return <path d={areaPath} fill="url(#scoreGradient)" />;
+          })()}
+
+          {/* Ligne */}
+          {scoreLinePath && (
+            <path
+              d={scoreLinePath}
+              stroke="#4C4DDC"
+              strokeWidth="3"
+              fill="none"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          )}
+
+          {/* Points */}
+          {scorePoints.map((point, index) => (
+            <g key={`score-point-${index}`}>
+              <circle cx={point.x} cy={point.y} r="6" fill="#FFFFFF" stroke={point.color} strokeWidth="2.5" />
+              <circle cx={point.x} cy={point.y} r="3" fill={point.color} />
+            </g>
+          ))}
+
+          {/* Axe X */}
+          <line
+            x1={padding.left}
+            y1={chartHeight - padding.bottom}
+            x2={chartWidth - padding.right}
+            y2={chartHeight - padding.bottom}
+            stroke="#9CA3AF"
+            strokeWidth="2"
+          />
+
+          {/* Axe Y */}
+          <line
+            x1={padding.left}
+            y1={padding.top}
+            x2={padding.left}
+            y2={chartHeight - padding.bottom}
+            stroke="#9CA3AF"
+            strokeWidth="2"
+          />
+
+          {/* Labels X */}
+          {xLabels.map((label, index) => (
+            <text
+              key={`score-xlabel-${index}`}
+              x={label.x}
+              y={chartHeight - padding.bottom + 25}
+              fontSize="11"
+              fill="#6B7280"
+              textAnchor="middle"
+              fontWeight="500"
+            >
+              {label.label}
+            </text>
+          ))}
+        </svg>
+      </View>
+
+      {/* GRAPHIQUE 2 : % Selles sanglantes */}
+      <View style={[styles.chartSection, styles.secondChart]}>
+        <View style={styles.chartHeader}>
+          <View style={[styles.legendDot, styles.legendDotRed]} />
+          <AppText variant="labelLarge" style={styles.chartLabel}>
+            % Selles sanglantes (0-100%)
+          </AppText>
+        </View>
+
+        <svg width={chartWidth} height={chartHeight} style={styles.svg}>
+          <defs>
+            <linearGradient id="bloodGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#DC2626" stopOpacity="0.12" />
+              <stop offset="100%" stopColor="#DC2626" stopOpacity="0.02" />
+            </linearGradient>
+          </defs>
+
+          {/* Grille */}
           {bloodGridLines.map((line, index) => (
-            <g key={`blood-${index}`}>
+            <g key={`blood-grid-${index}`}>
               <line
                 x1={padding.left}
                 y1={line.y}
@@ -163,212 +242,121 @@ const MultiAxisTrendChart = ({ scoreData, bloodPercentageData, labels }) => {
                 y2={line.y}
                 stroke="#FEE2E2"
                 strokeWidth="1"
-                strokeDasharray="2 2"
-                opacity="0.5"
+                strokeDasharray={line.value === 0 ? "0" : "3 3"}
               />
               <text
-                x={chartWidth - padding.right + 10}
+                x={padding.left - 12}
                 y={line.y + 4}
-                fontSize="10"
+                fontSize="11"
                 fill="#DC2626"
-                textAnchor="start"
+                textAnchor="end"
                 fontWeight="500"
               >
                 {line.value}%
               </text>
             </g>
           ))}
-        </g>
 
-        {/* Aire sous la courbe du score */}
-        {scorePoints.length >= 2 && (() => {
-          let areaPath = `M ${scorePoints[0].x} ${chartHeight - padding.bottom}`;
-          areaPath += ` L ${scorePoints[0].x} ${scorePoints[0].y}`;
-          for (let i = 1; i < scorePoints.length; i++) {
-            areaPath += ` L ${scorePoints[i].x} ${scorePoints[i].y}`;
-          }
-          areaPath += ` L ${scorePoints[scorePoints.length - 1].x} ${chartHeight - padding.bottom}`;
-          areaPath += ' Z';
-          
-          return (
+          {/* Aire sous la courbe */}
+          {bloodPoints.length >= 2 && (() => {
+            let areaPath = `M ${bloodPoints[0].x} ${chartHeight - padding.bottom}`;
+            areaPath += ` L ${bloodPoints[0].x} ${bloodPoints[0].y}`;
+            for (let i = 1; i < bloodPoints.length; i++) {
+              areaPath += ` L ${bloodPoints[i].x} ${bloodPoints[i].y}`;
+            }
+            areaPath += ` L ${bloodPoints[bloodPoints.length - 1].x} ${chartHeight - padding.bottom} Z`;
+            return <path d={areaPath} fill="url(#bloodGradient)" />;
+          })()}
+
+          {/* Ligne */}
+          {bloodLinePath && (
             <path
-              d={areaPath}
-              fill="url(#scoreAreaGradient)"
-            />
-          );
-        })()}
-
-        {/* Aire sous la courbe du sang */}
-        {bloodPoints.length >= 2 && (() => {
-          let areaPath = `M ${bloodPoints[0].x} ${chartHeight - padding.bottom}`;
-          areaPath += ` L ${bloodPoints[0].x} ${bloodPoints[0].y}`;
-          for (let i = 1; i < bloodPoints.length; i++) {
-            areaPath += ` L ${bloodPoints[i].x} ${bloodPoints[i].y}`;
-          }
-          areaPath += ` L ${bloodPoints[bloodPoints.length - 1].x} ${chartHeight - padding.bottom}`;
-          areaPath += ' Z';
-          
-          return (
-            <path
-              d={areaPath}
-              fill="url(#bloodAreaGradient)"
-            />
-          );
-        })()}
-
-        {/* Ligne du score */}
-        {scoreLinePath && (
-          <path
-            d={scoreLinePath}
-            stroke="#4C4DDC"
-            strokeWidth="2"
-            fill="none"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        )}
-
-        {/* Ligne du pourcentage de sang */}
-        {bloodLinePath && (
-          <path
-            d={bloodLinePath}
-            stroke="#DC2626"
-            strokeWidth="2"
-            fill="none"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeDasharray="4 4"
-          />
-        )}
-
-        {/* Points du score */}
-        {scorePoints.map((point, index) => (
-          <g key={`score-point-${index}`}>
-            <circle
-              cx={point.x}
-              cy={point.y}
-              r="4"
-              fill="#FFFFFF"
-              stroke={point.color}
-              strokeWidth="2"
-            />
-            <circle
-              cx={point.x}
-              cy={point.y}
-              r="2"
-              fill={point.color}
-            />
-          </g>
-        ))}
-
-        {/* Points du pourcentage de sang */}
-        {bloodPoints.map((point, index) => (
-          <g key={`blood-point-${index}`}>
-            <circle
-              cx={point.x}
-              cy={point.y}
-              r="3.5"
-              fill="#FFFFFF"
+              d={bloodLinePath}
               stroke="#DC2626"
-              strokeWidth="1.5"
+              strokeWidth="3"
+              fill="none"
+              strokeLinecap="round"
+              strokeLinejoin="round"
             />
-            <circle
-              cx={point.x}
-              cy={point.y}
-              r="1.5"
-              fill="#DC2626"
-            />
-          </g>
-        ))}
+          )}
 
-        {/* Axe X */}
-        <line
-          x1={padding.left}
-          y1={chartHeight - padding.bottom}
-          x2={chartWidth - padding.right}
-          y2={chartHeight - padding.bottom}
-          stroke="#C8C8F4"
-          strokeWidth="2"
-        />
+          {/* Points */}
+          {bloodPoints.map((point, index) => (
+            <g key={`blood-point-${index}`}>
+              <circle cx={point.x} cy={point.y} r="6" fill="#FFFFFF" stroke="#DC2626" strokeWidth="2.5" />
+              <circle cx={point.x} cy={point.y} r="3" fill="#DC2626" />
+            </g>
+          ))}
 
-        {/* Labels X */}
-        {xLabels.map((label, index) => (
-          <text
-            key={index}
-            x={label.x}
-            y={chartHeight - padding.bottom + 20}
-            fontSize="10"
-            fill="#101010"
-            textAnchor="middle"
-          >
-            {label.label}
-          </text>
-        ))}
+          {/* Axe X */}
+          <line
+            x1={padding.left}
+            y1={chartHeight - padding.bottom}
+            x2={chartWidth - padding.right}
+            y2={chartHeight - padding.bottom}
+            stroke="#F87171"
+            strokeWidth="2"
+          />
 
-        {/* Axe Y gauche (Score) */}
-        <line
-          x1={padding.left}
-          y1={padding.top}
-          x2={padding.left}
-          y2={chartHeight - padding.bottom}
-          stroke="#C8C8F4"
-          strokeWidth="2"
-        />
+          {/* Axe Y */}
+          <line
+            x1={padding.left}
+            y1={padding.top}
+            x2={padding.left}
+            y2={chartHeight - padding.bottom}
+            stroke="#F87171"
+            strokeWidth="2"
+          />
 
-        {/* Axe Y droit (Pourcentage) */}
-        <line
-          x1={chartWidth - padding.right}
-          y1={padding.top}
-          x2={chartWidth - padding.right}
-          y2={chartHeight - padding.bottom}
-          stroke="#FCA5A5"
-          strokeWidth="2"
-          opacity="0.6"
-        />
-
-        {/* Labels des axes */}
-        <text
-          x={padding.left - 30}
-          y={padding.top + innerHeight / 2}
-          fontSize="11"
-          fill="#101010"
-          textAnchor="middle"
-          transform={`rotate(-90 ${padding.left - 30} ${padding.top + innerHeight / 2})`}
-          fontWeight="600"
-        >
-          Score Lichtiger
-        </text>
-        <text
-          x={chartWidth - padding.right + 30}
-          y={padding.top + innerHeight / 2}
-          fontSize="11"
-          fill="#DC2626"
-          textAnchor="middle"
-          transform={`rotate(-90 ${chartWidth - padding.right + 30} ${padding.top + innerHeight / 2})`}
-          fontWeight="600"
-        >
-          % Selles sanglantes
-        </text>
-
-        {/* Légende */}
-        <g transform={`translate(${padding.left + 10}, ${padding.top - 20})`}>
-          {/* Score */}
-          <line x1="0" y1="0" x2="30" y2="0" stroke="#4C4DDC" strokeWidth="2" strokeLinecap="round" />
-          <text x="35" y="4" fontSize="10" fill="#101010" fontWeight="500">Score Lichtiger</text>
-          
-          {/* Sang */}
-          <line x1="0" y1="15" x2="30" y2="15" stroke="#DC2626" strokeWidth="2" strokeLinecap="round" strokeDasharray="4 4" />
-          <text x="35" y="19" fontSize="10" fill="#101010" fontWeight="500">% Selles sanglantes</text>
-        </g>
-      </svg>
+          {/* Labels X */}
+          {xLabels.map((label, index) => (
+            <text
+              key={`blood-xlabel-${index}`}
+              x={label.x}
+              y={chartHeight - padding.bottom + 25}
+              fontSize="11"
+              fill="#6B7280"
+              textAnchor="middle"
+              fontWeight="500"
+            >
+              {label.label}
+            </text>
+          ))}
+        </svg>
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
+    paddingVertical: designSystem.spacing[4],
+  },
+  chartSection: {
+    marginBottom: designSystem.spacing[6],
+  },
+  secondChart: {
+    marginTop: designSystem.spacing[2],
+  },
+  chartHeader: {
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 20,
+    marginBottom: designSystem.spacing[3],
+    paddingLeft: designSystem.spacing[2],
+  },
+  legendDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#4C4DDC',
+    marginRight: designSystem.spacing[2],
+  },
+  legendDotRed: {
+    backgroundColor: '#DC2626',
+  },
+  chartLabel: {
+    color: designSystem.colors.text.primary,
+    fontWeight: '600',
   },
   svg: {
     overflow: 'visible',
@@ -379,7 +367,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   emptyText: {
-    color: '#101010', // Color 03 - Noir pour meilleure lisibilité
+    color: designSystem.colors.text.secondary,
   },
 });
 
