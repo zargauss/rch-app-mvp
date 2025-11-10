@@ -7,7 +7,7 @@ import Slider from '@react-native-community/slider';
 
 // Components
 import AppCard from '../components/ui/AppCard';
-import AppText from '../ui/AppText';
+import AppText from '../components/ui/AppText';
 import PrimaryButton from '../components/ui/PrimaryButton';
 import Toast from '../components/ui/Toast';
 import DateTimeInput, { isValidDate, isValidTime } from '../components/ui/DateTimeInput';
