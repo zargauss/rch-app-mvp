@@ -115,81 +115,90 @@ export default function SurveyScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Section : Bilan à remplir */}
+        {/* Section : Questionnaires à remplir */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <MaterialCommunityIcons name="clipboard-text" size={24} color={designSystem.colors.primary[500]} />
             <AppText variant="h3" style={styles.sectionTitle}>
-              Bilan à remplir
+              Questionnaires à remplir
             </AppText>
           </View>
 
-          {/* Carte formulaire quotidien */}
-          <AppCard 
-            style={styles.surveyCard}
-            onPress={() => navigation.navigate('DailySurvey')}
-            pressable
-          >
-            <View style={styles.cardContent}>
-              <View style={styles.cardHeader}>
-                <MaterialCommunityIcons 
-                  name={surveyCompleted ? "check-circle" : "clipboard-text-outline"} 
-                  size={32} 
-                  color={surveyCompleted ? designSystem.colors.secondary[600] : designSystem.colors.primary[500]} 
-                />
-                <View style={styles.cardHeaderText}>
-                  <AppText variant="h4" style={styles.cardTitle}>
-                    Bilan quotidien
-                  </AppText>
-                  <AppText variant="bodySmall" style={styles.cardSubtitle}>
-                    {surveyCompleted ? 'Complété aujourd\'hui' : 'À compléter aujourd\'hui'}
-                  </AppText>
+          {/* Carte formulaire quotidien - Seulement si non complété */}
+          {!surveyCompleted && (
+            <AppCard
+              style={styles.surveyCard}
+              onPress={() => navigation.navigate('DailySurvey')}
+              pressable
+            >
+              <View style={styles.cardContent}>
+                <View style={styles.cardHeader}>
+                  <MaterialCommunityIcons
+                    name="clipboard-text-outline"
+                    size={32}
+                    color={designSystem.colors.primary[500]}
+                  />
+                  <View style={styles.cardHeaderText}>
+                    <AppText variant="h4" style={styles.cardTitle}>
+                      Bilan quotidien
+                    </AppText>
+                    <AppText variant="bodySmall" style={styles.cardSubtitle}>
+                      À compléter aujourd'hui
+                    </AppText>
+                  </View>
                 </View>
-              </View>
-              {surveyCompleted && (
-                <MaterialCommunityIcons 
-                  name="chevron-right" 
-                  size={24} 
-                  color={designSystem.colors.text.tertiary} 
+                <MaterialCommunityIcons
+                  name="chevron-right"
+                  size={24}
+                  color={designSystem.colors.text.tertiary}
                 />
-              )}
-            </View>
-          </AppCard>
+              </View>
+            </AppCard>
+          )}
 
-          {/* Carte IBDisk */}
-          <AppCard 
-            style={[styles.surveyCard, !ibdiskAvailable && styles.cardDisabled]}
-            onPress={ibdiskAvailable ? () => navigation.navigate('IBDiskQuestionnaire') : null}
-            pressable={ibdiskAvailable}
-          >
-            <View style={styles.cardContent}>
-              <View style={styles.cardHeader}>
-                <MaterialCommunityIcons 
-                  name="chart-box-outline" 
-                  size={32} 
-                  color={ibdiskAvailable ? designSystem.colors.primary[500] : designSystem.colors.text.tertiary} 
-                />
-                <View style={styles.cardHeaderText}>
-                  <AppText variant="h4" style={[styles.cardTitle, !ibdiskAvailable && styles.cardTitleDisabled]}>
-                    Questionnaire IBDisk
-                  </AppText>
-                  <AppText variant="bodySmall" style={styles.cardSubtitle}>
-                    {ibdiskAvailable 
-                      ? 'Disponible maintenant' 
-                      : `Disponible dans ${ibdiskDaysRemaining} jour${ibdiskDaysRemaining > 1 ? 's' : ''}`
-                    }
-                  </AppText>
+          {/* Carte IBDisk - Seulement si disponible */}
+          {ibdiskAvailable && (
+            <AppCard
+              style={styles.surveyCard}
+              onPress={() => navigation.navigate('IBDiskQuestionnaire')}
+              pressable
+            >
+              <View style={styles.cardContent}>
+                <View style={styles.cardHeader}>
+                  <MaterialCommunityIcons
+                    name="chart-box-outline"
+                    size={32}
+                    color={designSystem.colors.primary[500]}
+                  />
+                  <View style={styles.cardHeaderText}>
+                    <AppText variant="h4" style={styles.cardTitle}>
+                      Questionnaire IBDisk
+                    </AppText>
+                    <AppText variant="bodySmall" style={styles.cardSubtitle}>
+                      Disponible maintenant
+                    </AppText>
+                  </View>
                 </View>
-              </View>
-              {ibdiskAvailable && (
-                <MaterialCommunityIcons 
-                  name="chevron-right" 
-                  size={24} 
-                  color={designSystem.colors.text.tertiary} 
+                <MaterialCommunityIcons
+                  name="chevron-right"
+                  size={24}
+                  color={designSystem.colors.text.tertiary}
                 />
-              )}
-            </View>
-          </AppCard>
+              </View>
+            </AppCard>
+          )}
+
+          {/* Empty state si aucun questionnaire à remplir */}
+          {surveyCompleted && !ibdiskAvailable && (
+            <AppCard style={styles.infoCard}>
+              <EmptyState
+                icon="check-circle-outline"
+                title="Tous les questionnaires sont à jour"
+                message="Vous avez complété tous les questionnaires disponibles aujourd'hui."
+                variant="default"
+              />
+            </AppCard>
+          )}
         </View>
 
         {/* Section : Bilan à venir */}
@@ -201,14 +210,39 @@ export default function SurveyScreen() {
             </AppText>
           </View>
 
-          {!ibdiskAvailable ? (
-            <AppCard
-              style={[styles.surveyCard, styles.disabledCard]}
-              disabled
-            >
+          {/* Bilan quotidien complété - Disponible demain */}
+          {surveyCompleted && (
+            <AppCard style={[styles.surveyCard, styles.disabledCard]} disabled>
               <View style={styles.surveyCardHeader}>
                 <MaterialCommunityIcons
-                  name="checkbox-multiple-marked-circle"
+                  name="check-circle"
+                  size={32}
+                  color="#94A3B8"
+                />
+                <View style={styles.surveyCardContent}>
+                  <AppText variant="h4" style={[styles.surveyCardTitle, styles.disabledText]}>
+                    Bilan quotidien
+                  </AppText>
+                  <AppText variant="bodySmall" style={[styles.surveyCardDescription, styles.disabledText]}>
+                    Disponible demain
+                  </AppText>
+                </View>
+              </View>
+              <View style={styles.surveyCardFooter}>
+                <MaterialCommunityIcons name="clock-outline" size={16} color="#94A3B8" />
+                <AppText variant="bodySmall" style={styles.disabledText}>
+                  Ce questionnaire est disponible une fois par jour
+                </AppText>
+              </View>
+            </AppCard>
+          )}
+
+          {/* IBDisk complété - En cooldown */}
+          {!ibdiskAvailable && (
+            <AppCard style={[styles.surveyCard, styles.disabledCard]} disabled>
+              <View style={styles.surveyCardHeader}>
+                <MaterialCommunityIcons
+                  name="check-circle"
                   size={32}
                   color="#94A3B8"
                 />
@@ -217,7 +251,9 @@ export default function SurveyScreen() {
                     Questionnaire IBDisk
                   </AppText>
                   <AppText variant="bodySmall" style={[styles.surveyCardDescription, styles.disabledText]}>
-                    Disponible dans {ibdiskDaysRemaining} jour{ibdiskDaysRemaining > 1 ? 's' : ''}
+                    {ibdiskDaysRemaining === 1
+                      ? 'Disponible demain'
+                      : `Disponible dans ${ibdiskDaysRemaining} jours`}
                   </AppText>
                 </View>
               </View>
@@ -228,12 +264,15 @@ export default function SurveyScreen() {
                 </AppText>
               </View>
             </AppCard>
-          ) : (
+          )}
+
+          {/* Empty state si aucun bilan à venir */}
+          {!surveyCompleted && ibdiskAvailable && (
             <AppCard style={styles.infoCard}>
               <EmptyState
                 icon="calendar-outline"
-                title="Aucun bilan programmé"
-                message="Les bilans quotidiens sont disponibles chaque jour. Le questionnaire IBDisk est disponible une fois par mois."
+                title="Aucun bilan à venir"
+                message="Les questionnaires complétés apparaîtront ici avec leur date de prochaine disponibilité."
                 variant="default"
               />
             </AppCard>
