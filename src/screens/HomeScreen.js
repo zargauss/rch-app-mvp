@@ -549,12 +549,6 @@ export default function HomeScreen({ route }) {
     setTreatmentSuggestions([]);
   };
 
-  const showToast = (message, type = 'success') => {
-    setToastMessage(message);
-    setToastType(type);
-    setToastVisible(true);
-  };
-
   const handleTreatmentNameChange = (text) => {
     setTreatmentName(text);
     
