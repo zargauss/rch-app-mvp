@@ -201,14 +201,43 @@ export default function SurveyScreen() {
             </AppText>
           </View>
 
-          <AppCard style={styles.infoCard}>
-            <EmptyState
-              icon="calendar-outline"
-              title="Aucun bilan programmé"
-              message="Les bilans quotidiens sont disponibles chaque jour. Le questionnaire IBDisk est disponible une fois par mois."
-              variant="default"
-            />
-          </AppCard>
+          {!ibdiskAvailable ? (
+            <AppCard
+              style={[styles.surveyCard, styles.disabledCard]}
+              disabled
+            >
+              <View style={styles.surveyCardHeader}>
+                <MaterialCommunityIcons
+                  name="checkbox-multiple-marked-circle"
+                  size={32}
+                  color="#94A3B8"
+                />
+                <View style={styles.surveyCardContent}>
+                  <AppText variant="h4" style={[styles.surveyCardTitle, styles.disabledText]}>
+                    Questionnaire IBDisk
+                  </AppText>
+                  <AppText variant="bodySmall" style={[styles.surveyCardDescription, styles.disabledText]}>
+                    Disponible dans {ibdiskDaysRemaining} jour{ibdiskDaysRemaining > 1 ? 's' : ''}
+                  </AppText>
+                </View>
+              </View>
+              <View style={styles.surveyCardFooter}>
+                <MaterialCommunityIcons name="clock-outline" size={16} color="#94A3B8" />
+                <AppText variant="bodySmall" style={styles.disabledText}>
+                  Ce questionnaire est disponible une fois par mois
+                </AppText>
+              </View>
+            </AppCard>
+          ) : (
+            <AppCard style={styles.infoCard}>
+              <EmptyState
+                icon="calendar-outline"
+                title="Aucun bilan programmé"
+                message="Les bilans quotidiens sont disponibles chaque jour. Le questionnaire IBDisk est disponible une fois par mois."
+                variant="default"
+              />
+            </AppCard>
+          )}
         </View>
 
         {/* Section : Historique des bilans */}
@@ -399,6 +428,38 @@ const styles = StyleSheet.create({
   },
   historyItemDetails: {
     color: designSystem.colors.text.secondary,
+  },
+  surveyCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: designSystem.spacing[3],
+  },
+  surveyCardContent: {
+    marginLeft: designSystem.spacing[3],
+    flex: 1,
+  },
+  surveyCardTitle: {
+    color: designSystem.colors.text.primary,
+    fontWeight: '600',
+    marginBottom: designSystem.spacing[1],
+  },
+  surveyCardDescription: {
+    color: designSystem.colors.text.secondary,
+  },
+  surveyCardFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: designSystem.spacing[2],
+    paddingTop: designSystem.spacing[3],
+    borderTopWidth: 1,
+    borderTopColor: designSystem.colors.border.light,
+  },
+  disabledCard: {
+    opacity: 0.6,
+    backgroundColor: '#F8FAFC',
+  },
+  disabledText: {
+    color: '#94A3B8',
   },
 });
 
