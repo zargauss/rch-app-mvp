@@ -11,7 +11,8 @@ import StatCard from '../components/ui/StatCard';
 import Toast from '../components/ui/Toast';
 import SkeletonCard from '../components/ui/SkeletonCard';
 import EmptyState from '../components/ui/EmptyState';
-import DateTimeInput, { isValidDate, isValidTime } from '../components/ui/DateTimeInput';
+import DateTimePicker from '../components/ui/DateTimePicker';
+import { isValidDate, isValidTime } from '../components/ui/DateTimeInput';
 import Slider from '@react-native-community/slider';
 import CalendarSection from '../components/home/CalendarSection';
 import storage from '../utils/storage';
@@ -1168,7 +1169,7 @@ export default function HomeScreen({ route }) {
               
               <View style={styles.dateTimeSection}>
               <AppText style={styles.fieldLabel}>Date et heure</AppText>
-              <DateTimeInput
+              <DateTimePicker
                 dateValue={dateInput}
                 timeValue={timeInput}
                 onDateChange={setDateInput}
@@ -1248,7 +1249,7 @@ export default function HomeScreen({ route }) {
 
               <View style={styles.dateTimeSection}>
                 <AppText style={styles.fieldLabel}>Date et heure</AppText>
-                <DateTimeInput
+                <DateTimePicker
                   dateValue={stoolManagement.editDateInput}
                   timeValue={stoolManagement.editTimeInput}
                   onDateChange={stoolManagement.setEditDateInput}
@@ -1330,7 +1331,7 @@ export default function HomeScreen({ route }) {
                   📅 Date et heure de la prise
                 </AppText>
                 
-                <DateTimeInput
+                <DateTimePicker
                   dateValue={treatmentDateInput}
                   timeValue={treatmentTimeInput}
                   onDateChange={setTreatmentDateInput}
