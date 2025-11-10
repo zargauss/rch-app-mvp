@@ -13,6 +13,16 @@ import {
   checkOverdose,
   formatFrequency
 } from '../utils/treatmentUtils';
+import {
+  getSymptoms,
+  getSymptomDisplayName,
+  INTENSITY_LABELS
+} from '../utils/symptomsUtils';
+import {
+  getNotes,
+  getSharedNotes,
+  getCategoryLabel
+} from '../utils/notesUtils';
 import AppText from '../components/ui/AppText';
 import AppCard from '../components/ui/AppCard';
 import PrimaryButton from '../components/ui/PrimaryButton';
@@ -30,6 +40,8 @@ export default function ExportScreen() {
   const [schemas, setSchemas] = useState([]);
   const [intakes, setIntakes] = useState([]);
   const [ibdiskHistory, setIbdiskHistory] = useState([]);
+  const [symptoms, setSymptoms] = useState([]);
+  const [notes, setNotes] = useState([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState('complet'); // complet, 90, 30, 7
   const theme = useTheme();
@@ -98,6 +110,15 @@ export default function ExportScreen() {
     const ibdiskData = ibdiskJson ? JSON.parse(ibdiskJson) : [];
     setIbdiskHistory(ibdiskData);
     console.log('📦 Export - IBDisk loaded:', ibdiskData.length, 'questionnaires');
+
+    // Charger les symptômes et notes
+    const symptomsData = getSymptoms();
+    setSymptoms(symptomsData);
+    console.log('📦 Export - Symptoms loaded:', symptomsData.length, 'symptoms');
+
+    const notesData = getSharedNotes(); // Only load shared notes for export
+    setNotes(notesData);
+    console.log('📦 Export - Shared notes loaded:', notesData.length, 'notes');
   };
 
   const formatDate = (dateStr) => {
@@ -139,12 +160,14 @@ export default function ExportScreen() {
     let filteredSurveys = { ...surveys };
     let filteredTreatments = [...treatments];
     let filteredIbdisk = [...ibdiskHistory];
-    
+    let filteredSymptoms = [...symptoms];
+    let filteredNotes = [...notes];
+
     if (selectedPeriod !== 'complet' && scores.length > 0) {
       const days = parseInt(selectedPeriod);
       const endDate = new Date();
       const startDate = new Date(endDate.getTime() - (days - 1) * 24 * 60 * 60 * 1000);
-      
+
       // Filtrer les scores
       filteredScores = scores.filter(score => {
         const scoreDate = new Date(score.date);
@@ -171,13 +194,33 @@ export default function ExportScreen() {
         const treatmentDate = new Date(treatment.timestamp);
         return treatmentDate >= startDate && treatmentDate <= endDate;
       });
+
+      // Filtrer les symptômes pour la période
+      filteredSymptoms = symptoms.filter(symptom => {
+        const symptomDate = new Date(symptom.timestamp);
+        return symptomDate >= startDate && symptomDate <= endDate;
+      });
+
+      // Filtrer les notes pour la période
+      filteredNotes = notes.filter(note => {
+        const noteDate = new Date(note.timestamp);
+        return noteDate >= startDate && noteDate <= endDate;
+      });
     }
 
-    return { scores: filteredScores, stools: filteredStools, surveys: filteredSurveys, treatments: filteredTreatments, ibdisk: filteredIbdisk };
+    return {
+      scores: filteredScores,
+      stools: filteredStools,
+      surveys: filteredSurveys,
+      treatments: filteredTreatments,
+      ibdisk: filteredIbdisk,
+      symptoms: filteredSymptoms,
+      notes: filteredNotes
+    };
   };
 
   const generateHTML = () => {
-    const { scores: filteredScores, stools: filteredStools, surveys: filteredSurveys, treatments: filteredTreatments, ibdisk: filteredIbdisk } = getFilteredData();
+    const { scores: filteredScores, stools: filteredStools, surveys: filteredSurveys, treatments: filteredTreatments, ibdisk: filteredIbdisk, symptoms: filteredSymptoms, notes: filteredNotes } = getFilteredData();
     
     const currentDate = new Date().toLocaleDateString('fr-FR', {
       year: 'numeric',
@@ -886,6 +929,76 @@ export default function ExportScreen() {
           </div>
         </div>
 
+        ${filteredSymptoms.length > 0 ? `
+        <div class="details-section">
+          <div class="details-title">Symptômes Enregistrés</div>
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Symptôme</th>
+                <th>Intensité</th>
+                <th>Note</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${filteredSymptoms.sort((a, b) => b.timestamp - a.timestamp).map(symptom => {
+                const date = new Date(symptom.timestamp);
+                const dateStr = date.toLocaleDateString('fr-FR');
+                const timeStr = date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                const symptomName = getSymptomDisplayName(symptom);
+                const intensityLabel = INTENSITY_LABELS[symptom.intensity];
+                const intensityColor = symptom.intensity <= 2 ? '#16A34A' : symptom.intensity <= 3 ? '#F59E0B' : '#DC2626';
+
+                return `
+                  <tr>
+                    <td>${dateStr} ${timeStr}</td>
+                    <td style="font-weight: 600;">${symptomName}</td>
+                    <td style="text-align: center; color: ${intensityColor}; font-weight: 700;">
+                      ${symptom.intensity}/5 (${intensityLabel})
+                    </td>
+                    <td style="font-style: italic; color: #666;">${symptom.note || '—'}</td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+        ` : ''}
+
+        ${filteredNotes.length > 0 ? `
+        <div class="details-section">
+          <div class="details-title">Notes Partagées avec le Médecin</div>
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Catégorie</th>
+                <th>Note</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${filteredNotes.sort((a, b) => b.timestamp - a.timestamp).map(note => {
+                const date = new Date(note.timestamp);
+                const dateStr = date.toLocaleDateString('fr-FR');
+                const timeStr = date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                const categoryLabel = note.category ? getCategoryLabel(note.category) : '—';
+
+                return `
+                  <tr>
+                    <td style="white-space: nowrap;">${dateStr} ${timeStr}</td>
+                    <td style="text-align: center;">
+                      ${note.category ? `<span style="background: #EDEDFC; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; color: #4C4DDC;">${categoryLabel}</span>` : '—'}
+                    </td>
+                    <td>${note.content}</td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+        ` : ''}
+
         <div class="details-section">
           <div class="details-title">Historique Détaillé des Scores</div>
           ${filteredScores.length > 0 ? `
@@ -1250,6 +1363,14 @@ export default function ExportScreen() {
             <AppText variant="headline">{Object.keys(getFilteredData().surveys).length}</AppText>
             <AppText variant="caption">Bilans quotidiens</AppText>
           </View>
+          <View style={styles.statItem}>
+            <AppText variant="headline">{getFilteredData().symptoms.length}</AppText>
+            <AppText variant="caption">Symptômes</AppText>
+          </View>
+          <View style={styles.statItem}>
+            <AppText variant="headline">{getFilteredData().notes.length}</AppText>
+            <AppText variant="caption">Notes partagées</AppText>
+          </View>
         </View>
       </AppCard>
 
@@ -1257,10 +1378,13 @@ export default function ExportScreen() {
         <AppText variant="body" style={styles.contentTitle}>Contenu du Rapport</AppText>
         <View style={styles.contentList}>
           <AppText variant="body">• Résumé de la période (score moyen, saignements, selles)</AppText>
+          <AppText variant="body">• Évolution graphique des scores et selles sanglantes</AppText>
+          <AppText variant="body">• Symptômes enregistrés avec intensité et notes</AppText>
+          <AppText variant="body">• Notes partagées avec le médecin</AppText>
           <AppText variant="body">• Historique détaillé avec scores, selles jour/nuit, saignements</AppText>
           <AppText variant="body">• Données des bilans quotidiens (douleurs, état général)</AppText>
-          <AppText variant="body">• Codes couleur pour interprétation rapide</AppText>
-          <AppText variant="body">• Format médical professionnel</AppText>
+          <AppText variant="body">• Observance thérapeutique et traitements</AppText>
+          <AppText variant="body">• Format médical professionnel avec codes couleur</AppText>
         </View>
       </AppCard>
 

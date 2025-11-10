@@ -11,10 +11,8 @@ import StatCard from '../components/ui/StatCard';
 import Toast from '../components/ui/Toast';
 import SkeletonCard from '../components/ui/SkeletonCard';
 import EmptyState from '../components/ui/EmptyState';
-import DateTimePicker from '../components/ui/DateTimePicker';
-import { isValidDate, isValidTime } from '../components/ui/DateTimeInput';
+import DateTimeInput, { isValidDate, isValidTime } from '../components/ui/DateTimeInput';
 import Slider from '@react-native-community/slider';
-import CalendarSection from '../components/home/CalendarSection';
 import storage from '../utils/storage';
 import calculateLichtigerScore from '../utils/scoreCalculator';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -47,12 +45,6 @@ import {
   getCategoryLabel,
 } from '../utils/notesUtils';
 
-// Hooks personnalisés
-import { useHistoryData } from '../hooks/useHistoryData';
-import { useStoolManagement } from '../hooks/useStoolManagement';
-import { useSymptomManagement } from '../hooks/useSymptomManagement';
-import { useNoteManagement } from '../hooks/useNoteManagement';
-
 export default function HomeScreen({ route }) {
   const navigation = useNavigation();
   const theme = useTheme();
@@ -63,25 +55,36 @@ export default function HomeScreen({ route }) {
   const [dailyCount, setDailyCount] = useState(0);
   const [surveyCompleted, setSurveyCompleted] = useState(false);
   const [todayProvisionalScore, setTodayProvisionalScore] = useState(null);
-
+  
+  // États pour l'historique (depuis HistoryScreen)
+  const [stools, setStools] = useState([]);
+  const [scores, setScores] = useState([]);
+  const [treatments, setTreatments] = useState([]);
+  const [ibdiskHistory, setIbdiskHistory] = useState([]);
   const [currentIbdiskIndex, setCurrentIbdiskIndex] = useState(0);
   const [calendarMode, setCalendarMode] = useState('score');
   const [calendarMonthOffset, setCalendarMonthOffset] = useState(0);
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [editingStool, setEditingStool] = useState(null);
+  const [editBristol, setEditBristol] = useState(4);
+  const [editHasBlood, setEditHasBlood] = useState(false);
+  const [editDateInput, setEditDateInput] = useState('');
+  const [editTimeInput, setEditTimeInput] = useState('');
   const [dateInput, setDateInput] = useState('');
   const [timeInput, setTimeInput] = useState('');
-
+  
   // États pour la modale de traitement
   const [treatmentModalVisible, setTreatmentModalVisible] = useState(false);
   const [treatmentName, setTreatmentName] = useState('');
   const [treatmentDateInput, setTreatmentDateInput] = useState('');
   const [treatmentTimeInput, setTreatmentTimeInput] = useState('');
   const [treatmentSuggestions, setTreatmentSuggestions] = useState([]);
-
+  
   // État pour le Toast
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState('success');
-
+  
   // États pour IBDisk
   const [ibdiskAvailable, setIbdiskAvailable] = useState(true);
   const [ibdiskDaysRemaining, setIbdiskDaysRemaining] = useState(0);
@@ -95,38 +98,14 @@ export default function HomeScreen({ route }) {
   const tooltipOpacity = useRef(new Animated.Value(0)).current;
   const tooltipScale = useRef(new Animated.Value(0.96)).current;
 
+  // États pour symptômes et notes
+  const [symptoms, setSymptoms] = useState([]);
+  const [notes, setNotes] = useState([]);
+  const [symptomModalVisible, setSymptomModalVisible] = useState(false);
+  const [noteModalVisible, setNoteModalVisible] = useState(false);
+  const [editingSymptom, setEditingSymptom] = useState(null);
+  const [editingNote, setEditingNote] = useState(null);
   const [historyFilter, setHistoryFilter] = useState('all'); // 'all', 'stools', 'symptoms', 'notes'
-
-  // Hook pour gérer les données d'historique
-  const historyData = useHistoryData();
-  const { stools, scores, treatments, ibdiskHistory, symptoms, notes, loadHistoryData } = historyData;
-
-  // Toast helper
-  const showToast = (message, type = 'success') => {
-    setToastMessage(message);
-    setToastType(type);
-    setToastVisible(true);
-  };
-
-  // Hook pour gérer les selles
-  const stoolManagement = useStoolManagement({
-    onDataChange: () => {
-      loadHistoryData();
-      setDailyCount(computeTodayCount());
-    }
-  });
-
-  // Hook pour gérer les symptômes
-  const symptomManagement = useSymptomManagement({
-    onDataChange: loadHistoryData,
-    showToast
-  });
-
-  // Hook pour gérer les notes
-  const noteManagement = useNoteManagement({
-    onDataChange: loadHistoryData,
-    showToast
-  });
 
   // Animation du tooltip
   useEffect(() => {
@@ -334,13 +313,211 @@ export default function HomeScreen({ route }) {
   useEffect(() => {
     registerHandlers({
       onStoolPress: showModal,
-      onSymptomPress: symptomManagement.handleOpenSymptomModal,
-      onNotePress: noteManagement.handleOpenNoteModal,
+      onSymptomPress: handleOpenSymptomModal,
+      onNotePress: handleOpenNoteModal,
     });
   }, []);
 
   const hideModal = () => {
     closeModal();
+  };
+
+  // Fonctions pour l'historique (depuis HistoryScreen)
+  const loadHistoryData = () => {
+    const stoolsJson = storage.getString('dailySells');
+    const entries = stoolsJson ? JSON.parse(stoolsJson) : [];
+    setStools(entries.sort((a, b) => b.timestamp - a.timestamp));
+
+    const histJson = storage.getString('scoresHistory');
+    const history = histJson ? JSON.parse(histJson) : [];
+    setScores(history);
+
+    const treatmentsJson = storage.getString('treatments');
+    const treatmentsList = treatmentsJson ? JSON.parse(treatmentsJson) : [];
+    setTreatments(treatmentsList.sort((a, b) => b.timestamp - a.timestamp));
+
+    // Charger l'historique IBDisk
+    const ibdiskJson = storage.getString('ibdiskHistory');
+    const ibdiskList = ibdiskJson ? JSON.parse(ibdiskJson) : [];
+    setIbdiskHistory(ibdiskList);
+    setCurrentIbdiskIndex(0);
+
+    // Charger les symptômes et notes
+    const symptomsData = getSymptoms();
+    setSymptoms(symptomsData.sort((a, b) => b.timestamp - a.timestamp));
+
+    const notesData = getNotes();
+    setNotes(notesData.sort((a, b) => b.timestamp - a.timestamp));
+  };
+
+  // Handlers pour les symptômes
+  const handleOpenSymptomModal = () => {
+    setEditingSymptom(null);
+    setSymptomModalVisible(true);
+  };
+
+  const handleSaveSymptom = (data) => {
+    saveFeedback();
+    if (editingSymptom) {
+      // Mode édition
+      updateSymptom(editingSymptom.id, data);
+      showToast('✅ Symptôme mis à jour', 'success');
+    } else {
+      // Mode création
+      createSymptom(data.type, data.intensity, data.note, data.date);
+      showToast('✅ Symptôme enregistré', 'success');
+    }
+    setSymptomModalVisible(false);
+    setEditingSymptom(null);
+    loadHistoryData();
+  };
+
+  const handleEditSymptom = (symptom) => {
+    setEditingSymptom(symptom);
+    setSymptomModalVisible(true);
+  };
+
+  const handleDeleteSymptom = (symptomId) => {
+    const executeDelete = () => {
+      deleteFeedback();
+      deleteSymptom(symptomId);
+      loadHistoryData();
+      showToast('🗑️ Symptôme supprimé', 'success');
+    };
+
+    if (Platform.OS === 'web') {
+      if (window.confirm('Êtes-vous sûr de vouloir supprimer ce symptôme ?')) {
+        executeDelete();
+      }
+    } else {
+      Alert.alert(
+        'Supprimer le symptôme',
+        'Êtes-vous sûr de vouloir supprimer ce symptôme ?',
+        [
+          { text: 'Annuler', style: 'cancel' },
+          { text: 'Supprimer', onPress: executeDelete, style: 'destructive' }
+        ]
+      );
+    }
+  };
+
+  // Handlers pour les notes
+  const handleOpenNoteModal = () => {
+    setEditingNote(null);
+    setNoteModalVisible(true);
+  };
+
+  const handleSaveNote = (data) => {
+    saveFeedback();
+    if (editingNote) {
+      // Mode édition
+      updateNote(editingNote.id, data);
+      showToast('✅ Note mise à jour', 'success');
+    } else {
+      // Mode création
+      createNote(data.content, data.category, data.sharedWithDoctor, data.date);
+      showToast('✅ Note enregistrée', 'success');
+    }
+    setNoteModalVisible(false);
+    setEditingNote(null);
+    loadHistoryData();
+  };
+
+  const handleEditNote = (note) => {
+    setEditingNote(note);
+    setNoteModalVisible(true);
+  };
+
+  const handleDeleteNote = (noteId) => {
+    const executeDelete = () => {
+      deleteFeedback();
+      deleteNote(noteId);
+      loadHistoryData();
+      showToast('🗑️ Note supprimée', 'success');
+    };
+
+    if (Platform.OS === 'web') {
+      if (window.confirm('Êtes-vous sûr de vouloir supprimer cette note ?')) {
+        executeDelete();
+      }
+    } else {
+      Alert.alert(
+        'Supprimer la note',
+        'Êtes-vous sûr de vouloir supprimer cette note ?',
+        [
+          { text: 'Annuler', style: 'cancel' },
+          { text: 'Supprimer', onPress: executeDelete, style: 'destructive' }
+        ]
+      );
+    }
+  };
+
+  const handleDeleteStool = (stoolId) => {
+    const executeDelete = () => {
+      deleteFeedback();
+      const stoolsJson = storage.getString('dailySells');
+      const stools = stoolsJson ? JSON.parse(stoolsJson) : [];
+      const updated = stools.filter(s => s.id !== stoolId);
+      storage.set('dailySells', JSON.stringify(updated));
+      setStools(updated.sort((a, b) => b.timestamp - a.timestamp));
+      setDailyCount(computeTodayCount());
+    };
+
+    if (Platform.OS === 'web') {
+      if (window.confirm('Êtes-vous sûr de vouloir supprimer cette selle ?')) {
+        executeDelete();
+      }
+    } else {
+      Alert.alert(
+        'Supprimer la selle',
+        'Êtes-vous sûr de vouloir supprimer cette selle ?',
+        [
+          { text: 'Annuler', style: 'cancel' },
+          { text: 'Supprimer', onPress: executeDelete, style: 'destructive' }
+        ]
+      );
+    }
+  };
+
+  const handleEditStool = (stool) => {
+    setEditingStool(stool);
+    setEditBristol(stool.bristolScale);
+    setEditHasBlood(stool.hasBlood);
+    
+    const date = new Date(stool.timestamp);
+    const dateStr = date.toLocaleDateString('fr-FR');
+    const timeStr = date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    
+    setEditDateInput(dateStr);
+    setEditTimeInput(timeStr);
+    setEditModalVisible(true);
+  };
+
+  const hideEditModal = () => {
+    setEditModalVisible(false);
+    setEditingStool(null);
+  };
+
+  const handleSaveEdit = () => {
+    if (!editingStool) return;
+
+    const editDateTime = parseDateTime(editDateInput, editTimeInput);
+
+    const updatedStool = {
+      ...editingStool,
+      timestamp: editDateTime.getTime(),
+      bristolScale: Math.round(editBristol),
+      hasBlood: editHasBlood
+    };
+
+    const stoolsJson = storage.getString('dailySells');
+    const stools = stoolsJson ? JSON.parse(stoolsJson) : [];
+    const updated = stools.map(s => s.id === editingStool.id ? updatedStool : s);
+    storage.set('dailySells', JSON.stringify(updated));
+    setStools(updated.sort((a, b) => b.timestamp - a.timestamp));
+    setDailyCount(computeTodayCount());
+    saveFeedback();
+    hideEditModal();
   };
 
   const formatCompactDate = (timestamp) => {
@@ -395,6 +572,146 @@ export default function HomeScreen({ route }) {
     }
   };
 
+  // Rendu calendrier moderne (depuis HistoryScreen)
+  const renderModernCalendar = () => {
+    const now = new Date();
+    const targetDate = new Date(now.getFullYear(), now.getMonth() + calendarMonthOffset, 1);
+    const year = targetDate.getFullYear();
+    const month = targetDate.getMonth();
+    
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    
+    let startingDayOfWeek = firstDay.getDay();
+    startingDayOfWeek = startingDayOfWeek === 0 ? 6 : startingDayOfWeek - 1;
+    
+    const days = [];
+    for (let i = 0; i < startingDayOfWeek; i++) {
+      days.push(null);
+    }
+    for (let day = 1; day <= daysInMonth; day++) {
+      days.push(day);
+    }
+    const remainingCells = days.length % 7;
+    if (remainingCells > 0) {
+      for (let i = 0; i < (7 - remainingCells); i++) {
+        days.push(null);
+      }
+    }
+
+    const monthNames = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+    const dayNames = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+    const isCurrentMonth = calendarMonthOffset === 0;
+
+    return (
+      <View style={styles.calendarContainer}>
+        <View style={styles.calendarMonthHeader}>
+          <TouchableOpacity 
+            onPress={() => setCalendarMonthOffset(calendarMonthOffset - 1)}
+            style={styles.monthNavButton}
+          >
+            <AppText style={styles.monthNavIcon}>←</AppText>
+          </TouchableOpacity>
+          
+          <View style={styles.monthTitleContainer}>
+            <AppText variant="headlineLarge" style={styles.calendarMonth}>
+              {monthNames[month]} {year}
+            </AppText>
+            {isCurrentMonth && (
+              <View style={styles.currentMonthBadge}>
+                <AppText variant="labelSmall" style={styles.currentMonthText}>
+                  Aujourd'hui
+                </AppText>
+              </View>
+            )}
+          </View>
+          
+          <TouchableOpacity 
+            onPress={() => setCalendarMonthOffset(calendarMonthOffset + 1)}
+            style={styles.monthNavButton}
+          >
+            <AppText style={styles.monthNavIcon}>→</AppText>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.calendarHeader}>
+          {dayNames.map((name, index) => (
+            <View key={index} style={styles.dayNameCell}>
+              <AppText variant="labelSmall" style={styles.dayName}>
+                {name}
+              </AppText>
+            </View>
+          ))}
+        </View>
+
+        <View style={styles.calendarGrid}>
+          {days.map((day, index) => {
+            if (day === null) {
+              return <View key={`empty-${index}`} style={styles.dayCell} />;
+            }
+
+            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            
+            let cellContent = null;
+            let cellStyle = [styles.dayCell];
+            let hasData = false;
+
+            if (calendarMode === 'score') {
+              const score = calculateLichtigerScore(dateStr, storage);
+              if (score !== null) {
+                hasData = true;
+                let scoreColor = '#4C4DDC';
+                if (score >= 10) scoreColor = '#101010';
+                
+                cellStyle.push(styles.dayCellWithScore, { backgroundColor: scoreColor });
+                cellContent = (
+                  <View style={styles.dayCellContent}>
+                    <AppText variant="headlineLarge" style={styles.scoreInCell}>
+                      {score}
+                    </AppText>
+                  </View>
+                );
+              }
+            } else {
+              const [y, m, d] = dateStr.split('-').map(Number);
+              const dayStart = new Date(y, m - 1, d, 0, 0, 0, 0).getTime();
+              const dayEnd = dayStart + 24 * 60 * 60 * 1000;
+              const dayEntries = stools.filter(s => s.timestamp >= dayStart && s.timestamp < dayEnd);
+              
+              if (dayEntries.length > 0) {
+                hasData = true;
+                cellStyle.push(styles.dayCellWithStools);
+                cellContent = (
+                  <View style={styles.dayCellContent}>
+                    <AppText variant="displayMedium" style={styles.stoolCountLarge}>
+                      {dayEntries.length}
+                    </AppText>
+                  </View>
+                );
+              }
+            }
+
+            if (!hasData) {
+              cellStyle.push(styles.dayCellEmpty);
+              cellContent = (
+                <AppText variant="bodyMedium" style={styles.dayNumberEmpty}>
+                  {day}
+                </AppText>
+              );
+            }
+
+            return (
+              <View key={index} style={cellStyle}>
+                {cellContent}
+              </View>
+            );
+          })}
+        </View>
+      </View>
+    );
+  };
+
   // Fonctions pour la modale de traitement
   const showTreatmentModal = () => {
     const now = new Date();
@@ -409,6 +726,12 @@ export default function HomeScreen({ route }) {
     setTreatmentModalVisible(false);
     setTreatmentName('');
     setTreatmentSuggestions([]);
+  };
+
+  const showToast = (message, type = 'success') => {
+    setToastMessage(message);
+    setToastType(type);
+    setToastVisible(true);
   };
 
   const handleTreatmentNameChange = (text) => {
@@ -636,10 +959,6 @@ export default function HomeScreen({ route }) {
         storage.set('scoresHistory', JSON.stringify(newHistory));
       }
     }
-
-    // Recharger les données de l'historique pour HomeScreen
-    loadHistoryData();
-
     saveFeedback();
     hideModal();
   };
@@ -931,13 +1250,13 @@ export default function HomeScreen({ route }) {
                           </View>
                           <View style={styles.stoolActions}>
                             <TouchableOpacity
-                              onPress={() => stoolManagement.handleEditStool(item)}
+                              onPress={() => handleEditStool(item)}
                               style={styles.actionButton}
                             >
                               <MaterialCommunityIcons name="pencil" size={20} color="#4C4DDC" />
                             </TouchableOpacity>
                             <TouchableOpacity
-                              onPress={() => stoolManagement.handleDeleteStool(item.id)}
+                              onPress={() => handleDeleteStool(item.id)}
                               style={styles.actionButton}
                             >
                               <MaterialCommunityIcons name="delete" size={20} color="#DC2626" />
@@ -975,13 +1294,13 @@ export default function HomeScreen({ route }) {
                           </View>
                           <View style={styles.stoolActions}>
                             <TouchableOpacity
-                              onPress={() => symptomManagement.handleEditSymptom(item)}
+                              onPress={() => handleEditSymptom(item)}
                               style={styles.actionButton}
                             >
                               <MaterialCommunityIcons name="pencil" size={20} color="#4C4DDC" />
                             </TouchableOpacity>
                             <TouchableOpacity
-                              onPress={() => symptomManagement.handleDeleteSymptom(item.id)}
+                              onPress={() => handleDeleteSymptom(item.id)}
                               style={styles.actionButton}
                             >
                               <MaterialCommunityIcons name="delete" size={20} color="#DC2626" />
@@ -1030,13 +1349,13 @@ export default function HomeScreen({ route }) {
                           </View>
                           <View style={styles.stoolActions}>
                             <TouchableOpacity
-                              onPress={() => noteManagement.handleEditNote(item)}
+                              onPress={() => handleEditNote(item)}
                               style={styles.actionButton}
                             >
                               <MaterialCommunityIcons name="pencil" size={20} color="#4C4DDC" />
                             </TouchableOpacity>
                             <TouchableOpacity
-                              onPress={() => noteManagement.handleDeleteNote(item.id)}
+                              onPress={() => handleDeleteNote(item.id)}
                               style={styles.actionButton}
                             >
                               <MaterialCommunityIcons name="delete" size={20} color="#DC2626" />
@@ -1064,13 +1383,8 @@ export default function HomeScreen({ route }) {
               onValueChange={setCalendarMode}
             />
           </View>
-
-          <CalendarSection
-            calendarMonthOffset={calendarMonthOffset}
-            setCalendarMonthOffset={setCalendarMonthOffset}
-            calendarMode={calendarMode}
-            stools={stools}
-          />
+          
+          {renderModernCalendar()}
 
           {/* Légende */}
           <View style={styles.legend}>
@@ -1169,7 +1483,7 @@ export default function HomeScreen({ route }) {
               
               <View style={styles.dateTimeSection}>
               <AppText style={styles.fieldLabel}>Date et heure</AppText>
-              <DateTimePicker
+              <DateTimeInput
                 dateValue={dateInput}
                 timeValue={timeInput}
                 onDateChange={setDateInput}
@@ -1240,7 +1554,7 @@ export default function HomeScreen({ route }) {
 
       {/* Modal d'édition de selle */}
       <Portal>
-        <Modal visible={stoolManagement.editModalVisible} onDismiss={stoolManagement.hideEditModal} contentContainerStyle={styles.modalContainer}>
+        <Modal visible={editModalVisible} onDismiss={hideEditModal} contentContainerStyle={styles.modalContainer}>
           <AppCard style={styles.modalCard}>
             <ScrollView showsVerticalScrollIndicator={false}>
               <AppText variant="h2" style={styles.modalTitle}>
@@ -1249,11 +1563,11 @@ export default function HomeScreen({ route }) {
 
               <View style={styles.dateTimeSection}>
                 <AppText style={styles.fieldLabel}>Date et heure</AppText>
-                <DateTimePicker
-                  dateValue={stoolManagement.editDateInput}
-                  timeValue={stoolManagement.editTimeInput}
-                  onDateChange={stoolManagement.setEditDateInput}
-                  onTimeChange={stoolManagement.setEditTimeInput}
+                <DateTimeInput
+                  dateValue={editDateInput}
+                  timeValue={editTimeInput}
+                  onDateChange={setEditDateInput}
+                  onTimeChange={setEditTimeInput}
                   dateLabel="Date (DD/MM/YYYY)"
                   timeLabel="Heure (HH:MM)"
                 />
@@ -1268,15 +1582,15 @@ export default function HomeScreen({ route }) {
                   minimumValue={1}
                   maximumValue={7}
                   step={1}
-                  value={stoolManagement.editBristol}
-                  onValueChange={stoolManagement.setEditBristol}
+                  value={editBristol}
+                  onValueChange={setEditBristol}
                   style={styles.slider}
                   minimumTrackTintColor={theme.colors.primary}
                   maximumTrackTintColor={theme.colors.outline}
                   thumbStyle={{ backgroundColor: theme.colors.primary }}
                 />
                 <AppText variant="labelMedium" style={styles.bristolHint}>
-                  Sélection: {stoolManagement.editBristol} — {bristolDescriptions[stoolManagement.editBristol]}
+                  Sélection: {editBristol} — {bristolDescriptions[editBristol]}
                 </AppText>
               </View>
 
@@ -1284,10 +1598,10 @@ export default function HomeScreen({ route }) {
                 <View style={styles.switchRow}>
                   <AppText variant="bodyLarge">Présence de sang</AppText>
                   <Switch
-                    value={stoolManagement.editHasBlood}
+                    value={editHasBlood}
                     onValueChange={(value) => {
                       toggleFeedback();
-                      stoolManagement.setEditHasBlood(value);
+                      setEditHasBlood(value);
                     }}
                     color={theme.colors.error}
                   />
@@ -1296,7 +1610,7 @@ export default function HomeScreen({ route }) {
 
               <View style={styles.modalActions}>
                 <PrimaryButton
-                  onPress={stoolManagement.handleSaveEdit}
+                  onPress={handleSaveEdit}
                   style={styles.saveButton}
                   variant="primary"
                   size="medium"
@@ -1304,7 +1618,7 @@ export default function HomeScreen({ route }) {
                   Enregistrer
                 </PrimaryButton>
                 <PrimaryButton
-                  onPress={stoolManagement.hideEditModal}
+                  onPress={hideEditModal}
                   style={styles.cancelButton}
                   variant="neutral"
                   size="medium"
@@ -1331,7 +1645,7 @@ export default function HomeScreen({ route }) {
                   📅 Date et heure de la prise
                 </AppText>
                 
-                <DateTimePicker
+                <DateTimeInput
                   dateValue={treatmentDateInput}
                   timeValue={treatmentTimeInput}
                   onDateChange={setTreatmentDateInput}
@@ -1411,18 +1725,24 @@ export default function HomeScreen({ route }) {
 
       {/* Modal de symptôme */}
       <SymptomModal
-        visible={symptomManagement.symptomModalVisible}
-        onDismiss={symptomManagement.handleCloseSymptomModal}
-        onSave={symptomManagement.handleSaveSymptom}
-        initialData={symptomManagement.editingSymptom}
+        visible={symptomModalVisible}
+        onDismiss={() => {
+          setSymptomModalVisible(false);
+          setEditingSymptom(null);
+        }}
+        onSave={handleSaveSymptom}
+        initialData={editingSymptom}
       />
 
       {/* Modal de note */}
       <NoteModal
-        visible={noteManagement.noteModalVisible}
-        onDismiss={noteManagement.handleCloseNoteModal}
-        onSave={noteManagement.handleSaveNote}
-        initialData={noteManagement.editingNote}
+        visible={noteModalVisible}
+        onDismiss={() => {
+          setNoteModalVisible(false);
+          setEditingNote(null);
+        }}
+        onSave={handleSaveNote}
+        initialData={editingNote}
       />
     </View>
   );
@@ -1912,6 +2232,109 @@ const styles = StyleSheet.create({
   },
   calendarHeaderSection: {
     marginBottom: designSystem.spacing[5],
+  },
+  calendarContainer: {
+    marginBottom: designSystem.spacing[4],
+  },
+  calendarMonthHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: designSystem.spacing[4],
+    paddingHorizontal: designSystem.spacing[2],
+  },
+  monthNavButton: {
+    width: 48, // Augmenté de 44px à 48px
+    height: 48,
+    borderRadius: designSystem.borderRadius.lg, // Augmenté à lg
+    backgroundColor: '#EDEDFC',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#C8C8F4',
+  },
+  monthNavIcon: {
+    fontSize: 24,
+    color: '#4C4DDC',
+    fontWeight: '700',
+  },
+  monthTitleContainer: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  calendarMonth: {
+    color: designSystem.colors.text.primary,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  currentMonthBadge: {
+    backgroundColor: '#4C4DDC',
+    paddingHorizontal: designSystem.spacing[3],
+    paddingVertical: designSystem.spacing[1],
+    borderRadius: designSystem.borderRadius.md,
+    marginTop: designSystem.spacing[1],
+  },
+  currentMonthText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  calendarHeader: {
+    flexDirection: 'row',
+    marginBottom: designSystem.spacing[2],
+  },
+  dayNameCell: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: designSystem.spacing[2],
+  },
+  dayName: {
+    color: designSystem.colors.text.primary,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
+  calendarGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  dayCell: {
+    width: '13.48%',
+    aspectRatio: 1,
+    margin: '0.4%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dayCellEmpty: {
+    opacity: 0.7,
+  },
+  dayCellWithScore: {
+    borderRadius: designSystem.borderRadius.sm,
+  },
+  dayCellWithStools: {
+    backgroundColor: '#EDEDFC',
+    borderRadius: designSystem.borderRadius.sm,
+    borderWidth: 2,
+    borderColor: '#4C4DDC',
+  },
+  dayCellContent: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    height: '100%',
+  },
+  scoreInCell: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 22,
+  },
+  stoolCountLarge: {
+    color: '#4C4DDC',
+    fontWeight: '700',
+    fontSize: 26,
+  },
+  dayNumberEmpty: {
+    color: designSystem.colors.text.primary,
+    fontSize: 14,
+    fontWeight: '500',
   },
   legend: {
     flexDirection: 'row',
