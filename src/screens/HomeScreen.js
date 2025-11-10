@@ -26,11 +26,30 @@ import SegmentedControl from '../components/ui/SegmentedControl';
 import AnimatedListItem from '../components/ui/AnimatedListItem';
 import IBDiskChart from '../components/charts/IBDiskChart';
 import { deleteFeedback } from '../utils/haptics';
+import SymptomModal from '../components/modals/SymptomModal';
+import NoteModal from '../components/modals/NoteModal';
+import { useSpeedDial } from '../contexts/SpeedDialContext';
+import {
+  getSymptoms,
+  createSymptom,
+  updateSymptom,
+  deleteSymptom,
+  getSymptomDisplayName,
+  INTENSITY_LABELS,
+} from '../utils/symptomsUtils';
+import {
+  getNotes,
+  createNote,
+  updateNote,
+  deleteNote,
+  getCategoryLabel,
+} from '../utils/notesUtils';
 
 export default function HomeScreen({ route }) {
   const navigation = useNavigation();
   const theme = useTheme();
   const { isModalVisible, openModal, closeModal } = useStoolModal();
+  const { registerHandlers } = useSpeedDial();
   const [bristol, setBristol] = useState(4);
   const [hasBlood, setHasBlood] = useState(false);
   const [dailyCount, setDailyCount] = useState(0);
@@ -78,6 +97,15 @@ export default function HomeScreen({ route }) {
   const [scoreTooltipVisible, setScoreTooltipVisible] = useState(false);
   const tooltipOpacity = useRef(new Animated.Value(0)).current;
   const tooltipScale = useRef(new Animated.Value(0.96)).current;
+
+  // États pour symptômes et notes
+  const [symptoms, setSymptoms] = useState([]);
+  const [notes, setNotes] = useState([]);
+  const [symptomModalVisible, setSymptomModalVisible] = useState(false);
+  const [noteModalVisible, setNoteModalVisible] = useState(false);
+  const [editingSymptom, setEditingSymptom] = useState(null);
+  const [editingNote, setEditingNote] = useState(null);
+  const [historyFilter, setHistoryFilter] = useState('all'); // 'all', 'stools', 'symptoms', 'notes'
 
   // Animation du tooltip
   useEffect(() => {
@@ -281,6 +309,15 @@ export default function HomeScreen({ route }) {
     }, [])
   );
 
+  // Enregistrer les handlers pour le Speed Dial dans la tab bar
+  useEffect(() => {
+    registerHandlers({
+      onStoolPress: showModal,
+      onSymptomPress: handleOpenSymptomModal,
+      onNotePress: handleOpenNoteModal,
+    });
+  }, []);
+
   const hideModal = () => {
     closeModal();
   };
@@ -290,20 +327,129 @@ export default function HomeScreen({ route }) {
     const stoolsJson = storage.getString('dailySells');
     const entries = stoolsJson ? JSON.parse(stoolsJson) : [];
     setStools(entries.sort((a, b) => b.timestamp - a.timestamp));
-    
+
     const histJson = storage.getString('scoresHistory');
     const history = histJson ? JSON.parse(histJson) : [];
     setScores(history);
-    
+
     const treatmentsJson = storage.getString('treatments');
     const treatmentsList = treatmentsJson ? JSON.parse(treatmentsJson) : [];
     setTreatments(treatmentsList.sort((a, b) => b.timestamp - a.timestamp));
-    
+
     // Charger l'historique IBDisk
     const ibdiskJson = storage.getString('ibdiskHistory');
     const ibdiskList = ibdiskJson ? JSON.parse(ibdiskJson) : [];
     setIbdiskHistory(ibdiskList);
     setCurrentIbdiskIndex(0);
+
+    // Charger les symptômes et notes
+    const symptomsData = getSymptoms();
+    setSymptoms(symptomsData.sort((a, b) => b.timestamp - a.timestamp));
+
+    const notesData = getNotes();
+    setNotes(notesData.sort((a, b) => b.timestamp - a.timestamp));
+  };
+
+  // Handlers pour les symptômes
+  const handleOpenSymptomModal = () => {
+    setEditingSymptom(null);
+    setSymptomModalVisible(true);
+  };
+
+  const handleSaveSymptom = (data) => {
+    saveFeedback();
+    if (editingSymptom) {
+      // Mode édition
+      updateSymptom(editingSymptom.id, data);
+      showToast('✅ Symptôme mis à jour', 'success');
+    } else {
+      // Mode création
+      createSymptom(data.type, data.intensity, data.note, data.date);
+      showToast('✅ Symptôme enregistré', 'success');
+    }
+    setSymptomModalVisible(false);
+    setEditingSymptom(null);
+    loadHistoryData();
+  };
+
+  const handleEditSymptom = (symptom) => {
+    setEditingSymptom(symptom);
+    setSymptomModalVisible(true);
+  };
+
+  const handleDeleteSymptom = (symptomId) => {
+    const executeDelete = () => {
+      deleteFeedback();
+      deleteSymptom(symptomId);
+      loadHistoryData();
+      showToast('🗑️ Symptôme supprimé', 'success');
+    };
+
+    if (Platform.OS === 'web') {
+      if (window.confirm('Êtes-vous sûr de vouloir supprimer ce symptôme ?')) {
+        executeDelete();
+      }
+    } else {
+      Alert.alert(
+        'Supprimer le symptôme',
+        'Êtes-vous sûr de vouloir supprimer ce symptôme ?',
+        [
+          { text: 'Annuler', style: 'cancel' },
+          { text: 'Supprimer', onPress: executeDelete, style: 'destructive' }
+        ]
+      );
+    }
+  };
+
+  // Handlers pour les notes
+  const handleOpenNoteModal = () => {
+    setEditingNote(null);
+    setNoteModalVisible(true);
+  };
+
+  const handleSaveNote = (data) => {
+    saveFeedback();
+    if (editingNote) {
+      // Mode édition
+      updateNote(editingNote.id, data);
+      showToast('✅ Note mise à jour', 'success');
+    } else {
+      // Mode création
+      createNote(data.content, data.category, data.sharedWithDoctor, data.date);
+      showToast('✅ Note enregistrée', 'success');
+    }
+    setNoteModalVisible(false);
+    setEditingNote(null);
+    loadHistoryData();
+  };
+
+  const handleEditNote = (note) => {
+    setEditingNote(note);
+    setNoteModalVisible(true);
+  };
+
+  const handleDeleteNote = (noteId) => {
+    const executeDelete = () => {
+      deleteFeedback();
+      deleteNote(noteId);
+      loadHistoryData();
+      showToast('🗑️ Note supprimée', 'success');
+    };
+
+    if (Platform.OS === 'web') {
+      if (window.confirm('Êtes-vous sûr de vouloir supprimer cette note ?')) {
+        executeDelete();
+      }
+    } else {
+      Alert.alert(
+        'Supprimer la note',
+        'Êtes-vous sûr de vouloir supprimer cette note ?',
+        [
+          { text: 'Annuler', style: 'cancel' },
+          { text: 'Supprimer', onPress: executeDelete, style: 'destructive' }
+        ]
+      );
+    }
   };
 
   const handleDeleteStool = (stoolId) => {
@@ -384,11 +530,27 @@ export default function HomeScreen({ route }) {
     const isYesterday = date.toDateString() === yesterday.toDateString();
 
     const time = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
-    
+
     if (isToday) return `Aujourd'hui ${time}`;
     if (isYesterday) return `Hier ${time}`;
-    
+
     return `${date.getDate()}/${date.getMonth() + 1} ${time}`;
+  };
+
+  // Format date sans heure (pour symptômes et notes)
+  const formatCompactDateOnly = (timestamp) => {
+    const date = new Date(timestamp);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    const isToday = date.toDateString() === today.toDateString();
+    const isYesterday = date.toDateString() === yesterday.toDateString();
+
+    if (isToday) return `Aujourd'hui`;
+    if (isYesterday) return `Hier`;
+
+    return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
   };
 
   const getBristolColor = (bristol) => {
@@ -1007,60 +1169,206 @@ export default function HomeScreen({ route }) {
             </AppText>
           </View>
 
-          {/* Liste des selles */}
-          {stools.length === 0 ? (
-            <EmptyState
-              healthIcon="empty"
-              title="Aucune selle enregistrée"
-              description="Commencez à suivre votre santé intestinale en enregistrant votre première selle"
-              size="compact"
+          {/* Onglets de filtrage */}
+          <View style={styles.historyTabsContainer}>
+            <SegmentedControl
+              options={[
+                { value: 'all', label: 'Tout' },
+                { value: 'stools', label: 'Selles' },
+                { value: 'symptoms', label: 'Symptômes' },
+                { value: 'notes', label: 'Notes' }
+              ]}
+              selectedValue={historyFilter}
+              onValueChange={setHistoryFilter}
             />
-          ) : (
-            <View>
-              {stools.slice(0, 10).map((item, index) => (
-                <AnimatedListItem key={item.id} index={index} delay={30}>
-                  <View style={styles.stoolItem}>
-                    <View style={styles.stoolMain}>
-                      <View style={[styles.bristolBadge, { backgroundColor: getBristolColor(item.bristolScale) }]}>
-                        <AppText variant="bodyLarge" style={styles.bristolNumber}>
-                          {item.bristolScale}
-                        </AppText>
-                      </View>
-                      <View style={styles.stoolInfo}>
-                        <View style={styles.stoolDateContainer}>
-                          <AppText variant="bodyMedium" style={styles.stoolDate}>
-                            {formatCompactDate(item.timestamp)}
-                          </AppText>
-                          {item.hasBlood && (
-                            <MaterialCommunityIcons 
-                              name="water" 
-                              size={16} 
-                              color="#DC2626" 
-                              style={{ marginLeft: 6 }}
-                            />
-                          )}
+          </View>
+
+          {/* Liste filtrée */}
+          {(() => {
+            // Filtrer les entrées selon l'onglet sélectionné
+            let filteredEntries = [];
+
+            if (historyFilter === 'all' || historyFilter === 'stools') {
+              filteredEntries = [...filteredEntries, ...stools.map(s => ({ ...s, type: 'stool' }))];
+            }
+            if (historyFilter === 'all' || historyFilter === 'symptoms') {
+              filteredEntries = [...filteredEntries, ...symptoms.map(s => ({ ...s, type: 'symptom' }))];
+            }
+            if (historyFilter === 'all' || historyFilter === 'notes') {
+              filteredEntries = [...filteredEntries, ...notes.map(n => ({ ...n, type: 'note' }))];
+            }
+
+            // Trier par timestamp
+            filteredEntries.sort((a, b) => b.timestamp - a.timestamp);
+
+            // Limiter à 20 entrées
+            filteredEntries = filteredEntries.slice(0, 20);
+
+            if (filteredEntries.length === 0) {
+              let emptyMessage = '';
+              if (historyFilter === 'stools') emptyMessage = 'Aucune selle enregistrée';
+              else if (historyFilter === 'symptoms') emptyMessage = 'Aucun symptôme enregistré';
+              else if (historyFilter === 'notes') emptyMessage = 'Aucune note enregistrée';
+              else emptyMessage = 'Aucune donnée enregistrée';
+
+              return (
+                <EmptyState
+                  healthIcon="empty"
+                  title={emptyMessage}
+                  description="Utilisez le bouton + en bas pour ajouter une entrée"
+                  size="compact"
+                />
+              );
+            }
+
+            return (
+              <View>
+                {filteredEntries.map((item, index) => (
+                  <AnimatedListItem key={`${item.type}-${item.id}`} index={index} delay={30}>
+                    {item.type === 'stool' && (
+                      <View style={styles.stoolItem}>
+                        <View style={styles.stoolMain}>
+                          <View style={[styles.bristolBadge, { backgroundColor: getBristolColor(item.bristolScale) }]}>
+                            <AppText variant="bodyLarge" style={styles.bristolNumber}>
+                              {item.bristolScale}
+                            </AppText>
+                          </View>
+                          <View style={styles.stoolInfo}>
+                            <View style={styles.stoolDateContainer}>
+                              <AppText variant="bodyMedium" style={styles.stoolDate}>
+                                {formatCompactDate(item.timestamp)}
+                              </AppText>
+                              {item.hasBlood && (
+                                <MaterialCommunityIcons
+                                  name="water"
+                                  size={16}
+                                  color="#DC2626"
+                                  style={{ marginLeft: 6 }}
+                                />
+                              )}
+                            </View>
+                          </View>
+                          <View style={styles.stoolActions}>
+                            <TouchableOpacity
+                              onPress={() => handleEditStool(item)}
+                              style={styles.actionButton}
+                            >
+                              <MaterialCommunityIcons name="pencil" size={20} color="#4C4DDC" />
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              onPress={() => handleDeleteStool(item.id)}
+                              style={styles.actionButton}
+                            >
+                              <MaterialCommunityIcons name="delete" size={20} color="#DC2626" />
+                            </TouchableOpacity>
+                          </View>
                         </View>
                       </View>
-                      <View style={styles.stoolActions}>
-                        <TouchableOpacity 
-                          onPress={() => handleEditStool(item)}
-                          style={styles.actionButton}
-                        >
-                          <MaterialCommunityIcons name="pencil" size={20} color="#4C4DDC" />
-                        </TouchableOpacity>
-                        <TouchableOpacity 
-                          onPress={() => handleDeleteStool(item.id)}
-                          style={styles.actionButton}
-                        >
-                          <MaterialCommunityIcons name="delete" size={20} color="#DC2626" />
-                        </TouchableOpacity>
+                    )}
+
+                    {item.type === 'symptom' && (
+                      <View style={styles.symptomItem}>
+                        <View style={styles.symptomMain}>
+                          <View style={[styles.symptomIcon, { backgroundColor: '#FEE2E2' }]}>
+                            <MaterialCommunityIcons name="alert-circle-outline" size={24} color="#DC2626" />
+                          </View>
+                          <View style={styles.symptomInfo}>
+                            <AppText variant="bodyMedium" style={styles.symptomType}>
+                              {getSymptomDisplayName(item)}
+                            </AppText>
+                            <View style={styles.symptomMeta}>
+                              <AppText variant="labelSmall" style={styles.symptomDate}>
+                                {formatCompactDateOnly(item.timestamp)}
+                              </AppText>
+                              <View style={styles.symptomIntensity}>
+                                <AppText variant="labelSmall" style={styles.symptomIntensityText}>
+                                  Intensité: {item.intensity}/5 ({INTENSITY_LABELS[item.intensity]})
+                                </AppText>
+                              </View>
+                            </View>
+                            {item.note && (
+                              <AppText variant="labelSmall" style={styles.symptomNote}>
+                                {item.note}
+                              </AppText>
+                            )}
+                          </View>
+                          <View style={styles.stoolActions}>
+                            <TouchableOpacity
+                              onPress={() => handleEditSymptom(item)}
+                              style={styles.actionButton}
+                            >
+                              <MaterialCommunityIcons name="pencil" size={20} color="#4C4DDC" />
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              onPress={() => handleDeleteSymptom(item.id)}
+                              style={styles.actionButton}
+                            >
+                              <MaterialCommunityIcons name="delete" size={20} color="#DC2626" />
+                            </TouchableOpacity>
+                          </View>
+                        </View>
                       </View>
-                    </View>
-                  </View>
-                </AnimatedListItem>
-              ))}
-            </View>
-          )}
+                    )}
+
+                    {item.type === 'note' && (
+                      <View style={styles.noteItem}>
+                        <View style={styles.noteMain}>
+                          <View style={[styles.noteIcon, { backgroundColor: '#FEF3C7' }]}>
+                            <MaterialCommunityIcons
+                              name={item.sharedWithDoctor ? "share-variant" : "note-text-outline"}
+                              size={24}
+                              color="#F59E0B"
+                            />
+                          </View>
+                          <View style={styles.noteInfo}>
+                            <View style={styles.noteHeader}>
+                              <AppText variant="bodyMedium" style={styles.noteContent}>
+                                {item.content.length > 80 ? item.content.substring(0, 80) + '...' : item.content}
+                              </AppText>
+                            </View>
+                            <View style={styles.noteMeta}>
+                              <AppText variant="labelSmall" style={styles.noteDate}>
+                                {formatCompactDateOnly(item.timestamp)}
+                              </AppText>
+                              {item.category && (
+                                <View style={styles.noteCategory}>
+                                  <AppText variant="labelSmall" style={styles.noteCategoryText}>
+                                    {getCategoryLabel(item.category)}
+                                  </AppText>
+                                </View>
+                              )}
+                              {item.sharedWithDoctor && (
+                                <View style={styles.noteShared}>
+                                  <MaterialCommunityIcons name="share-variant" size={12} color="#4C4DDC" />
+                                  <AppText variant="labelSmall" style={styles.noteSharedText}>
+                                    Partagé
+                                  </AppText>
+                                </View>
+                              )}
+                            </View>
+                          </View>
+                          <View style={styles.stoolActions}>
+                            <TouchableOpacity
+                              onPress={() => handleEditNote(item)}
+                              style={styles.actionButton}
+                            >
+                              <MaterialCommunityIcons name="pencil" size={20} color="#4C4DDC" />
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              onPress={() => handleDeleteNote(item.id)}
+                              style={styles.actionButton}
+                            >
+                              <MaterialCommunityIcons name="delete" size={20} color="#DC2626" />
+                            </TouchableOpacity>
+                          </View>
+                        </View>
+                      </View>
+                    )}
+                  </AnimatedListItem>
+                ))}
+              </View>
+            );
+          })()}
         </AppCard>
 
         {/* Calendrier moderne */}
@@ -1413,6 +1721,28 @@ export default function HomeScreen({ route }) {
         type={toastType}
         duration={3000}
         onHide={() => setToastVisible(false)}
+      />
+
+      {/* Modal de symptôme */}
+      <SymptomModal
+        visible={symptomModalVisible}
+        onDismiss={() => {
+          setSymptomModalVisible(false);
+          setEditingSymptom(null);
+        }}
+        onSave={handleSaveSymptom}
+        initialData={editingSymptom}
+      />
+
+      {/* Modal de note */}
+      <NoteModal
+        visible={noteModalVisible}
+        onDismiss={() => {
+          setNoteModalVisible(false);
+          setEditingNote(null);
+        }}
+        onSave={handleSaveNote}
+        initialData={editingNote}
       />
     </View>
   );
@@ -2080,5 +2410,125 @@ const styles = StyleSheet.create({
   singleQuestionnaireText: {
     color: designSystem.colors.text.secondary,
     fontStyle: 'italic',
+  },
+  // Styles pour les onglets d'historique
+  historyTabsContainer: {
+    marginBottom: designSystem.spacing[4],
+  },
+  // Styles pour les symptômes
+  symptomItem: {
+    marginBottom: designSystem.spacing[3],
+  },
+  symptomMain: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEF2F2',
+    borderRadius: designSystem.borderRadius.md,
+    padding: designSystem.spacing[3],
+    borderWidth: 1,
+    borderColor: '#FECACA',
+  },
+  symptomIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: designSystem.borderRadius.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: designSystem.spacing[3],
+  },
+  symptomInfo: {
+    flex: 1,
+  },
+  symptomType: {
+    color: designSystem.colors.text.primary,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  symptomMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: designSystem.spacing[2],
+    flexWrap: 'wrap',
+  },
+  symptomDate: {
+    color: designSystem.colors.text.tertiary,
+  },
+  symptomIntensity: {
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: designSystem.spacing[2],
+    paddingVertical: 2,
+    borderRadius: designSystem.borderRadius.sm,
+  },
+  symptomIntensityText: {
+    color: designSystem.colors.text.secondary,
+    fontWeight: '500',
+  },
+  symptomNote: {
+    color: designSystem.colors.text.secondary,
+    marginTop: 4,
+    fontStyle: 'italic',
+  },
+  // Styles pour les notes
+  noteItem: {
+    marginBottom: designSystem.spacing[3],
+  },
+  noteMain: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFBEB',
+    borderRadius: designSystem.borderRadius.md,
+    padding: designSystem.spacing[3],
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+  },
+  noteIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: designSystem.borderRadius.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: designSystem.spacing[3],
+  },
+  noteInfo: {
+    flex: 1,
+  },
+  noteHeader: {
+    marginBottom: 4,
+  },
+  noteContent: {
+    color: designSystem.colors.text.primary,
+    fontWeight: '500',
+  },
+  noteMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: designSystem.spacing[2],
+    flexWrap: 'wrap',
+  },
+  noteDate: {
+    color: designSystem.colors.text.tertiary,
+  },
+  noteCategory: {
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: designSystem.spacing[2],
+    paddingVertical: 2,
+    borderRadius: designSystem.borderRadius.sm,
+  },
+  noteCategoryText: {
+    color: designSystem.colors.text.secondary,
+    fontWeight: '500',
+  },
+  noteShared: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#EDEDFC',
+    paddingHorizontal: designSystem.spacing[2],
+    paddingVertical: 2,
+    borderRadius: designSystem.borderRadius.sm,
+  },
+  noteSharedText: {
+    color: '#4C4DDC',
+    fontWeight: '500',
   },
 });
