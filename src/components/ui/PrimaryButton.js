@@ -102,7 +102,8 @@ export default function PrimaryButton({
   const config = variantConfig[variant];
   const sizeStyle = sizeConfig[size];
 
-  const buttonStyle = [
+  // Styles internes pour le gradient/contenu
+  const innerButtonStyle = [
     styles.button,
     {
       height: sizeStyle.height,
@@ -114,8 +115,10 @@ export default function PrimaryButton({
       borderColor: config.borderColor,
     },
     disabled && styles.disabled,
-    style,
   ];
+
+  // Style du container (pour flex, width, etc.)
+  const containerStyle = style;
 
   const iconColor = outlined ? config.iconColor : colors.text.inverse;
 
@@ -162,11 +165,13 @@ export default function PrimaryButton({
         activeOpacity={1}
         onPressIn={disabled ? undefined : handlePressIn}
         onPressOut={disabled ? undefined : handlePressOut}
-        style={buttonStyle}
+        style={containerStyle}
         {...props}
       >
-        <Animated.View style={{ transform: disabled ? [] : [{ scale: scaleAnim }] }}>
-          {content}
+        <Animated.View style={{ transform: disabled ? [] : [{ scale: scaleAnim }], flex: 1 }}>
+          <View style={innerButtonStyle}>
+            {content}
+          </View>
         </Animated.View>
       </TouchableOpacity>
     );
@@ -179,14 +184,15 @@ export default function PrimaryButton({
       activeOpacity={1}
       onPressIn={disabled ? undefined : handlePressIn}
       onPressOut={disabled ? undefined : handlePressOut}
+      style={containerStyle}
       {...props}
     >
-      <Animated.View style={{ transform: disabled ? [] : [{ scale: scaleAnim }] }}>
+      <Animated.View style={{ transform: disabled ? [] : [{ scale: scaleAnim }], flex: 1 }}>
         <LinearGradient
           colors={disabled ? [colors.neutral[300], colors.neutral[400]] : config.gradient}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
-          style={buttonStyle}
+          style={innerButtonStyle}
         >
           {content}
         </LinearGradient>
