@@ -13,6 +13,7 @@ import SkeletonCard from '../components/ui/SkeletonCard';
 import EmptyState from '../components/ui/EmptyState';
 import DateTimeInput, { isValidDate, isValidTime } from '../components/ui/DateTimeInput';
 import Slider from '@react-native-community/slider';
+import CalendarSection from '../components/home/CalendarSection';
 import storage from '../utils/storage';
 import calculateLichtigerScore from '../utils/scoreCalculator';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -391,146 +392,6 @@ export default function HomeScreen({ route }) {
     if (currentIbdiskIndex > 0) {
       setCurrentIbdiskIndex(currentIbdiskIndex - 1);
     }
-  };
-
-  // Rendu calendrier moderne (depuis HistoryScreen)
-  const renderModernCalendar = () => {
-    const now = new Date();
-    const targetDate = new Date(now.getFullYear(), now.getMonth() + calendarMonthOffset, 1);
-    const year = targetDate.getFullYear();
-    const month = targetDate.getMonth();
-    
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    const daysInMonth = lastDay.getDate();
-    
-    let startingDayOfWeek = firstDay.getDay();
-    startingDayOfWeek = startingDayOfWeek === 0 ? 6 : startingDayOfWeek - 1;
-    
-    const days = [];
-    for (let i = 0; i < startingDayOfWeek; i++) {
-      days.push(null);
-    }
-    for (let day = 1; day <= daysInMonth; day++) {
-      days.push(day);
-    }
-    const remainingCells = days.length % 7;
-    if (remainingCells > 0) {
-      for (let i = 0; i < (7 - remainingCells); i++) {
-        days.push(null);
-      }
-    }
-
-    const monthNames = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
-    const dayNames = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
-    const isCurrentMonth = calendarMonthOffset === 0;
-
-    return (
-      <View style={styles.calendarContainer}>
-        <View style={styles.calendarMonthHeader}>
-          <TouchableOpacity 
-            onPress={() => setCalendarMonthOffset(calendarMonthOffset - 1)}
-            style={styles.monthNavButton}
-          >
-            <AppText style={styles.monthNavIcon}>←</AppText>
-          </TouchableOpacity>
-          
-          <View style={styles.monthTitleContainer}>
-            <AppText variant="headlineLarge" style={styles.calendarMonth}>
-              {monthNames[month]} {year}
-            </AppText>
-            {isCurrentMonth && (
-              <View style={styles.currentMonthBadge}>
-                <AppText variant="labelSmall" style={styles.currentMonthText}>
-                  Aujourd'hui
-                </AppText>
-              </View>
-            )}
-          </View>
-          
-          <TouchableOpacity 
-            onPress={() => setCalendarMonthOffset(calendarMonthOffset + 1)}
-            style={styles.monthNavButton}
-          >
-            <AppText style={styles.monthNavIcon}>→</AppText>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.calendarHeader}>
-          {dayNames.map((name, index) => (
-            <View key={index} style={styles.dayNameCell}>
-              <AppText variant="labelSmall" style={styles.dayName}>
-                {name}
-              </AppText>
-            </View>
-          ))}
-        </View>
-
-        <View style={styles.calendarGrid}>
-          {days.map((day, index) => {
-            if (day === null) {
-              return <View key={`empty-${index}`} style={styles.dayCell} />;
-            }
-
-            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-            
-            let cellContent = null;
-            let cellStyle = [styles.dayCell];
-            let hasData = false;
-
-            if (calendarMode === 'score') {
-              const score = calculateLichtigerScore(dateStr, storage);
-              if (score !== null) {
-                hasData = true;
-                let scoreColor = '#4C4DDC';
-                if (score >= 10) scoreColor = '#101010';
-                
-                cellStyle.push(styles.dayCellWithScore, { backgroundColor: scoreColor });
-                cellContent = (
-                  <View style={styles.dayCellContent}>
-                    <AppText variant="headlineLarge" style={styles.scoreInCell}>
-                      {score}
-                    </AppText>
-                  </View>
-                );
-              }
-            } else {
-              const [y, m, d] = dateStr.split('-').map(Number);
-              const dayStart = new Date(y, m - 1, d, 0, 0, 0, 0).getTime();
-              const dayEnd = dayStart + 24 * 60 * 60 * 1000;
-              const dayEntries = stools.filter(s => s.timestamp >= dayStart && s.timestamp < dayEnd);
-              
-              if (dayEntries.length > 0) {
-                hasData = true;
-                cellStyle.push(styles.dayCellWithStools);
-                cellContent = (
-                  <View style={styles.dayCellContent}>
-                    <AppText variant="displayMedium" style={styles.stoolCountLarge}>
-                      {dayEntries.length}
-                    </AppText>
-                  </View>
-                );
-              }
-            }
-
-            if (!hasData) {
-              cellStyle.push(styles.dayCellEmpty);
-              cellContent = (
-                <AppText variant="bodyMedium" style={styles.dayNumberEmpty}>
-                  {day}
-                </AppText>
-              );
-            }
-
-            return (
-              <View key={index} style={cellStyle}>
-                {cellContent}
-              </View>
-            );
-          })}
-        </View>
-      </View>
-    );
   };
 
   // Fonctions pour la modale de traitement
@@ -1202,8 +1063,13 @@ export default function HomeScreen({ route }) {
               onValueChange={setCalendarMode}
             />
           </View>
-          
-          {renderModernCalendar()}
+
+          <CalendarSection
+            calendarMonthOffset={calendarMonthOffset}
+            setCalendarMonthOffset={setCalendarMonthOffset}
+            calendarMode={calendarMode}
+            stools={stools}
+          />
 
           {/* Légende */}
           <View style={styles.legend}>
@@ -2045,109 +1911,6 @@ const styles = StyleSheet.create({
   },
   calendarHeaderSection: {
     marginBottom: designSystem.spacing[5],
-  },
-  calendarContainer: {
-    marginBottom: designSystem.spacing[4],
-  },
-  calendarMonthHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: designSystem.spacing[4],
-    paddingHorizontal: designSystem.spacing[2],
-  },
-  monthNavButton: {
-    width: 48, // Augmenté de 44px à 48px
-    height: 48,
-    borderRadius: designSystem.borderRadius.lg, // Augmenté à lg
-    backgroundColor: '#EDEDFC',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#C8C8F4',
-  },
-  monthNavIcon: {
-    fontSize: 24,
-    color: '#4C4DDC',
-    fontWeight: '700',
-  },
-  monthTitleContainer: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  calendarMonth: {
-    color: designSystem.colors.text.primary,
-    fontWeight: '700',
-    textAlign: 'center',
-  },
-  currentMonthBadge: {
-    backgroundColor: '#4C4DDC',
-    paddingHorizontal: designSystem.spacing[3],
-    paddingVertical: designSystem.spacing[1],
-    borderRadius: designSystem.borderRadius.md,
-    marginTop: designSystem.spacing[1],
-  },
-  currentMonthText: {
-    color: '#FFFFFF',
-    fontWeight: '600',
-  },
-  calendarHeader: {
-    flexDirection: 'row',
-    marginBottom: designSystem.spacing[2],
-  },
-  dayNameCell: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: designSystem.spacing[2],
-  },
-  dayName: {
-    color: designSystem.colors.text.primary,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-  },
-  calendarGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  dayCell: {
-    width: '13.48%',
-    aspectRatio: 1,
-    margin: '0.4%',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  dayCellEmpty: {
-    opacity: 0.7,
-  },
-  dayCellWithScore: {
-    borderRadius: designSystem.borderRadius.sm,
-  },
-  dayCellWithStools: {
-    backgroundColor: '#EDEDFC',
-    borderRadius: designSystem.borderRadius.sm,
-    borderWidth: 2,
-    borderColor: '#4C4DDC',
-  },
-  dayCellContent: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '100%',
-    height: '100%',
-  },
-  scoreInCell: {
-    color: '#FFFFFF',
-    fontWeight: '700',
-    fontSize: 22,
-  },
-  stoolCountLarge: {
-    color: '#4C4DDC',
-    fontWeight: '700',
-    fontSize: 26,
-  },
-  dayNumberEmpty: {
-    color: designSystem.colors.text.primary,
-    fontSize: 14,
-    fontWeight: '500',
   },
   legend: {
     flexDirection: 'row',
