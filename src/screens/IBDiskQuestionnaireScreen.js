@@ -84,7 +84,7 @@ const IBDiskQuestionnaireScreen = () => {
     if (savedProgress) {
       try {
         const progressData = JSON.parse(savedProgress);
-        
+
         // Vérifier si c'est l'ancien format (juste les réponses) ou le nouveau format
         if (progressData.answers && typeof progressData.currentQuestion === 'number') {
           // Nouveau format avec position
@@ -104,6 +104,23 @@ const IBDiskQuestionnaireScreen = () => {
       }
     }
   }, []);
+
+  // Initialiser la réponse à 5 si elle n'existe pas pour la question actuelle
+  useEffect(() => {
+    const currentQ = questions[currentQuestion];
+    if (currentQ && answers[currentQ.id] === undefined) {
+      // Initialiser la réponse à 5 (valeur par défaut du slider)
+      const newAnswers = { ...answers, [currentQ.id]: 5 };
+      setAnswers(newAnswers);
+
+      // Sauvegarder automatiquement
+      const progressData = {
+        answers: newAnswers,
+        currentQuestion: currentQuestion
+      };
+      storage.set('ibdiskCurrentAnswers', JSON.stringify(progressData));
+    }
+  }, [currentQuestion]);
 
   const handleAnswerChange = (value) => {
     const newAnswers = { ...answers, [questions[currentQuestion].id]: value };

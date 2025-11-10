@@ -154,26 +154,18 @@ export default function PrimaryButton({
     </>
   );
 
-  if (disabled) {
-    return (
-      <View style={[buttonStyle, styles.disabledContainer]}>
-        {content}
-      </View>
-    );
-  }
-
   if (outlined) {
     return (
       <TouchableOpacity
         onPress={handlePress}
         disabled={disabled || loading}
         activeOpacity={1}
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
+        onPressIn={disabled ? undefined : handlePressIn}
+        onPressOut={disabled ? undefined : handlePressOut}
         style={buttonStyle}
         {...props}
       >
-        <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+        <Animated.View style={{ transform: disabled ? [] : [{ scale: scaleAnim }] }}>
           {content}
         </Animated.View>
       </TouchableOpacity>
@@ -185,13 +177,13 @@ export default function PrimaryButton({
       onPress={handlePress}
       disabled={disabled || loading}
       activeOpacity={1}
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
+      onPressIn={disabled ? undefined : handlePressIn}
+      onPressOut={disabled ? undefined : handlePressOut}
       {...props}
     >
-      <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+      <Animated.View style={{ transform: disabled ? [] : [{ scale: scaleAnim }] }}>
         <LinearGradient
-          colors={config.gradient}
+          colors={disabled ? [colors.neutral[300], colors.neutral[400]] : config.gradient}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={buttonStyle}
@@ -222,9 +214,6 @@ const styles = StyleSheet.create({
     marginLeft: spacing[2],
   },
   disabled: {
-    opacity: 0.5,
-  },
-  disabledContainer: {
-    backgroundColor: colors.neutral[300],
+    opacity: 0.6,
   },
 });

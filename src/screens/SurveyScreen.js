@@ -193,7 +193,7 @@ export default function SurveyScreen() {
             <AppCard style={styles.infoCard}>
               <EmptyState
                 icon="check-circle-outline"
-                title="Tous les questionnaires sont à jour"
+                title="Aucun bilan à compléter"
                 message="Vous avez complété tous les questionnaires disponibles aujourd'hui."
                 variant="default"
               />
