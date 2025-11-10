@@ -774,6 +774,10 @@ export default function HomeScreen({ route }) {
         storage.set('scoresHistory', JSON.stringify(newHistory));
       }
     }
+
+    // Recharger les données de l'historique pour HomeScreen
+    loadHistoryData();
+
     saveFeedback();
     hideModal();
   };
