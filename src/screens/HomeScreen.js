@@ -1189,13 +1189,13 @@ export default function HomeScreen({ route }) {
             let filteredEntries = [];
 
             if (historyFilter === 'all' || historyFilter === 'stools') {
-              filteredEntries = [...filteredEntries, ...stools.map(s => ({ ...s, type: 'stool' }))];
+              filteredEntries = [...filteredEntries, ...stools.map(s => ({ ...s, entryType: 'stool' }))];
             }
             if (historyFilter === 'all' || historyFilter === 'symptoms') {
-              filteredEntries = [...filteredEntries, ...symptoms.map(s => ({ ...s, type: 'symptom' }))];
+              filteredEntries = [...filteredEntries, ...symptoms.map(s => ({ ...s, entryType: 'symptom' }))];
             }
             if (historyFilter === 'all' || historyFilter === 'notes') {
-              filteredEntries = [...filteredEntries, ...notes.map(n => ({ ...n, type: 'note' }))];
+              filteredEntries = [...filteredEntries, ...notes.map(n => ({ ...n, entryType: 'note' }))];
             }
 
             // Trier par timestamp
@@ -1224,8 +1224,8 @@ export default function HomeScreen({ route }) {
             return (
               <View>
                 {filteredEntries.map((item, index) => (
-                  <AnimatedListItem key={`${item.type}-${item.id}`} index={index} delay={30}>
-                    {item.type === 'stool' && (
+                  <AnimatedListItem key={`${item.entryType}-${item.id}`} index={index} delay={30}>
+                    {item.entryType === 'stool' && (
                       <View style={styles.stoolItem}>
                         <View style={styles.stoolMain}>
                           <View style={[styles.bristolBadge, { backgroundColor: getBristolColor(item.bristolScale) }]}>
@@ -1266,7 +1266,7 @@ export default function HomeScreen({ route }) {
                       </View>
                     )}
 
-                    {item.type === 'symptom' && (
+                    {item.entryType === 'symptom' && (
                       <View style={styles.symptomItem}>
                         <View style={styles.symptomMain}>
                           <View style={[styles.symptomIcon, { backgroundColor: '#FEE2E2' }]}>
@@ -1310,7 +1310,7 @@ export default function HomeScreen({ route }) {
                       </View>
                     )}
 
-                    {item.type === 'note' && (
+                    {item.entryType === 'note' && (
                       <View style={styles.noteItem}>
                         <View style={styles.noteMain}>
                           <View style={[styles.noteIcon, { backgroundColor: '#FEF3C7' }]}>
