@@ -341,34 +341,6 @@ export default function HomeScreen({ route }) {
     closeModal();
   };
 
-  // Fonctions pour l'historique (depuis HistoryScreen)
-  const loadHistoryData = () => {
-    const stoolsJson = storage.getString('dailySells');
-    const entries = stoolsJson ? JSON.parse(stoolsJson) : [];
-    setStools(entries.sort((a, b) => b.timestamp - a.timestamp));
-
-    const histJson = storage.getString('scoresHistory');
-    const history = histJson ? JSON.parse(histJson) : [];
-    setScores(history);
-
-    const treatmentsJson = storage.getString('treatments');
-    const treatmentsList = treatmentsJson ? JSON.parse(treatmentsJson) : [];
-    setTreatments(treatmentsList.sort((a, b) => b.timestamp - a.timestamp));
-
-    // Charger l'historique IBDisk
-    const ibdiskJson = storage.getString('ibdiskHistory');
-    const ibdiskList = ibdiskJson ? JSON.parse(ibdiskJson) : [];
-    setIbdiskHistory(ibdiskList);
-    setCurrentIbdiskIndex(0);
-
-    // Charger les symptômes et notes
-    const symptomsData = getSymptoms();
-    setSymptoms(symptomsData.sort((a, b) => b.timestamp - a.timestamp));
-
-    const notesData = getNotes();
-    setNotes(notesData.sort((a, b) => b.timestamp - a.timestamp));
-  };
-
   const formatCompactDate = (timestamp) => {
     const date = new Date(timestamp);
     const today = new Date();
