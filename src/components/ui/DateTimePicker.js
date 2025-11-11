@@ -276,8 +276,8 @@ const styles = StyleSheet.create({
   },
   // Styles web
   webRow: {
-    flexDirection: 'row',
-    gap: designSystem.spacing[4],
+    flexDirection: 'column',
+    gap: designSystem.spacing[3],
   },
   webInputWrapper: {
     flex: 1,
@@ -293,8 +293,8 @@ const styles = StyleSheet.create({
   },
   // Styles mobile
   inputsRow: {
-    flexDirection: 'row',
-    gap: designSystem.spacing[4],
+    flexDirection: 'column',
+    gap: designSystem.spacing[3],
   },
   inputsRowSingle: {
     flexDirection: 'column',
