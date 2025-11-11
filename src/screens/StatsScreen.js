@@ -283,7 +283,7 @@ export default function StatsScreen() {
             <View style={styles.titleRow}>
               <MaterialCommunityIcons name="chart-timeline-variant" size={28} color="#4C4DDC" style={{ marginRight: 12 }} />
               <AppText variant="headlineLarge" style={styles.chartTitle}>
-                {dataType === 'score' ? 'Évolution des indicateurs' : 'Évolution des Selles'}
+                {dataType === 'score' ? 'Indicateurs' : 'Évolution des Selles'}
               </AppText>
             </View>
             <AppText variant="bodyMedium" style={styles.chartSubtitle}>
@@ -389,7 +389,8 @@ const styles = StyleSheet.create({
     marginBottom: designSystem.spacing[6],
   },
   chartCard: {
-    marginHorizontal: designSystem.spacing[4],
+    marginLeft: designSystem.spacing[2],
+    marginRight: designSystem.spacing[4],
     marginBottom: designSystem.spacing[6],
   },
   titleRow: {
