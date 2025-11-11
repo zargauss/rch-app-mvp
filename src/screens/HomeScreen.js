@@ -1601,13 +1601,8 @@ const styles = StyleSheet.create({
     marginBottom: designSystem.spacing[3], // Réduit de [4] à [3]
   },
   dateTimeRow: {
-    flexDirection: 'row',
-    gap: designSystem.spacing[4],
-    // Sur mobile, mettre les champs en colonne pour éviter la superposition
-    ...(Platform.OS !== 'web' && {
-      flexDirection: 'column',
-      gap: designSystem.spacing[3],
-    }),
+    flexDirection: 'column',
+    gap: designSystem.spacing[3],
   },
   dateTimeInput: {
     flex: 1,
