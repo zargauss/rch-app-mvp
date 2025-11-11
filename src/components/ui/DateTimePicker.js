@@ -276,11 +276,11 @@ const styles = StyleSheet.create({
   },
   // Styles web
   webRow: {
-    flexDirection: 'row',
-    gap: designSystem.spacing[4],
+    flexDirection: 'column',
+    gap: designSystem.spacing[3],
   },
   webInputWrapper: {
-    flex: 1,
+    width: '100%',
   },
   webLabel: {
     marginBottom: designSystem.spacing[1],
@@ -293,26 +293,26 @@ const styles = StyleSheet.create({
   },
   // Styles mobile
   inputsRow: {
-    flexDirection: 'row',
-    gap: designSystem.spacing[4],
+    flexDirection: 'column',
+    gap: designSystem.spacing[3],
   },
   inputsRowSingle: {
     flexDirection: 'column',
   },
   inputWrapper: {
-    flex: 1,
+    width: '100%',
   },
   input: {
     backgroundColor: '#F8FAFB',
   },
   dateInput: {
-    marginRight: designSystem.spacing[2],
+    marginRight: 0,
   },
   dateInputFull: {
     marginRight: 0,
   },
   timeInput: {
-    marginLeft: designSystem.spacing[2],
+    marginLeft: 0,
   },
   outline: {
     borderRadius: designSystem.borderRadius.lg,

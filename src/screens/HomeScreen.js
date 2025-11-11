@@ -95,7 +95,7 @@ export default function HomeScreen({ route }) {
   const tooltipOpacity = useRef(new Animated.Value(0)).current;
   const tooltipScale = useRef(new Animated.Value(0.96)).current;
 
-  const [historyFilter, setHistoryFilter] = useState('all'); // 'all', 'stools', 'symptoms', 'notes'
+  const [historyFilter, setHistoryFilter] = useState('stools'); // 'stools', 'symptoms', 'notes'
 
   // Hook pour gérer les données d'historique
   const historyData = useHistoryData();
@@ -854,7 +854,6 @@ export default function HomeScreen({ route }) {
           <View style={styles.historyTabsContainer}>
             <SegmentedControl
               options={[
-                { value: 'all', label: 'Tout' },
                 { value: 'stools', label: 'Selles' },
                 { value: 'symptoms', label: 'Symptômes' },
                 { value: 'notes', label: 'Notes' }
@@ -869,13 +868,13 @@ export default function HomeScreen({ route }) {
             // Filtrer les entrées selon l'onglet sélectionné
             let filteredEntries = [];
 
-            if (historyFilter === 'all' || historyFilter === 'stools') {
+            if (historyFilter === 'stools') {
               filteredEntries = [...filteredEntries, ...stools.map(s => ({ ...s, entryType: 'stool' }))];
             }
-            if (historyFilter === 'all' || historyFilter === 'symptoms') {
+            if (historyFilter === 'symptoms') {
               filteredEntries = [...filteredEntries, ...symptoms.map(s => ({ ...s, entryType: 'symptom' }))];
             }
-            if (historyFilter === 'all' || historyFilter === 'notes') {
+            if (historyFilter === 'notes') {
               filteredEntries = [...filteredEntries, ...notes.map(n => ({ ...n, entryType: 'note' }))];
             }
 
@@ -908,7 +907,10 @@ export default function HomeScreen({ route }) {
                   <AnimatedListItem key={`${item.entryType}-${item.id}`} index={index} delay={30}>
                     {item.entryType === 'stool' && (
                       <View style={styles.stoolItem}>
-                        <View style={styles.stoolMain}>
+                        <View style={[
+                          styles.stoolMain,
+                          item.hasBlood && styles.stoolMainWithBlood
+                        ]}>
                           <View style={[styles.bristolBadge, { backgroundColor: getBristolColor(item.bristolScale) }]}>
                             <AppText variant="bodyLarge" style={styles.bristolNumber}>
                               {item.bristolScale}
@@ -919,14 +921,6 @@ export default function HomeScreen({ route }) {
                               <AppText variant="bodyMedium" style={styles.stoolDate}>
                                 {formatCompactDate(item.timestamp)}
                               </AppText>
-                              {item.hasBlood && (
-                                <MaterialCommunityIcons
-                                  name="water"
-                                  size={16}
-                                  color="#DC2626"
-                                  style={{ marginLeft: 6 }}
-                                />
-                              )}
                             </View>
                           </View>
                           <View style={styles.stoolActions}>
@@ -1168,7 +1162,6 @@ export default function HomeScreen({ route }) {
               </AppText>
               
               <View style={styles.dateTimeSection}>
-              <AppText style={styles.fieldLabel}>Date et heure</AppText>
               <DateTimePicker
                 dateValue={dateInput}
                 timeValue={timeInput}
@@ -1607,8 +1600,8 @@ const styles = StyleSheet.create({
     marginBottom: designSystem.spacing[3], // Réduit de [4] à [3]
   },
   dateTimeRow: {
-    flexDirection: 'row',
-    gap: designSystem.spacing[4],
+    flexDirection: 'column',
+    gap: designSystem.spacing[3],
   },
   dateTimeInput: {
     flex: 1,
@@ -1868,6 +1861,10 @@ const styles = StyleSheet.create({
     padding: designSystem.spacing[3],
     borderWidth: 1,
     borderColor: '#C8C8F4',
+  },
+  stoolMainWithBlood: {
+    borderColor: '#DC2626',
+    borderWidth: 2,
   },
   bristolBadge: {
     width: 40,

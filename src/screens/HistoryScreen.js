@@ -475,7 +475,10 @@ export default function HistoryScreen({ navigation }) {
             {stools.slice(0, 10).map((item, index) => (
               <AnimatedListItem key={item.id} index={index} delay={30}>
                 <View style={styles.stoolItem}>
-                  <View style={styles.stoolMain}>
+                  <View style={[
+                    styles.stoolMain,
+                    item.hasBlood && styles.stoolMainWithBlood
+                  ]}>
                     <View style={[styles.bristolBadge, { backgroundColor: getBristolColor(item.bristolScale) }]}>
                       <AppText variant="bodyLarge" style={styles.bristolNumber}>
                         {item.bristolScale}
@@ -486,14 +489,6 @@ export default function HistoryScreen({ navigation }) {
                         <AppText variant="bodyMedium" style={styles.stoolDate}>
                           {formatCompactDate(item.timestamp)}
                         </AppText>
-                        {item.hasBlood && (
-                          <MaterialCommunityIcons 
-                            name="water" 
-                            size={16} 
-                            color="#DC2626" 
-                            style={{ marginLeft: 6 }}
-                          />
-                        )}
                       </View>
                     </View>
                     <View style={styles.stoolActions}>
@@ -826,6 +821,10 @@ const styles = StyleSheet.create({
     padding: 12,
     borderWidth: 1,
     borderColor: '#C8C8F4', // Color 04
+  },
+  stoolMainWithBlood: {
+    borderColor: '#DC2626',
+    borderWidth: 2,
   },
   bristolBadge: {
     width: 40,
