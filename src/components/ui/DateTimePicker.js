@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
     gap: designSystem.spacing[3],
   },
   webInputWrapper: {
-    flex: 1,
+    width: '100%',
   },
   webLabel: {
     marginBottom: designSystem.spacing[1],
@@ -300,19 +300,19 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
   },
   inputWrapper: {
-    flex: 1,
+    width: '100%',
   },
   input: {
     backgroundColor: '#F8FAFB',
   },
   dateInput: {
-    marginRight: designSystem.spacing[2],
+    marginRight: 0,
   },
   dateInputFull: {
     marginRight: 0,
   },
   timeInput: {
-    marginLeft: designSystem.spacing[2],
+    marginLeft: 0,
   },
   outline: {
     borderRadius: designSystem.borderRadius.lg,

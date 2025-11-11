@@ -1162,7 +1162,6 @@ export default function HomeScreen({ route }) {
               </AppText>
               
               <View style={styles.dateTimeSection}>
-              <AppText style={styles.fieldLabel}>Date et heure</AppText>
               <DateTimePicker
                 dateValue={dateInput}
                 timeValue={timeInput}
