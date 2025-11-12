@@ -113,8 +113,7 @@ Une Progressive Web App simple et efficace qui permet un suivi quotidien structu
 
 **Quantitatifs**
 - ✅ Passage de 0% à 100% de tracking quotidien
-- ✅ Score de Lichtiger passé de 8 à 4 (amélioration clinique visible)
-- ✅ Observance traitement : 95% (vs estimation subjective avant)
+- ✅ Données précises sur l'évolution de l'état de santé et de la progression de la maladie
 - ✅ Document PDF structuré prêt en 2 clics pour consultation
 
 **Qualitatifs**
