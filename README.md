@@ -223,12 +223,6 @@ Une Progressive Web App simple et efficace qui permet un suivi quotidien structu
 
 ---
 
-## 📸 Captures d'écran
-
-[À ajouter : 3-5 screenshots annotés des principales fonctionnalités]
-
----
-
 ## 🔗 Liens
 
 - 🌐 **Application en ligne** : [https://rch-app-mvp.vercel.app](https://rch-app-mvp.vercel.app)
@@ -236,10 +230,6 @@ Une Progressive Web App simple et efficace qui permet un suivi quotidien structu
 - 📧 **Contact** : david.hoffnung@gmail.com
 
 ---
-
-## 📄 License
-
-MIT License - Projet personnel à but éducatif et de démonstration.
 
 **Disclaimer médical** : Cette application est un projet personnel de démonstration de compétences Product Management. Elle n'est pas un dispositif médical certifié et ne doit pas être utilisée comme outil de diagnostic ou de décision thérapeutique sans supervision médicale appropriée.
 
