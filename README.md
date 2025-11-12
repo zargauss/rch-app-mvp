@@ -2,7 +2,7 @@
 
 > Application mobile de suivi médical pour la gestion personnelle de la Rectocolite Hémorragique (RCH)
 
-**⚠️ Note importante** : Projet personnel à but de démonstration de compétences Product Management. Non destiné à un usage médical sans supervision professionnelle.
+**⚠️ Note importante** : Projet personnel à but de démonstration. Non destiné à un usage médical sans supervision professionnelle.
 
 ---
 
