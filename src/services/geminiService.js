@@ -1,9 +1,15 @@
 // Service pour l'analyse de notes avec Google Gemini API
 // Extraction de tags pertinents pour l'analyse des facteurs déclencheurs de MICI
+// Utilise le SDK officiel @google/genai
+
+import { GoogleGenAI, Type } from "@google/genai";
 
 const GEMINI_API_KEY = 'AIzaSyCYTGrCIfRu0PPj-U0_PBwZ8deo_wZyNJ0';
-// Utiliser gemini-1.5-flash avec l'API v1beta
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+
+// Initialisation du client Google GenAI
+const ai = new GoogleGenAI({
+  apiKey: GEMINI_API_KEY
+});
 
 /**
  * Génère le prompt médical pour l'analyse de la note
@@ -40,52 +46,6 @@ Règles :
 };
 
 /**
- * Parse la réponse de l'API Gemini pour extraire le JSON
- * @param {string} responseText - Texte de réponse de l'API
- * @returns {Object|null} Objet parsé avec tags et confiance, ou null si erreur
- */
-const parseGeminiResponse = (responseText) => {
-  try {
-    // La réponse peut contenir du markdown avec des backticks
-    // On cherche le JSON entre ```json et ``` ou directement le JSON
-    let jsonText = responseText;
-
-    // Retirer les backticks markdown si présents
-    const jsonMatch = responseText.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/);
-    if (jsonMatch) {
-      jsonText = jsonMatch[1];
-    } else {
-      // Chercher le premier objet JSON dans la réponse
-      const directJsonMatch = responseText.match(/\{[\s\S]*\}/);
-      if (directJsonMatch) {
-        jsonText = directJsonMatch[0];
-      }
-    }
-
-    const parsed = JSON.parse(jsonText.trim());
-
-    // Validation de la structure
-    if (!parsed.tags || !Array.isArray(parsed.tags)) {
-      console.warn('⚠️ Format de réponse invalide : pas de tableau tags');
-      return { tags: [], confiance: 'faible' };
-    }
-
-    // Limitation à 8 tags max
-    const tags = parsed.tags.slice(0, 8);
-
-    // Validation du niveau de confiance
-    const confiance = ['haute', 'moyenne', 'faible'].includes(parsed.confiance)
-      ? parsed.confiance
-      : 'faible';
-
-    return { tags, confiance };
-  } catch (error) {
-    console.error('❌ Erreur lors du parsing de la réponse Gemini:', error);
-    return null;
-  }
-};
-
-/**
  * Analyse une note avec l'API Gemini pour extraire les tags
  * @param {string} noteContent - Le contenu de la note à analyser
  * @returns {Promise<{tags: string[], confiance: string}>} Résultat de l'analyse
@@ -104,79 +64,82 @@ export const analyzeNoteWithAI = async (noteContent) => {
     // Préparation du prompt
     const prompt = generateMedicalPrompt(noteContent);
     console.log('📋 Prompt généré, longueur:', prompt.length, 'caractères');
+    console.log('🌐 Appel à Gemini avec le modèle: gemini-2.0-flash-exp');
 
-    // Configuration du timeout (15 secondes)
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
-
-    const apiUrl = `${GEMINI_API_URL}?key=${GEMINI_API_KEY}`;
-    console.log('🌐 Appel API Gemini:', GEMINI_API_URL);
-
-    // Appel à l'API Gemini
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              {
-                text: prompt,
-              },
-            ],
+    // Appel à l'API Gemini avec le SDK
+    const response = await ai.models.generateContent({
+      model: "gemini-2.0-flash-exp",
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            tags: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING }
+            },
+            confiance: {
+              type: Type.STRING,
+              enum: ["haute", "moyenne", "faible"]
+            }
           },
-        ],
-        generationConfig: {
-          temperature: 0.3, // Plus conservateur pour des réponses médicales cohérentes
-          topK: 40,
-          topP: 0.95,
-          maxOutputTokens: 1024,
+          required: ["tags", "confiance"]
         },
-      }),
-      signal: controller.signal,
+        temperature: 0.3, // Plus conservateur pour des réponses médicales cohérentes
+      }
     });
 
-    clearTimeout(timeoutId);
-
-    console.log('📡 Réponse HTTP status:', response.status);
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('❌ Erreur API Gemini:', response.status, errorText);
-      throw new Error(`Erreur API Gemini: ${response.status} - ${errorText.substring(0, 200)}`);
-    }
-
-    // Récupération de la réponse
-    const data = await response.json();
-    console.log('📦 Données reçues de Gemini:', JSON.stringify(data).substring(0, 500));
+    console.log('✅ Réponse reçue de Gemini');
 
     // Extraction du texte généré
-    const generatedText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    const generatedText = response.text;
 
     if (!generatedText) {
       console.error('❌ Pas de texte généré par Gemini');
-      console.error('Structure de la réponse:', JSON.stringify(data, null, 2));
       return { tags: [], confiance: 'faible' };
     }
 
     console.log('📝 Réponse brute Gemini:', generatedText);
 
-    // Parsing de la réponse
-    const parsed = parseGeminiResponse(generatedText);
+    // Parsing de la réponse JSON
+    try {
+      const jsonText = generatedText.trim();
+      const parsed = JSON.parse(jsonText);
 
-    if (!parsed) {
+      // Validation de la structure
+      if (!parsed.tags || !Array.isArray(parsed.tags)) {
+        console.warn('⚠️ Format de réponse invalide : pas de tableau tags');
+        return { tags: [], confiance: 'faible' };
+      }
+
+      // Limitation à 8 tags max
+      const tags = parsed.tags.slice(0, 8);
+
+      // Validation du niveau de confiance
+      const confiance = ['haute', 'moyenne', 'faible'].includes(parsed.confiance)
+        ? parsed.confiance
+        : 'faible';
+
+      console.log(`✅ Analyse terminée: ${tags.length} tag(s) extrait(s) (confiance: ${confiance})`);
+
+      return { tags, confiance };
+    } catch (parseError) {
+      console.error('❌ Erreur lors du parsing JSON:', parseError);
+      console.error('Texte reçu:', generatedText);
       return { tags: [], confiance: 'faible' };
     }
-
-    console.log(`✅ Analyse terminée: ${parsed.tags.length} tag(s) extrait(s) (confiance: ${parsed.confiance})`);
-    return parsed;
   } catch (error) {
-    if (error.name === 'AbortError') {
-      console.error('⏱️ Timeout lors de l\'appel à Gemini (15s)');
-    } else {
-      console.error('❌ Erreur lors de l\'analyse AI:', error);
+    console.error('❌ Erreur lors de l\'analyse AI:', error);
+
+    // Gestion spécifique des erreurs
+    if (error instanceof Error) {
+      if (error.message.includes("model")) {
+        console.error("Le modèle spécifié n'est pas disponible. Vérifiez le nom du modèle.");
+      }
+      if (error.message.includes("API key")) {
+        console.error("Clé API invalide ou manquante.");
+      }
     }
 
     // En cas d'erreur, retourner un résultat vide
