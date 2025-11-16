@@ -2,8 +2,8 @@
 // Extraction de tags pertinents pour l'analyse des facteurs déclencheurs de MICI
 
 const GEMINI_API_KEY = 'AIzaSyCYTGrCIfRu0PPj-U0_PBwZ8deo_wZyNJ0';
-// Utiliser gemini-pro avec l'API v1 (version stable)
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent';
+// Utiliser gemini-1.5-flash-latest avec l'API v1beta
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent';
 
 /**
  * Génère le prompt médical pour l'analyse de la note
