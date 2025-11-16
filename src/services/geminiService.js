@@ -17,32 +17,108 @@ const ai = new GoogleGenAI({
  * @returns {string} Le prompt formaté
  */
 const generateMedicalPrompt = (noteContent) => {
-  return `Tu es un assistant médical spécialisé dans l'analyse des facteurs déclencheurs de MICI (Crohn, RCH).
+  return `Tu es un assistant médical spécialisé dans les MICI (maladies inflammatoires chroniques intestinales).
 
-Analyse cette note patient et extrais UNIQUEMENT des tags courts (1-3 mots max) qui pourraient influencer les symptômes digestifs.
+MISSION : Extraire les facteurs de risque alimentaires et comportementaux à partir de notes de patients atteints de RCH.
 
-Catégories à analyser :
-- ALIMENTATION : type d'aliment, mode de cuisson, quantité (ex: "produits laitiers", "friture", "repas copieux", "alcool", "café", "épices")
-- STRESS : événements, émotions (ex: "stress travail", "anxiété", "conflit", "deadline")
-- SOMMEIL : qualité, durée (ex: "insomnie", "nuit courte", "sommeil agité")
-- MÉDICAMENTS : prise, oubli (ex: "antibiotique", "AINS", "oubli traitement")
-- ACTIVITÉ : sport, effort (ex: "sport intense", "sédentarité", "marche")
-- ENVIRONNEMENT : météo, voyage (ex: "canicule", "voyage", "restaurant")
-- SYMPTÔMES ASSOCIÉS : autres signes (ex: "fatigue", "fièvre", "douleur articulaire")
+RÈGLE FONDAMENTALE : Ne tagge JAMAIS les noms de plats ou recettes. Identifie uniquement les COMPOSANTS ou CARACTÉRISTIQUES du plat qui sont des facteurs de risque connus pour les MICI.
 
-Note patient : "${noteContent}"
+FACTEURS À EXTRAIRE (max 8 tags) :
 
-Retourne UNIQUEMENT un JSON avec les tags pertinents :
+ALIMENTATION - Taguer selon la composition :
+- "viande-rouge" (bœuf, agneau - facteur inflammatoire)
+- "charcuterie" (facteur inflammatoire)
+- "produits-laitiers" (lactose)
+- "fibres-crues" (crudités, salades, légumes crus)
+- "fritures" (mode de cuisson)
+- "graisses-saturées" (sauces, crème, fromage)
+- "épices" (piment, curry, etc.)
+- "alcool" (préciser si quantité : alcool-faible, alcool-modéré, alcool-fort)
+- "café"
+- "gluten" (si mentionné)
+- "fast-food" (si la nature industrielle est le point clé)
+
+COMPORTEMENT :
+- "stress-travail"
+- "stress-relationnel"
+- "anxiété"
+- "sommeil-insuffisant" (< 6h ou mention explicite)
+- "sommeil-perturbé" (réveils, mauvaise qualité)
+- "sport-intense" (si intensité inhabituelle mentionnée)
+- "tabac"
+
+EXCLUSIONS STRICTES :
+- Noms de plats (bourguignon, tajine, carbonara, etc.)
+- Noms de restaurants
+- Aliments neutres (riz blanc, pâtes, pain blanc, poisson blanc, poulet)
+- Émotions positives sans stress ("content", "heureux")
+- Activités routinières
+
+LOGIQUE D'EXTRACTION :
+1. Si un plat est mentionné, décompose-le mentalement en ingrédients
+2. Ne garde que les ingrédients/modes de préparation qui sont des facteurs de risque MICI
+3. Maximum 3 tags alimentaires par repas mentionné
+4. Si rien de problématique n'est identifiable, ne tagge pas
+
+FORMAT DE SORTIE (JSON strict) :
 {
-  "tags": ["tag1", "tag2", "tag3"],
-  "confiance": "haute|moyenne|faible"
+  "tags": ["tag1", "tag2"],
+  "confiance": "haute|moyenne|basse"
 }
 
-Règles :
-- Maximum 8 tags par note
-- Prioriser les facteurs connus pour impacter les MICI
-- Ignorer le banal (ex: "eau", "respiration")
-- Si rien de pertinent : {"tags": [], "confiance": "faible"}`;
+Mets "confiance: basse" si la note est vague ou si tu dois inférer fortement.
+
+EXEMPLES :
+
+Note : "Bœuf bourguignon ce soir avec du pain"
+Réponse : {
+  "tags": ["viande-rouge"],
+  "confiance": "haute"
+}
+Explication : Le bourguignon contient du bœuf (viande rouge, facteur inflammatoire). Le vin dans la sauce est cuit donc négligeable. Pain = neutre.
+
+Note : "McDo ce midi, Big Mac frites"
+Réponse : {
+  "tags": ["fast-food", "fritures", "graisses-saturées"],
+  "confiance": "haute"
+}
+
+Note : "Salade césar au restaurant"
+Réponse : {
+  "tags": ["fibres-crues", "graisses-saturées"],
+  "confiance": "haute"
+}
+Explication : Salade = crudités. Sauce césar = graisses saturées (parmesan, crème).
+
+Note : "Pizza 4 fromages avec les collègues, 2 bières"
+Réponse : {
+  "tags": ["produits-laitiers", "graisses-saturées", "alcool-modéré"],
+  "confiance": "haute"
+}
+
+Note : "Poisson grillé et riz, eau plate"
+Réponse : {
+  "tags": [],
+  "confiance": "haute"
+}
+Explication : Aucun facteur de risque identifié.
+
+Note : "Resto japonais, super soirée"
+Réponse : {
+  "tags": [],
+  "confiance": "basse"
+}
+Explication : Pas assez de détails sur ce qui a été mangé. Japonais peut être sushi (cru mais poisson blanc généralement OK) ou tempura (fritures). Trop vague.
+
+Note : "Grosse journée de boulot, dead. Pas eu le temps de manger à midi, sandwich jambon beurre vite fait"
+Réponse : {
+  "tags": ["stress-travail", "charcuterie", "graisses-saturées"],
+  "confiance": "haute"
+}
+
+Analyse maintenant cette note :
+
+"${noteContent}"`;
 };
 
 /**
@@ -81,7 +157,7 @@ export const analyzeNoteWithAI = async (noteContent) => {
             },
             confiance: {
               type: Type.STRING,
-              enum: ["haute", "moyenne", "faible"]
+              enum: ["haute", "moyenne", "basse"]
             }
           },
           required: ["tags", "confiance"]
@@ -116,10 +192,14 @@ export const analyzeNoteWithAI = async (noteContent) => {
       // Limitation à 8 tags max
       const tags = parsed.tags.slice(0, 8);
 
-      // Validation du niveau de confiance
-      const confiance = ['haute', 'moyenne', 'faible'].includes(parsed.confiance)
-        ? parsed.confiance
-        : 'faible';
+      // Validation du niveau de confiance (mapper "basse" vers "faible" pour compatibilité)
+      let confiance = parsed.confiance;
+      if (confiance === 'basse') {
+        confiance = 'faible';
+      }
+      if (!['haute', 'moyenne', 'faible'].includes(confiance)) {
+        confiance = 'faible';
+      }
 
       console.log(`✅ Analyse terminée: ${tags.length} tag(s) extrait(s) (confiance: ${confiance})`);
 
