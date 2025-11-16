@@ -64,11 +64,11 @@ export const analyzeNoteWithAI = async (noteContent) => {
     // Préparation du prompt
     const prompt = generateMedicalPrompt(noteContent);
     console.log('📋 Prompt généré, longueur:', prompt.length, 'caractères');
-    console.log('🌐 Appel à Gemini avec le modèle: gemini-2.0-flash-exp');
+    console.log('🌐 Appel à Gemini avec le modèle: gemini-2.0-flash');
 
     // Appel à l'API Gemini avec le SDK
     const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash-exp",
+      model: "gemini-2.0-flash",
       contents: prompt,
       config: {
         responseMimeType: "application/json",
