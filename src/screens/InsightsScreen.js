@@ -48,19 +48,19 @@ export default function InsightsScreen() {
     // Couleurs selon la sévérité
     const severityColors = {
       high: {
-        bg: designSystem.colors.error[50],
-        border: designSystem.colors.error[300],
-        text: designSystem.colors.error[700],
+        bg: designSystem.colors.health.decline.light,
+        border: designSystem.colors.health.decline.main,
+        text: designSystem.colors.health.decline.dark,
       },
       medium: {
-        bg: designSystem.colors.warning[50],
-        border: designSystem.colors.warning[300],
-        text: designSystem.colors.warning[700],
+        bg: '#FEF3C7',
+        border: '#FCD34D',
+        text: '#92400E',
       },
       low: {
-        bg: designSystem.colors.success[50],
-        border: designSystem.colors.success[300],
-        text: designSystem.colors.success[700],
+        bg: designSystem.colors.health.improvement.light,
+        border: designSystem.colors.health.improvement.main,
+        text: designSystem.colors.health.improvement.dark,
       },
     };
 
@@ -218,7 +218,7 @@ export default function InsightsScreen() {
         <MaterialCommunityIcons
           name="lightbulb-outline"
           size={20}
-          color={designSystem.colors.warning[500]}
+          color="#F59E0B"
         />
         <AppText variant="bodySmall" style={styles.footerText}>
           Ces corrélations sont indicatives. Consultez votre médecin pour un diagnostic personnalisé.
@@ -356,16 +356,16 @@ const styles = StyleSheet.create({
   footerCard: {
     margin: designSystem.spacing[4],
     marginTop: designSystem.spacing[5],
-    backgroundColor: designSystem.colors.warning[50],
+    backgroundColor: '#FEF3C7',
     borderWidth: 1,
-    borderColor: designSystem.colors.warning[200],
+    borderColor: '#FCD34D',
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: designSystem.spacing[2],
   },
   footerText: {
     flex: 1,
-    color: designSystem.colors.warning[800],
+    color: '#92400E',
     lineHeight: 18,
   },
   loadingCard: {
