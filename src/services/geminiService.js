@@ -19,11 +19,16 @@ const ai = new GoogleGenAI({
 const generateMedicalPrompt = (noteContent) => {
   return `Tu es un assistant médical spécialisé dans les MICI (maladies inflammatoires chroniques intestinales).
 
-MISSION : Extraire les facteurs de risque alimentaires et comportementaux à partir de notes de patients atteints de RCH.
+MISSION : Extraire les facteurs de risque ET les symptômes à partir de notes de patients atteints de RCH.
 
-RÈGLE FONDAMENTALE : Ne tagge JAMAIS les noms de plats ou recettes. Identifie uniquement les COMPOSANTS ou CARACTÉRISTIQUES du plat qui sont des facteurs de risque connus pour les MICI.
+RÈGLE FONDAMENTALE :
+1. Distingue FACTEURS DE RISQUE (alimentation, comportement) et SYMPTÔMES (manifestations physiques)
+2. Ne tagge JAMAIS les noms de plats, seulement les COMPOSANTS à risque
+3. Pour chaque symptôme, estime son intensité de 1 à 5
 
-FACTEURS À EXTRAIRE (max 8 tags) :
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PARTIE 1 : FACTEURS DE RISQUE (max 8 tags)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ALIMENTATION - Taguer selon la composition :
 - "viande-rouge" (bœuf, agneau - facteur inflammatoire)
@@ -47,74 +52,123 @@ COMPORTEMENT :
 - "sport-intense" (si intensité inhabituelle mentionnée)
 - "tabac"
 
-EXCLUSIONS STRICTES :
-- Noms de plats (bourguignon, tajine, carbonara, etc.)
+EXCLUSIONS pour les tags :
+- Noms de plats (bourguignon, tajine, carbonara)
 - Noms de restaurants
 - Aliments neutres (riz blanc, pâtes, pain blanc, poisson blanc, poulet)
-- Émotions positives sans stress ("content", "heureux")
+- Émotions positives sans stress
 - Activités routinières
+- LES SYMPTÔMES (voir partie 2)
 
-LOGIQUE D'EXTRACTION :
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PARTIE 2 : SYMPTÔMES (avec intensité 1-5)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+SYMPTÔMES À DÉTECTER (hors selles qui sont traquées séparément) :
+- "Douleurs abdominales" (crampes, douleurs ventre)
+- "Fatigue" (épuisement, fatigué, crevé, dead)
+- "Nausées" (envie de vomir, mal au cœur)
+- "Fièvre" (température, fièvre, chaud)
+- "Perte d'appétit" (pas faim, n'a rien mangé)
+- "Douleurs articulaires" (douleur articulations, genoux, dos)
+- "Ballonnements" (ventre gonflé, ballonné)
+- "Maux de tête" (migraine, mal de crâne)
+
+ÉCHELLE D'INTENSITÉ :
+1 = Légère (mentionné en passant, peu gênant)
+2 = Modérée (notable mais supportable)
+3 = Importante (gênant, affecte les activités)
+4 = Sévère (très gênant, limite les activités)
+5 = Insupportable (ne peut rien faire)
+
+EXEMPLES d'évaluation d'intensité :
+- "un peu fatigué" → intensité: 1
+- "fatigué" → intensité: 2
+- "très fatigué" / "crevé" → intensité: 3
+- "épuisé" / "dead" → intensité: 4
+- "ne peux plus bouger" → intensité: 5
+- "mal au ventre" → intensité: 2
+- "grosses douleurs abdominales" → intensité: 4
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+LOGIQUE D'EXTRACTION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Pour les TAGS :
 1. Si un plat est mentionné, décompose-le mentalement en ingrédients
-2. Ne garde que les ingrédients/modes de préparation qui sont des facteurs de risque MICI
+2. Ne garde que les ingrédients/modes de préparation à risque
 3. Maximum 3 tags alimentaires par repas mentionné
-4. Si rien de problématique n'est identifiable, ne tagge pas
+
+Pour les SYMPTÔMES :
+1. Cherche les manifestations physiques/sensations désagréables
+2. Évalue l'intensité selon le vocabulaire utilisé
+3. Ne pas confondre avec les facteurs de risque (ex: "stress" → tag, "mal de tête" → symptôme)
 
 FORMAT DE SORTIE (JSON strict) :
 {
   "tags": ["tag1", "tag2"],
+  "symptoms": [
+    {"nom": "Fatigue", "intensité": 3},
+    {"nom": "Douleurs abdominales", "intensité": 2}
+  ],
   "confiance": "haute|moyenne|basse"
 }
 
+Si pas de symptômes : "symptoms": []
+Si pas de tags : "tags": []
+
 Mets "confiance: basse" si la note est vague ou si tu dois inférer fortement.
 
-EXEMPLES :
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+EXEMPLES COMPLETS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Note : "Bœuf bourguignon ce soir avec du pain"
 Réponse : {
   "tags": ["viande-rouge"],
+  "symptoms": [],
   "confiance": "haute"
 }
-Explication : Le bourguignon contient du bœuf (viande rouge, facteur inflammatoire). Le vin dans la sauce est cuit donc négligeable. Pain = neutre.
 
-Note : "McDo ce midi, Big Mac frites"
+Note : "McDo Big Mac frites, après j'avais mal au ventre"
 Réponse : {
   "tags": ["fast-food", "fritures", "graisses-saturées"],
+  "symptoms": [{"nom": "Douleurs abdominales", "intensité": 2}],
   "confiance": "haute"
 }
-
-Note : "Salade césar au restaurant"
-Réponse : {
-  "tags": ["fibres-crues", "graisses-saturées"],
-  "confiance": "haute"
-}
-Explication : Salade = crudités. Sauce césar = graisses saturées (parmesan, crème).
-
-Note : "Pizza 4 fromages avec les collègues, 2 bières"
-Réponse : {
-  "tags": ["produits-laitiers", "graisses-saturées", "alcool-modéré"],
-  "confiance": "haute"
-}
-
-Note : "Poisson grillé et riz, eau plate"
-Réponse : {
-  "tags": [],
-  "confiance": "haute"
-}
-Explication : Aucun facteur de risque identifié.
-
-Note : "Resto japonais, super soirée"
-Réponse : {
-  "tags": [],
-  "confiance": "basse"
-}
-Explication : Pas assez de détails sur ce qui a été mangé. Japonais peut être sushi (cru mais poisson blanc généralement OK) ou tempura (fritures). Trop vague.
 
 Note : "Grosse journée de boulot, dead. Pas eu le temps de manger à midi, sandwich jambon beurre vite fait"
 Réponse : {
   "tags": ["stress-travail", "charcuterie", "graisses-saturées"],
+  "symptoms": [{"nom": "Fatigue", "intensité": 4}],
   "confiance": "haute"
 }
+Explication : "dead" indique une fatigue intense (4). Stress-travail = tag. Charcuterie/graisses = tags.
+
+Note : "Poisson grillé et riz, eau plate. Bien dormi, forme olympique."
+Réponse : {
+  "tags": [],
+  "symptoms": [],
+  "confiance": "haute"
+}
+
+Note : "Pizza 4 fromages avec les collègues, 2 bières. Mal de crâne après"
+Réponse : {
+  "tags": ["produits-laitiers", "graisses-saturées", "alcool-modéré"],
+  "symptoms": [{"nom": "Maux de tête", "intensité": 2}],
+  "confiance": "haute"
+}
+
+Note : "Très mal au ventre ce matin, rien pu avaler"
+Réponse : {
+  "tags": [],
+  "symptoms": [
+    {"nom": "Douleurs abdominales", "intensité": 4},
+    {"nom": "Perte d'appétit", "intensité": 3}
+  ],
+  "confiance": "haute"
+}
+Explication : "Très mal" → intensité 4. "Rien pu avaler" → perte d'appétit modérée à importante.
 
 Analyse maintenant cette note :
 
@@ -122,9 +176,9 @@ Analyse maintenant cette note :
 };
 
 /**
- * Analyse une note avec l'API Gemini pour extraire les tags
+ * Analyse une note avec l'API Gemini pour extraire les tags et symptômes
  * @param {string} noteContent - Le contenu de la note à analyser
- * @returns {Promise<{tags: string[], confiance: string}>} Résultat de l'analyse
+ * @returns {Promise<{tags: string[], symptoms: Array<{nom: string, intensité: number}>, confiance: string}>} Résultat de l'analyse
  */
 export const analyzeNoteWithAI = async (noteContent) => {
   try {
@@ -134,7 +188,7 @@ export const analyzeNoteWithAI = async (noteContent) => {
     // Vérification que la note n'est pas vide
     if (!noteContent || noteContent.trim().length === 0) {
       console.warn('⚠️ Note vide, aucune analyse effectuée');
-      return { tags: [], confiance: 'faible' };
+      return { tags: [], symptoms: [], confiance: 'faible' };
     }
 
     // Préparation du prompt
@@ -155,12 +209,23 @@ export const analyzeNoteWithAI = async (noteContent) => {
               type: Type.ARRAY,
               items: { type: Type.STRING }
             },
+            symptoms: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  nom: { type: Type.STRING },
+                  intensité: { type: Type.NUMBER }
+                },
+                required: ["nom", "intensité"]
+              }
+            },
             confiance: {
               type: Type.STRING,
               enum: ["haute", "moyenne", "basse"]
             }
           },
-          required: ["tags", "confiance"]
+          required: ["tags", "symptoms", "confiance"]
         },
         temperature: 0.3, // Plus conservateur pour des réponses médicales cohérentes
       }
@@ -173,7 +238,7 @@ export const analyzeNoteWithAI = async (noteContent) => {
 
     if (!generatedText) {
       console.error('❌ Pas de texte généré par Gemini');
-      return { tags: [], confiance: 'faible' };
+      return { tags: [], symptoms: [], confiance: 'faible' };
     }
 
     console.log('📝 Réponse brute Gemini:', generatedText);
@@ -186,11 +251,24 @@ export const analyzeNoteWithAI = async (noteContent) => {
       // Validation de la structure
       if (!parsed.tags || !Array.isArray(parsed.tags)) {
         console.warn('⚠️ Format de réponse invalide : pas de tableau tags');
-        return { tags: [], confiance: 'faible' };
+        return { tags: [], symptoms: [], confiance: 'faible' };
+      }
+
+      if (!parsed.symptoms || !Array.isArray(parsed.symptoms)) {
+        console.warn('⚠️ Format de réponse invalide : pas de tableau symptoms');
+        parsed.symptoms = [];
       }
 
       // Limitation à 8 tags max
       const tags = parsed.tags.slice(0, 8);
+
+      // Validation des symptômes
+      const symptoms = parsed.symptoms
+        .filter(s => s.nom && typeof s.intensité === 'number')
+        .map(s => ({
+          nom: s.nom,
+          intensité: Math.max(1, Math.min(5, Math.round(s.intensité))) // Clamp 1-5
+        }));
 
       // Validation du niveau de confiance (mapper "basse" vers "faible" pour compatibilité)
       let confiance = parsed.confiance;
@@ -201,13 +279,16 @@ export const analyzeNoteWithAI = async (noteContent) => {
         confiance = 'faible';
       }
 
-      console.log(`✅ Analyse terminée: ${tags.length} tag(s) extrait(s) (confiance: ${confiance})`);
+      console.log(`✅ Analyse terminée: ${tags.length} tag(s), ${symptoms.length} symptôme(s) (confiance: ${confiance})`);
+      if (symptoms.length > 0) {
+        console.log('📊 Symptômes détectés:', symptoms.map(s => `${s.nom} (${s.intensité}/5)`).join(', '));
+      }
 
-      return { tags, confiance };
+      return { tags, symptoms, confiance };
     } catch (parseError) {
       console.error('❌ Erreur lors du parsing JSON:', parseError);
       console.error('Texte reçu:', generatedText);
-      return { tags: [], confiance: 'faible' };
+      return { tags: [], symptoms: [], confiance: 'faible' };
     }
   } catch (error) {
     console.error('❌ Erreur lors de l\'analyse AI:', error);
@@ -223,7 +304,7 @@ export const analyzeNoteWithAI = async (noteContent) => {
     }
 
     // En cas d'erreur, retourner un résultat vide
-    return { tags: [], confiance: 'faible' };
+    return { tags: [], symptoms: [], confiance: 'faible' };
   }
 };
 

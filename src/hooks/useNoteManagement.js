@@ -44,18 +44,27 @@ export const useNoteManagement = ({ onDataChange, showToast }) => {
       }, 500);
 
       processNoteWithAI(noteId)
-        .then(() => {
+        .then((result) => {
           console.log('✅ Analyse IA terminée pour la note:', noteId);
-          // Rafraîchir les données pour afficher les tags
+          // Rafraîchir les données pour afficher les tags et symptômes
           onDataChange?.();
 
-          // Récupérer la note pour afficher le résultat
-          const { getNoteById } = require('../utils/notesUtils');
-          const updatedNote = getNoteById(noteId);
-          if (updatedNote && updatedNote.tags && updatedNote.tags.length > 0) {
-            showToast?.(`✅ ${updatedNote.tags.length} tag(s) détecté(s)`, 'success');
+          // Construire le message du toast en fonction des résultats
+          const parts = [];
+          if (result.tags && result.tags.length > 0) {
+            parts.push(`${result.tags.length} tag(s)`);
+          }
+          if (result.createdSymptoms && result.createdSymptoms.length > 0) {
+            parts.push(`${result.createdSymptoms.length} symptôme(s)`);
+          }
+
+          if (parts.length > 0) {
+            const message = parts.length === 2
+              ? `✅ ${parts.join(' et ')} détecté(s)`
+              : `✅ ${parts[0]} détecté(s)`;
+            showToast?.(message, 'success');
           } else {
-            showToast?.('ℹ️ Aucun tag détecté', 'info');
+            showToast?.('ℹ️ Aucun élément détecté', 'info');
           }
         })
         .catch((error) => {

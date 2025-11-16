@@ -1,5 +1,6 @@
 import storage from './storage';
 import { analyzeNoteWithAI } from '../services/geminiService';
+import { createSymptom } from './symptomsUtils';
 
 // ========================================
 // Catégories prédéfinies
@@ -177,10 +178,10 @@ export const getCategoryLabel = (category) => {
 // ========================================
 
 /**
- * Analyse une note avec l'IA pour extraire les tags
+ * Analyse une note avec l'IA pour extraire les tags et créer les symptômes
  * Cette fonction est asynchrone et met à jour la note après l'analyse
  * @param {string} noteId - ID de la note à analyser
- * @returns {Promise<void>}
+ * @returns {Promise<{tags: string[], createdSymptoms: Array, confiance: string}>}
  */
 export const processNoteWithAI = async (noteId) => {
   try {
@@ -188,31 +189,62 @@ export const processNoteWithAI = async (noteId) => {
 
     if (!note) {
       console.warn('⚠️ Note non trouvée:', noteId);
-      return;
+      return { tags: [], createdSymptoms: [], confiance: 'faible' };
     }
 
     console.log('🤖 Début de l\'analyse IA pour la note:', noteId);
 
-    // Appel au service Gemini
-    const { tags, confiance } = await analyzeNoteWithAI(note.content);
+    // Appel au service Gemini (retourne tags ET symptoms)
+    const { tags, symptoms, confiance } = await analyzeNoteWithAI(note.content);
 
-    // Mise à jour de la note avec les résultats
+    // Mise à jour de la note avec les tags
     updateNote(noteId, {
       tags,
       aiProcessed: true,
       aiConfidence: confiance,
     });
 
-    console.log(`✅ Note ${noteId} analysée: ${tags.length} tag(s) (confiance: ${confiance})`);
+    // Création automatique des symptômes détectés
+    const createdSymptoms = [];
+    if (symptoms && symptoms.length > 0) {
+      const noteDate = new Date(note.timestamp);
+
+      for (const symptom of symptoms) {
+        try {
+          const symptomId = createSymptom(
+            symptom.nom,           // type (correspond à PREDEFINED_SYMPTOMS)
+            symptom.intensité,     // intensity 1-5
+            note.content,          // note text pour contexte
+            noteDate               // même date que la note
+          );
+
+          createdSymptoms.push({
+            id: symptomId,
+            nom: symptom.nom,
+            intensité: symptom.intensité,
+          });
+
+          console.log(`  ➕ Symptôme créé: ${symptom.nom} (intensité: ${symptom.intensité}/5)`);
+        } catch (symptomError) {
+          console.error(`  ❌ Erreur création symptôme "${symptom.nom}":`, symptomError);
+        }
+      }
+    }
+
+    console.log(`✅ Note ${noteId} analysée: ${tags.length} tag(s), ${createdSymptoms.length} symptôme(s) créé(s) (confiance: ${confiance})`);
+
+    return { tags, createdSymptoms, confiance };
   } catch (error) {
     console.error('❌ Erreur lors du traitement IA de la note:', error);
 
-    // En cas d'erreur, marquer la note comme traitée mais sans tags
+    // En cas d'erreur, marquer la note comme traitée mais sans tags ni symptômes
     updateNote(noteId, {
       tags: [],
       aiProcessed: true,
       aiConfidence: 'faible',
     });
+
+    return { tags: [], createdSymptoms: [], confiance: 'faible' };
   }
 };
 
