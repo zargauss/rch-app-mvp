@@ -1,4 +1,5 @@
 import storage from './storage';
+import { analyzeNoteWithAI } from '../services/geminiService';
 
 // ========================================
 // Catégories prédéfinies
@@ -47,6 +48,10 @@ export const createNote = (content, category = null, sharedWithDoctor = false, d
     timestamp: date.getTime(),
     sharedWithDoctor,
     createdAt: Date.now(),
+    // Nouveaux champs pour l'analyse IA
+    tags: [],
+    aiProcessed: false,
+    aiConfidence: null,
   };
 
   notes.push(newNote);
@@ -84,6 +89,19 @@ export const updateNote = (id, updates) => {
   if (updates.date !== undefined) {
     note.date = formatDate(updates.date);
     note.timestamp = updates.date.getTime();
+  }
+
+  // Mise à jour des champs IA
+  if (updates.tags !== undefined) {
+    note.tags = updates.tags;
+  }
+
+  if (updates.aiProcessed !== undefined) {
+    note.aiProcessed = updates.aiProcessed;
+  }
+
+  if (updates.aiConfidence !== undefined) {
+    note.aiConfidence = updates.aiConfidence;
   }
 
   note.updatedAt = Date.now();
@@ -152,6 +170,69 @@ export const getSharedNotes = () => {
 export const getCategoryLabel = (category) => {
   const cat = NOTE_CATEGORIES.find(c => c.value === category);
   return cat ? cat.label : 'Sans catégorie';
+};
+
+// ========================================
+// Analyse IA
+// ========================================
+
+/**
+ * Analyse une note avec l'IA pour extraire les tags
+ * Cette fonction est asynchrone et met à jour la note après l'analyse
+ * @param {string} noteId - ID de la note à analyser
+ * @returns {Promise<void>}
+ */
+export const processNoteWithAI = async (noteId) => {
+  try {
+    const note = getNoteById(noteId);
+
+    if (!note) {
+      console.warn('⚠️ Note non trouvée:', noteId);
+      return;
+    }
+
+    console.log('🤖 Début de l\'analyse IA pour la note:', noteId);
+
+    // Appel au service Gemini
+    const { tags, confiance } = await analyzeNoteWithAI(note.content);
+
+    // Mise à jour de la note avec les résultats
+    updateNote(noteId, {
+      tags,
+      aiProcessed: true,
+      aiConfidence: confiance,
+    });
+
+    console.log(`✅ Note ${noteId} analysée: ${tags.length} tag(s) (confiance: ${confiance})`);
+  } catch (error) {
+    console.error('❌ Erreur lors du traitement IA de la note:', error);
+
+    // En cas d'erreur, marquer la note comme traitée mais sans tags
+    updateNote(noteId, {
+      tags: [],
+      aiProcessed: true,
+      aiConfidence: 'faible',
+    });
+  }
+};
+
+/**
+ * Récupère toutes les notes avec leurs tags (filtre les notes non traitées)
+ * @returns {Array} - Notes avec tags
+ */
+export const getNotesWithTags = () => {
+  const notes = getNotes();
+  return notes.filter(n => n.aiProcessed && n.tags && n.tags.length > 0);
+};
+
+/**
+ * Récupère tous les tags uniques de toutes les notes
+ * @returns {Array} - Liste des tags uniques
+ */
+export const getAllUniqueTags = () => {
+  const notes = getNotesWithTags();
+  const allTags = notes.flatMap(n => n.tags);
+  return [...new Set(allTags)].sort();
 };
 
 // ========================================

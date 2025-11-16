@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Platform, Alert } from 'react-native';
-import { createNote, updateNote, deleteNote } from '../utils/notesUtils';
+import { createNote, updateNote, deleteNote, processNoteWithAI } from '../utils/notesUtils';
 import { saveFeedback, deleteFeedback } from '../utils/haptics';
 
 /**
@@ -17,18 +17,35 @@ export const useNoteManagement = ({ onDataChange, showToast }) => {
 
   const handleSaveNote = (data) => {
     saveFeedback();
+    let noteId;
+
     if (editingNote) {
       // Mode édition
-      updateNote(editingNote.id, data);
+      noteId = editingNote.id;
+      updateNote(noteId, data);
       showToast?.('✅ Note mise à jour', 'success');
     } else {
       // Mode création
-      createNote(data.content, data.category, data.sharedWithDoctor, data.date);
+      noteId = createNote(data.content, data.category, data.sharedWithDoctor, data.date);
       showToast?.('✅ Note enregistrée', 'success');
     }
+
     setNoteModalVisible(false);
     setEditingNote(null);
     onDataChange?.();
+
+    // Lancer l'analyse IA en arrière-plan (asynchrone, non-bloquant)
+    if (noteId) {
+      processNoteWithAI(noteId)
+        .then(() => {
+          console.log('✅ Analyse IA terminée pour la note:', noteId);
+          // Rafraîchir les données pour afficher les tags
+          onDataChange?.();
+        })
+        .catch((error) => {
+          console.error('❌ Erreur lors de l\'analyse IA:', error);
+        });
+    }
   };
 
   const handleEditNote = (note) => {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { Portal, Modal, TextInput, Switch, HelperText, Menu } from 'react-native-paper';
+import { Portal, Modal, TextInput, Switch, HelperText, Menu, Chip, ActivityIndicator } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import AppCard from '../ui/AppCard';
 import AppText from '../ui/AppText';
@@ -20,6 +20,12 @@ const NoteModal = ({ visible, onDismiss, onSave, initialData = null }) => {
   const [errors, setErrors] = useState({ content: '', date: '' });
   const [menuVisible, setMenuVisible] = useState(false);
 
+  // États pour les tags IA
+  const [tags, setTags] = useState([]);
+  const [newTagInput, setNewTagInput] = useState('');
+  const [aiProcessed, setAiProcessed] = useState(false);
+  const [aiConfidence, setAiConfidence] = useState(null);
+
   // Initialiser avec les données existantes (mode édition)
   useEffect(() => {
     if (visible) {
@@ -27,6 +33,9 @@ const NoteModal = ({ visible, onDismiss, onSave, initialData = null }) => {
         setContent(initialData.content || '');
         setCategory(initialData.category || null);
         setSharedWithDoctor(initialData.sharedWithDoctor || false);
+        setTags(initialData.tags || []);
+        setAiProcessed(initialData.aiProcessed || false);
+        setAiConfidence(initialData.aiConfidence || null);
         // Convertir date YYYY-MM-DD en DD/MM/YYYY
         if (initialData.date) {
           const [y, m, d] = initialData.date.split('-');
@@ -39,8 +48,12 @@ const NoteModal = ({ visible, onDismiss, onSave, initialData = null }) => {
         setContent('');
         setCategory(null);
         setSharedWithDoctor(false);
+        setTags([]);
+        setAiProcessed(false);
+        setAiConfidence(null);
       }
       setErrors({ content: '', date: '' });
+      setNewTagInput('');
     }
   }, [visible, initialData]);
 
@@ -84,7 +97,20 @@ const NoteModal = ({ visible, onDismiss, onSave, initialData = null }) => {
       category,
       sharedWithDoctor,
       date,
+      tags,
     });
+  };
+
+  const handleAddTag = () => {
+    const trimmedTag = newTagInput.trim();
+    if (trimmedTag && !tags.includes(trimmedTag) && tags.length < 8) {
+      setTags([...tags, trimmedTag]);
+      setNewTagInput('');
+    }
+  };
+
+  const handleRemoveTag = (tagToRemove) => {
+    setTags(tags.filter(tag => tag !== tagToRemove));
   };
 
   const getCategoryDisplayText = () => {
@@ -184,6 +210,80 @@ const NoteModal = ({ visible, onDismiss, onSave, initialData = null }) => {
                 {errors.date}
               </HelperText>
             </View>
+
+            {/* Tags IA */}
+            {initialData && (
+              <View style={styles.section}>
+                <View style={styles.tagsHeader}>
+                  <AppText style={styles.fieldLabel}>Tags IA</AppText>
+                  {!aiProcessed && (
+                    <View style={styles.processingBadge}>
+                      <ActivityIndicator size={12} color={designSystem.colors.primary[500]} />
+                      <AppText variant="labelSmall" style={styles.processingText}>
+                        Analyse en cours...
+                      </AppText>
+                    </View>
+                  )}
+                  {aiProcessed && aiConfidence && (
+                    <AppText variant="labelSmall" style={styles.confidenceText}>
+                      Confiance: {aiConfidence}
+                    </AppText>
+                  )}
+                </View>
+
+                {/* Liste des tags */}
+                <View style={styles.tagsContainer}>
+                  {tags.length === 0 && aiProcessed && (
+                    <AppText variant="bodySmall" style={styles.noTagsText}>
+                      Aucun tag détecté
+                    </AppText>
+                  )}
+                  {tags.map((tag, index) => (
+                    <Chip
+                      key={index}
+                      onClose={() => handleRemoveTag(tag)}
+                      style={styles.chip}
+                      textStyle={styles.chipText}
+                    >
+                      {tag}
+                    </Chip>
+                  ))}
+                </View>
+
+                {/* Ajouter un tag manuellement */}
+                {tags.length < 8 && (
+                  <View style={styles.addTagRow}>
+                    <TextInput
+                      mode="outlined"
+                      placeholder="Ajouter un tag..."
+                      value={newTagInput}
+                      onChangeText={setNewTagInput}
+                      onSubmitEditing={handleAddTag}
+                      style={styles.tagInput}
+                      outlineStyle={{ borderRadius: 8 }}
+                      dense
+                    />
+                    <TouchableOpacity
+                      style={styles.addTagButton}
+                      onPress={handleAddTag}
+                      disabled={!newTagInput.trim()}
+                    >
+                      <MaterialCommunityIcons
+                        name="plus-circle"
+                        size={28}
+                        color={newTagInput.trim() ? designSystem.colors.primary[500] : designSystem.colors.text.tertiary}
+                      />
+                    </TouchableOpacity>
+                  </View>
+                )}
+
+                {tags.length >= 8 && (
+                  <HelperText type="info">
+                    Limite de 8 tags atteinte
+                  </HelperText>
+                )}
+              </View>
+            )}
 
             {/* Partager avec le médecin */}
             <View style={styles.section}>
@@ -334,6 +434,60 @@ const styles = StyleSheet.create({
   dropdownText: {
     color: designSystem.colors.text.primary,
     flex: 1,
+  },
+  tagsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: designSystem.spacing[2],
+  },
+  processingBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: designSystem.spacing[1],
+    backgroundColor: designSystem.colors.primary[50],
+    paddingHorizontal: designSystem.spacing[2],
+    paddingVertical: designSystem.spacing[1],
+    borderRadius: designSystem.borderRadius.full,
+  },
+  processingText: {
+    color: designSystem.colors.primary[600],
+    fontWeight: '500',
+  },
+  confidenceText: {
+    color: designSystem.colors.text.secondary,
+    fontStyle: 'italic',
+  },
+  tagsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: designSystem.spacing[2],
+    marginBottom: designSystem.spacing[2],
+  },
+  chip: {
+    backgroundColor: designSystem.colors.primary[100],
+    borderWidth: 1,
+    borderColor: designSystem.colors.primary[300],
+  },
+  chipText: {
+    color: designSystem.colors.primary[700],
+    fontSize: designSystem.typography.fontSize.sm,
+  },
+  noTagsText: {
+    color: designSystem.colors.text.tertiary,
+    fontStyle: 'italic',
+  },
+  addTagRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: designSystem.spacing[2],
+  },
+  tagInput: {
+    flex: 1,
+    backgroundColor: designSystem.colors.background.secondary,
+  },
+  addTagButton: {
+    padding: designSystem.spacing[1],
   },
 });
 
