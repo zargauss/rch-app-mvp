@@ -209,12 +209,20 @@ export const processNoteWithAI = async (noteId) => {
     if (symptoms && symptoms.length > 0) {
       const noteDate = new Date(note.timestamp);
 
+      // Formater la date au format DD/MM/YYYY
+      const day = String(noteDate.getDate()).padStart(2, '0');
+      const month = String(noteDate.getMonth() + 1).padStart(2, '0');
+      const year = noteDate.getFullYear();
+      const dateFormatted = `${day}/${month}/${year}`;
+
+      const autoNoteText = `Création IA à partir de la note du ${dateFormatted}`;
+
       for (const symptom of symptoms) {
         try {
           const symptomId = createSymptom(
             symptom.nom,           // type (correspond à PREDEFINED_SYMPTOMS)
             symptom.intensité,     // intensity 1-5
-            note.content,          // note text pour contexte
+            autoNoteText,          // note formatée avec date
             noteDate               // même date que la note
           );
 
