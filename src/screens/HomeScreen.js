@@ -1000,6 +1000,23 @@ export default function HomeScreen({ route }) {
                               <AppText variant="bodyMedium" style={styles.noteContent}>
                                 {item.content.length > 80 ? item.content.substring(0, 80) + '...' : item.content}
                               </AppText>
+                              {/* Badge de traitement IA */}
+                              {!item.aiProcessed && (
+                                <View style={styles.aiProcessingBadge}>
+                                  <MaterialCommunityIcons name="brain" size={12} color="#4C4DDC" />
+                                  <AppText variant="labelSmall" style={styles.aiProcessingText}>
+                                    IA...
+                                  </AppText>
+                                </View>
+                              )}
+                              {item.aiProcessed && item.tags && item.tags.length > 0 && (
+                                <View style={styles.aiCompleteBadge}>
+                                  <MaterialCommunityIcons name="tag-multiple" size={12} color="#16A34A" />
+                                  <AppText variant="labelSmall" style={styles.aiCompleteText}>
+                                    {item.tags.length}
+                                  </AppText>
+                                </View>
+                              )}
                             </View>
                             <View style={styles.noteMeta}>
                               <AppText variant="labelSmall" style={styles.noteDate}>
@@ -2068,6 +2085,9 @@ const styles = StyleSheet.create({
   },
   noteHeader: {
     marginBottom: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
   },
   noteContent: {
     color: designSystem.colors.text.primary,
@@ -2104,5 +2124,36 @@ const styles = StyleSheet.create({
   noteSharedText: {
     color: '#4C4DDC',
     fontWeight: '500',
+  },
+  // Badges IA
+  aiProcessingBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#EDEDFC',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 12,
+    marginLeft: 8,
+  },
+  aiProcessingText: {
+    color: '#4C4DDC',
+    fontWeight: '600',
+    fontSize: 10,
+  },
+  aiCompleteBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#D1FAE5',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 12,
+    marginLeft: 8,
+  },
+  aiCompleteText: {
+    color: '#16A34A',
+    fontWeight: '600',
+    fontSize: 10,
   },
 });

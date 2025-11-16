@@ -2,7 +2,8 @@
 // Extraction de tags pertinents pour l'analyse des facteurs déclencheurs de MICI
 
 const GEMINI_API_KEY = 'AIzaSyCYTGrCIfRu0PPj-U0_PBwZ8deo_wZyNJ0';
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent';
+// Utiliser gemini-1.5-flash qui est plus stable
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
 
 /**
  * Génère le prompt médical pour l'analyse de la note
@@ -92,6 +93,7 @@ const parseGeminiResponse = (responseText) => {
 export const analyzeNoteWithAI = async (noteContent) => {
   try {
     console.log('🤖 Envoi de la note à Gemini pour analyse...');
+    console.log('📝 Contenu de la note:', noteContent);
 
     // Vérification que la note n'est pas vide
     if (!noteContent || noteContent.trim().length === 0) {
@@ -101,13 +103,17 @@ export const analyzeNoteWithAI = async (noteContent) => {
 
     // Préparation du prompt
     const prompt = generateMedicalPrompt(noteContent);
+    console.log('📋 Prompt généré, longueur:', prompt.length, 'caractères');
 
     // Configuration du timeout (15 secondes)
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 15000);
 
+    const apiUrl = `${GEMINI_API_URL}?key=${GEMINI_API_KEY}`;
+    console.log('🌐 Appel API Gemini:', GEMINI_API_URL);
+
     // Appel à l'API Gemini
-    const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+    const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -134,20 +140,24 @@ export const analyzeNoteWithAI = async (noteContent) => {
 
     clearTimeout(timeoutId);
 
+    console.log('📡 Réponse HTTP status:', response.status);
+
     if (!response.ok) {
       const errorText = await response.text();
       console.error('❌ Erreur API Gemini:', response.status, errorText);
-      throw new Error(`Erreur API Gemini: ${response.status}`);
+      throw new Error(`Erreur API Gemini: ${response.status} - ${errorText.substring(0, 200)}`);
     }
 
     // Récupération de la réponse
     const data = await response.json();
+    console.log('📦 Données reçues de Gemini:', JSON.stringify(data).substring(0, 500));
 
     // Extraction du texte généré
     const generatedText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
 
     if (!generatedText) {
       console.error('❌ Pas de texte généré par Gemini');
+      console.error('Structure de la réponse:', JSON.stringify(data, null, 2));
       return { tags: [], confiance: 'faible' };
     }
 

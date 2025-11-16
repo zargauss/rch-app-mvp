@@ -36,14 +36,31 @@ export const useNoteManagement = ({ onDataChange, showToast }) => {
 
     // Lancer l'analyse IA en arrière-plan (asynchrone, non-bloquant)
     if (noteId) {
+      console.log('🚀 Lancement de l\'analyse IA pour la note:', noteId);
+
+      // Toast de début d'analyse
+      setTimeout(() => {
+        showToast?.('🤖 Analyse IA en cours...', 'info');
+      }, 500);
+
       processNoteWithAI(noteId)
         .then(() => {
           console.log('✅ Analyse IA terminée pour la note:', noteId);
           // Rafraîchir les données pour afficher les tags
           onDataChange?.();
+
+          // Récupérer la note pour afficher le résultat
+          const { getNoteById } = require('../utils/notesUtils');
+          const updatedNote = getNoteById(noteId);
+          if (updatedNote && updatedNote.tags && updatedNote.tags.length > 0) {
+            showToast?.(`✅ ${updatedNote.tags.length} tag(s) détecté(s)`, 'success');
+          } else {
+            showToast?.('ℹ️ Aucun tag détecté', 'info');
+          }
         })
         .catch((error) => {
           console.error('❌ Erreur lors de l\'analyse IA:', error);
+          showToast?.('⚠️ Erreur analyse IA', 'error');
         });
     }
   };
