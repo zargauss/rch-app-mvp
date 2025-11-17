@@ -4,7 +4,7 @@
 
 /**
  * Tags organisés par type (aggravant/protecteur) et catégorie (alimentation/comportement)
- * Total : 38 tags (24 aggravants + 14 protecteurs)
+ * Total : 39 tags (25 aggravants + 14 protecteurs)
  */
 export const TAG_DEFINITIONS = {
   aggravants: {
@@ -14,6 +14,7 @@ export const TAG_DEFINITIONS = {
       'fast food',
       'plats industriels',
       'fibres crues',
+      'fruits crus',
       'alcool',
       'alcool important',
       'graisses saturées',

@@ -36,13 +36,13 @@ RÈGLES FONDAMENTALES :
 PARTIE 1 : FACTEURS DE RISQUE (max 8 tags)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-LISTE EXHAUSTIVE DES TAGS AUTORISÉS (38 tags) :
+LISTE EXHAUSTIVE DES TAGS AUTORISÉS (39 tags) :
 
 ${tagsList}
 
 RÈGLES D'EXTRACTION :
 - Utilise UNIQUEMENT les tags de cette liste (aucun autre tag accepté)
-- Tu peux extraire jusqu'à 8 tags. Si une note contient 5-6 facteurs pertinents, extrais-les tous. Ne te limite pas artificiellement à 2-3 tags.
+- Tu peux extraire jusqu'à 8 tags. Si une note contient 5-6 facteurs pertinents, extrais-les tous.
 - Maximum 3 tags alimentaires par repas mentionné
 - Décompose les plats en composants (ex: "burger" → "fast food", "viande rouge", "graisses saturées")
 - TOUS les tags utilisent des ESPACES (jamais de tirets)
@@ -50,8 +50,12 @@ RÈGLES D'EXTRACTION :
 - ÉQUILIBRE : Si la note mentionne des facteurs protecteurs (sport, légumes, sommeil réparateur), EXTRAIS-LES aussi
 
 PRÉCISIONS IMPORTANTES :
-- "aliments fermentés" : yaourt (grec, bulgare, nature), kéfir, kombucha, choucroute, kimchi, miso
-- "repas sauté" : "pas eu le temps de manger", "sauté le repas", "pas mangé", "juste grignoté" (sans vrai repas), "rien avalé ce midi"
+- "produits laitiers" : lait, yaourt (tous types), fromage, crème, beurre
+- "aliments fermentés" : kéfir, kombucha, choucroute, kimchi, miso UNIQUEMENT (yaourt = produits laitiers)
+- "poisson gras" : saumon, maquereau, sardine, thon, hareng (si espèce identifiable). Ne pas taguer "poisson" générique ou poisson blanc
+- "fruits crus" : tous fruits non cuits SAUF banane mûre, melon, pastèque (bien tolérés)
+- "fibres crues" : salade verte, crudités, tomates crues, légumes crus, carottes crues
+- "repas sauté" : "pas eu le temps de manger", "sauté le repas", "pas mangé", "juste grignoté", "rien avalé"
 
 EXCLUSIONS pour les tags :
 - Noms de plats (bourguignon, tajine, carbonara)
@@ -145,15 +149,15 @@ Réponse : {
   "symptoms": [{"nom": "Fatigue", "intensité": 4}],
   "confiance": "haute"
 }
-Explication : "dead" = fatigue intense (4). "Pas eu le temps de manger" = repas sauté. "Grosse journée de boulot" = stress travail.
+Explication : "dead" = fatigue intense (4). "Pas eu le temps de manger" = repas sauté.
 
-Note : "Poisson grillé et légumes vapeur, marche 30min, bien dormi, forme olympique"
+Note : "Salade verte et tomates en entrée, pavé de saumon grillé, compote"
 Réponse : {
-  "tags": ["poisson gras", "légumes cuits", "marche", "sommeil réparateur"],
+  "tags": ["fibres crues", "poisson gras", "fruits cuits"],
   "symptoms": [],
   "confiance": "haute"
 }
-Explication : Note avec UNIQUEMENT des facteurs protecteurs → on les extrait tous !
+Explication : Salade/tomates = fibres crues. Saumon = poisson gras (espèce identifiée). Compote = fruits cuits (protecteur).
 
 Note : "Pizza 4 fromages avec les collègues, 2 bières. Mal de crâne après"
 Réponse : {
@@ -171,7 +175,14 @@ Réponse : {
   ],
   "confiance": "haute"
 }
-Explication : "Très mal" → intensité 4. "Rien pu avaler" → perte d'appétit modérée à importante.
+
+Note : "Bol de yaourt grec avec des pommes crues"
+Réponse : {
+  "tags": ["produits laitiers", "fruits crus"],
+  "symptoms": [],
+  "confiance": "haute"
+}
+Explication : Yaourt = produits laitiers (même fermenté, le lactose reste). Pommes crues = fruits crus (pas d'exception).
 
 Note : "Saumon grillé, salade de chou fermenté. Séance yoga le soir, stressé par le meeting de demain"
 Réponse : {
