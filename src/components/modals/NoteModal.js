@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Animated } from 'react-native';
 import { Portal, Modal, TextInput, Switch, HelperText, Menu, Chip, ActivityIndicator } from 'react-native-paper';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import AppCard from '../ui/AppCard';
@@ -9,6 +9,7 @@ import DateTimeInput, { isValidDate } from '../ui/DateTimeInput';
 import designSystem from '../../theme/designSystem';
 import { NOTE_CATEGORIES, validateNoteContent, getCategoryLabel } from '../../utils/notesUtils';
 import { getAllTags, getTagLabel, getTagType, TAG_DEFINITIONS } from '../../utils/tagDefinitions';
+import { useSpeechRecognition } from '../../hooks/useSpeechRecognition';
 
 /**
  * Modale pour ajouter/éditer une note libre
@@ -26,6 +27,26 @@ const NoteModal = ({ visible, onDismiss, onSave, initialData = null }) => {
   const [tagMenuVisible, setTagMenuVisible] = useState(false);
   const [aiProcessed, setAiProcessed] = useState(false);
   const [aiConfidence, setAiConfidence] = useState(null);
+
+  // Hook de reconnaissance vocale
+  const {
+    isSupported: isSpeechSupported,
+    isRecording,
+    transcript,
+    interimTranscript,
+    error: speechError,
+    toggleRecording,
+    resetTranscript,
+  } = useSpeechRecognition({
+    lang: 'fr-FR',
+    continuous: false,
+    interimResults: true,
+    maxAlternatives: 1,
+  });
+
+  // Animation pour le bouton microphone
+  const [micScale] = useState(new Animated.Value(1));
+  const [micOpacity] = useState(new Animated.Value(1));
 
   // Initialiser avec les données existantes (mode édition)
   useEffect(() => {
@@ -54,8 +75,58 @@ const NoteModal = ({ visible, onDismiss, onSave, initialData = null }) => {
         setAiConfidence(null);
       }
       setErrors({ content: '', date: '' });
+      resetTranscript();
     }
-  }, [visible, initialData]);
+  }, [visible, initialData, resetTranscript]);
+
+  // Animation du bouton microphone pendant l'enregistrement
+  useEffect(() => {
+    if (isRecording) {
+      // Animation pulsante
+      Animated.loop(
+        Animated.sequence([
+          Animated.parallel([
+            Animated.timing(micScale, {
+              toValue: 1.2,
+              duration: 600,
+              useNativeDriver: true,
+            }),
+            Animated.timing(micOpacity, {
+              toValue: 0.7,
+              duration: 600,
+              useNativeDriver: true,
+            }),
+          ]),
+          Animated.parallel([
+            Animated.timing(micScale, {
+              toValue: 1,
+              duration: 600,
+              useNativeDriver: true,
+            }),
+            Animated.timing(micOpacity, {
+              toValue: 1,
+              duration: 600,
+              useNativeDriver: true,
+            }),
+          ]),
+        ])
+      ).start();
+    } else {
+      // Réinitialiser l'animation
+      micScale.setValue(1);
+      micOpacity.setValue(1);
+    }
+  }, [isRecording, micScale, micOpacity]);
+
+  // Ajouter la transcription au contenu existant
+  useEffect(() => {
+    if (transcript) {
+      // Ajouter un espace si le contenu existant ne se termine pas par un espace
+      const separator = content && !content.endsWith(' ') && !content.endsWith('\n') ? ' ' : '';
+      setContent(prevContent => prevContent + separator + transcript);
+      resetTranscript();
+    }
+  }, [transcript, content, resetTranscript]);
 
   const handleSave = () => {
     const newErrors = { content: '', date: '' };
@@ -160,23 +231,74 @@ const NoteModal = ({ visible, onDismiss, onSave, initialData = null }) => {
 
             {/* Contenu */}
             <View style={styles.section}>
-              <AppText style={styles.fieldLabel}>Contenu *</AppText>
+              <View style={styles.contentHeader}>
+                <AppText style={styles.fieldLabel}>Contenu *</AppText>
+                {isSpeechSupported && (
+                  <TouchableOpacity
+                    onPress={toggleRecording}
+                    style={[
+                      styles.micButton,
+                      isRecording && styles.micButtonRecording,
+                    ]}
+                    activeOpacity={0.7}
+                  >
+                    <Animated.View
+                      style={{
+                        transform: [{ scale: micScale }],
+                        opacity: micOpacity,
+                      }}
+                    >
+                      <MaterialCommunityIcons
+                        name={isRecording ? 'microphone' : 'microphone-outline'}
+                        size={24}
+                        color={isRecording ? '#FFFFFF' : designSystem.colors.primary[500]}
+                      />
+                    </Animated.View>
+                  </TouchableOpacity>
+                )}
+              </View>
+
               <TextInput
                 mode="outlined"
-                placeholder="Écrivez votre note..."
+                placeholder="Écrivez votre note ou utilisez la dictée vocale..."
                 value={content}
                 onChangeText={setContent}
                 multiline
                 numberOfLines={6}
-                error={!!errors.content}
+                error={!!errors.content || !!speechError}
                 style={styles.textArea}
                 outlineStyle={{ borderRadius: 12 }}
                 maxLength={500}
               />
+
+              {/* Afficher la transcription intermédiaire */}
+              {isRecording && interimTranscript && (
+                <View style={styles.interimContainer}>
+                  <MaterialCommunityIcons
+                    name="record-circle"
+                    size={16}
+                    color="#EF4444"
+                  />
+                  <AppText variant="bodySmall" style={styles.interimText}>
+                    {interimTranscript}
+                  </AppText>
+                </View>
+              )}
+
               <View style={styles.helperRow}>
-                <HelperText type="error" visible={!!errors.content} style={{ flex: 1 }}>
-                  {errors.content}
-                </HelperText>
+                <View style={{ flex: 1 }}>
+                  <HelperText type="error" visible={!!errors.content}>
+                    {errors.content}
+                  </HelperText>
+                  <HelperText type="error" visible={!!speechError && !errors.content}>
+                    {speechError}
+                  </HelperText>
+                  {isRecording && (
+                    <HelperText type="info">
+                      Parlez maintenant... (arrêt automatique après silence)
+                    </HelperText>
+                  )}
+                </View>
                 <AppText variant="labelSmall" style={styles.charCount}>
                   {content.length}/500
                 </AppText>
@@ -616,6 +738,45 @@ const styles = StyleSheet.create({
     color: designSystem.colors.text.tertiary,
     textTransform: 'uppercase',
     paddingTop: designSystem.spacing[2],
+  },
+  contentHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: designSystem.spacing[2],
+  },
+  micButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: designSystem.colors.primary[50],
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: designSystem.colors.primary[200],
+    ...designSystem.shadows.sm,
+  },
+  micButtonRecording: {
+    backgroundColor: '#EF4444',
+    borderColor: '#DC2626',
+    ...designSystem.shadows.lg,
+  },
+  interimContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: designSystem.spacing[2],
+    paddingHorizontal: designSystem.spacing[3],
+    paddingVertical: designSystem.spacing[2],
+    backgroundColor: '#FEF3C7',
+    borderRadius: designSystem.borderRadius.md,
+    marginTop: designSystem.spacing[2],
+    borderWidth: 1,
+    borderColor: '#FCD34D',
+  },
+  interimText: {
+    color: '#78350F',
+    fontStyle: 'italic',
+    flex: 1,
   },
 });
 
