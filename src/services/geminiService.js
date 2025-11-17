@@ -3,6 +3,7 @@
 // Utilise le SDK officiel @google/genai
 
 import { GoogleGenAI, Type } from "@google/genai";
+import { getTagsForPrompt } from '../utils/tagDefinitions';
 
 const GEMINI_API_KEY = 'AIzaSyCYTGrCIfRu0PPj-U0_PBwZ8deo_wZyNJ0';
 
@@ -17,6 +18,8 @@ const ai = new GoogleGenAI({
  * @returns {string} Le prompt formaté
  */
 const generateMedicalPrompt = (noteContent) => {
+  const tagsList = getTagsForPrompt();
+
   return `Tu es un assistant médical spécialisé dans les MICI (maladies inflammatoires chroniques intestinales).
 
 MISSION : Extraire les facteurs de risque ET les symptômes à partir de notes de patients atteints de RCH.
@@ -25,37 +28,27 @@ RÈGLE FONDAMENTALE :
 1. Distingue FACTEURS DE RISQUE (alimentation, comportement) et SYMPTÔMES (manifestations physiques)
 2. Ne tagge JAMAIS les noms de plats, seulement les COMPOSANTS à risque
 3. Pour chaque symptôme, estime son intensité de 1 à 5
+4. Utilise UNIQUEMENT les tags de la liste ci-dessous (aucun autre tag n'est autorisé)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 PARTIE 1 : FACTEURS DE RISQUE (max 8 tags)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-ALIMENTATION - Taguer selon la composition :
-- "viande-rouge" (bœuf, agneau - facteur inflammatoire)
-- "charcuterie" (facteur inflammatoire)
-- "produits-laitiers" (lactose)
-- "fibres-crues" (crudités, salades, légumes crus)
-- "fritures" (mode de cuisson)
-- "graisses-saturées" (sauces, crème, fromage)
-- "épices" (piment, curry, etc.)
-- "alcool" (préciser si quantité : alcool-faible, alcool-modéré, alcool-fort)
-- "café"
-- "gluten" (si mentionné)
-- "fast-food" (si la nature industrielle est le point clé)
+LISTE EXHAUSTIVE DES TAGS AUTORISÉS (38 tags) :
 
-COMPORTEMENT :
-- "stress-travail"
-- "stress-relationnel"
-- "anxiété"
-- "sommeil-insuffisant" (< 6h ou mention explicite)
-- "sommeil-perturbé" (réveils, mauvaise qualité)
-- "sport-intense" (si intensité inhabituelle mentionnée)
-- "tabac"
+${tagsList}
+
+RÈGLES D'EXTRACTION :
+- Utilise UNIQUEMENT les tags de cette liste (aucun autre tag accepté)
+- Maximum 8 tags par note
+- Maximum 3 tags alimentaires par repas mentionné
+- Décompose les plats en composants (ex: "burger" → "fast-food", "viande-rouge", "graisses-saturees")
+- Ne pas inventer de tags, même si un facteur semble pertinent
 
 EXCLUSIONS pour les tags :
 - Noms de plats (bourguignon, tajine, carbonara)
 - Noms de restaurants
-- Aliments neutres (riz blanc, pâtes, pain blanc, poisson blanc, poulet)
+- Aliments neutres non listés (riz blanc, pâtes, pain blanc, poulet)
 - Émotions positives sans stress
 - Activités routinières
 - LES SYMPTÔMES (voir partie 2)

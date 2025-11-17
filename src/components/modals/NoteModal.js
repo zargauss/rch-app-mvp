@@ -8,6 +8,7 @@ import PrimaryButton from '../ui/PrimaryButton';
 import DateTimeInput, { isValidDate } from '../ui/DateTimeInput';
 import designSystem from '../../theme/designSystem';
 import { NOTE_CATEGORIES, validateNoteContent, getCategoryLabel } from '../../utils/notesUtils';
+import { getAllTags, getTagLabel, getTagType, TAG_DEFINITIONS } from '../../utils/tagDefinitions';
 
 /**
  * Modale pour ajouter/éditer une note libre
@@ -22,7 +23,7 @@ const NoteModal = ({ visible, onDismiss, onSave, initialData = null }) => {
 
   // États pour les tags IA
   const [tags, setTags] = useState([]);
-  const [newTagInput, setNewTagInput] = useState('');
+  const [tagMenuVisible, setTagMenuVisible] = useState(false);
   const [aiProcessed, setAiProcessed] = useState(false);
   const [aiConfidence, setAiConfidence] = useState(null);
 
@@ -53,7 +54,6 @@ const NoteModal = ({ visible, onDismiss, onSave, initialData = null }) => {
         setAiConfidence(null);
       }
       setErrors({ content: '', date: '' });
-      setNewTagInput('');
     }
   }, [visible, initialData]);
 
@@ -101,16 +101,43 @@ const NoteModal = ({ visible, onDismiss, onSave, initialData = null }) => {
     });
   };
 
-  const handleAddTag = () => {
-    const trimmedTag = newTagInput.trim();
-    if (trimmedTag && !tags.includes(trimmedTag) && tags.length < 8) {
-      setTags([...tags, trimmedTag]);
-      setNewTagInput('');
+  const handleAddTag = (tagToAdd) => {
+    if (tagToAdd && !tags.includes(tagToAdd) && tags.length < 8) {
+      setTags([...tags, tagToAdd]);
+      setTagMenuVisible(false);
     }
   };
 
   const handleRemoveTag = (tagToRemove) => {
     setTags(tags.filter(tag => tag !== tagToRemove));
+  };
+
+  const getTagColors = (tag) => {
+    const tagType = getTagType(tag);
+    if (tagType === 'aggravant') {
+      return {
+        backgroundColor: '#FEE2E2', // rouge clair
+        borderColor: '#EF4444',     // rouge
+        textColor: '#991B1B',       // rouge foncé
+      };
+    } else if (tagType === 'protecteur') {
+      return {
+        backgroundColor: '#DBEAFE', // bleu clair
+        borderColor: '#3B82F6',     // bleu
+        textColor: '#1E3A8A',       // bleu foncé
+      };
+    }
+    // Fallback (ne devrait pas arriver avec la nouvelle liste)
+    return {
+      backgroundColor: '#F3F4F6',
+      borderColor: '#9CA3AF',
+      textColor: '#374151',
+    };
+  };
+
+  const getAvailableTagsForMenu = () => {
+    const allTags = getAllTags();
+    return allTags.filter(tag => !tags.includes(tag));
   };
 
   const getCategoryDisplayText = () => {
@@ -238,42 +265,123 @@ const NoteModal = ({ visible, onDismiss, onSave, initialData = null }) => {
                       Aucun tag détecté
                     </AppText>
                   )}
-                  {tags.map((tag, index) => (
-                    <Chip
-                      key={index}
-                      onClose={() => handleRemoveTag(tag)}
-                      style={styles.chip}
-                      textStyle={styles.chipText}
-                    >
-                      {tag}
-                    </Chip>
-                  ))}
+                  {tags.map((tag, index) => {
+                    const colors = getTagColors(tag);
+                    return (
+                      <Chip
+                        key={index}
+                        onClose={() => handleRemoveTag(tag)}
+                        style={[
+                          styles.chip,
+                          {
+                            backgroundColor: colors.backgroundColor,
+                            borderColor: colors.borderColor,
+                            borderWidth: 1,
+                          }
+                        ]}
+                        textStyle={[styles.chipText, { color: colors.textColor }]}
+                      >
+                        {getTagLabel(tag)}
+                      </Chip>
+                    );
+                  })}
                 </View>
 
                 {/* Ajouter un tag manuellement */}
                 {tags.length < 8 && (
                   <View style={styles.addTagRow}>
-                    <TextInput
-                      mode="outlined"
-                      placeholder="Ajouter un tag..."
-                      value={newTagInput}
-                      onChangeText={setNewTagInput}
-                      onSubmitEditing={handleAddTag}
-                      style={styles.tagInput}
-                      outlineStyle={{ borderRadius: 8 }}
-                      dense
-                    />
-                    <TouchableOpacity
-                      style={styles.addTagButton}
-                      onPress={handleAddTag}
-                      disabled={!newTagInput.trim()}
+                    <Menu
+                      visible={tagMenuVisible}
+                      onDismiss={() => setTagMenuVisible(false)}
+                      anchor={
+                        <TouchableOpacity
+                          style={styles.addTagButton}
+                          onPress={() => setTagMenuVisible(true)}
+                        >
+                          <MaterialCommunityIcons
+                            name="plus-circle"
+                            size={24}
+                            color={designSystem.colors.primary[500]}
+                          />
+                          <AppText variant="bodyMedium" style={styles.addTagButtonText}>
+                            Ajouter un tag
+                          </AppText>
+                        </TouchableOpacity>
+                      }
+                      contentStyle={styles.tagMenuContent}
                     >
-                      <MaterialCommunityIcons
-                        name="plus-circle"
-                        size={28}
-                        color={newTagInput.trim() ? designSystem.colors.primary[500] : designSystem.colors.text.tertiary}
-                      />
-                    </TouchableOpacity>
+                      <ScrollView style={styles.tagMenuScroll}>
+                        {/* Facteurs aggravants */}
+                        <Menu.Item
+                          title="FACTEURS AGGRAVANTS - Alimentation"
+                          disabled
+                          titleStyle={styles.tagMenuHeader}
+                        />
+                        {TAG_DEFINITIONS.aggravants.alimentation
+                          .filter(tag => !tags.includes(tag))
+                          .map(tag => (
+                            <Menu.Item
+                              key={tag}
+                              onPress={() => handleAddTag(tag)}
+                              title={getTagLabel(tag)}
+                              leadingIcon="alert-circle"
+                              titleStyle={{ color: '#991B1B' }}
+                            />
+                          ))}
+
+                        <Menu.Item
+                          title="FACTEURS AGGRAVANTS - Comportement"
+                          disabled
+                          titleStyle={styles.tagMenuHeader}
+                        />
+                        {TAG_DEFINITIONS.aggravants.comportement
+                          .filter(tag => !tags.includes(tag))
+                          .map(tag => (
+                            <Menu.Item
+                              key={tag}
+                              onPress={() => handleAddTag(tag)}
+                              title={getTagLabel(tag)}
+                              leadingIcon="alert-circle"
+                              titleStyle={{ color: '#991B1B' }}
+                            />
+                          ))}
+
+                        {/* Facteurs protecteurs */}
+                        <Menu.Item
+                          title="FACTEURS PROTECTEURS - Alimentation"
+                          disabled
+                          titleStyle={styles.tagMenuHeader}
+                        />
+                        {TAG_DEFINITIONS.protecteurs.alimentation
+                          .filter(tag => !tags.includes(tag))
+                          .map(tag => (
+                            <Menu.Item
+                              key={tag}
+                              onPress={() => handleAddTag(tag)}
+                              title={getTagLabel(tag)}
+                              leadingIcon="shield-check"
+                              titleStyle={{ color: '#1E3A8A' }}
+                            />
+                          ))}
+
+                        <Menu.Item
+                          title="FACTEURS PROTECTEURS - Comportement"
+                          disabled
+                          titleStyle={styles.tagMenuHeader}
+                        />
+                        {TAG_DEFINITIONS.protecteurs.comportement
+                          .filter(tag => !tags.includes(tag))
+                          .map(tag => (
+                            <Menu.Item
+                              key={tag}
+                              onPress={() => handleAddTag(tag)}
+                              title={getTagLabel(tag)}
+                              leadingIcon="shield-check"
+                              titleStyle={{ color: '#1E3A8A' }}
+                            />
+                          ))}
+                      </ScrollView>
+                    </Menu>
                   </View>
                 )}
 
@@ -478,16 +586,36 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   addTagRow: {
+    marginTop: designSystem.spacing[2],
+  },
+  addTagButton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: designSystem.spacing[2],
+    backgroundColor: designSystem.colors.background.secondary,
+    borderRadius: designSystem.borderRadius.md,
+    padding: designSystem.spacing[3],
+    borderWidth: 1,
+    borderColor: designSystem.colors.border.light,
+    borderStyle: 'dashed',
   },
-  tagInput: {
-    flex: 1,
+  addTagButtonText: {
+    color: designSystem.colors.primary[500],
+    fontWeight: '500',
+  },
+  tagMenuContent: {
+    maxHeight: 400,
     backgroundColor: designSystem.colors.background.secondary,
   },
-  addTagButton: {
-    padding: designSystem.spacing[1],
+  tagMenuScroll: {
+    maxHeight: 380,
+  },
+  tagMenuHeader: {
+    fontSize: designSystem.typography.fontSize.xs,
+    fontWeight: designSystem.typography.fontWeight.bold,
+    color: designSystem.colors.text.tertiary,
+    textTransform: 'uppercase',
+    paddingTop: designSystem.spacing[2],
   },
 });
 
