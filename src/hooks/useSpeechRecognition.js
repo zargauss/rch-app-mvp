@@ -47,6 +47,14 @@ export const useSpeechRecognition = (options = {}) => {
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
+    // Log pour diagnostic de l'environnement
+    console.log('Speech Recognition Setup:', {
+      supported: !!SpeechRecognition,
+      protocol: window.location.protocol,
+      hostname: window.location.hostname,
+      isSecure: window.isSecureContext,
+    });
+
     if (SpeechRecognition) {
       setIsSupported(true);
       recognitionRef.current = new SpeechRecognition();
@@ -100,6 +108,14 @@ export const useSpeechRecognition = (options = {}) => {
         setIsRecording(false);
         setInterimTranscript('');
 
+        // Log pour diagnostic
+        console.log('Speech Recognition Error:', {
+          error: event.error,
+          message: event.message,
+          protocol: window.location.protocol,
+          hostname: window.location.hostname,
+        });
+
         switch (event.error) {
           case 'not-allowed':
           case 'service-not-allowed':
@@ -112,7 +128,17 @@ export const useSpeechRecognition = (options = {}) => {
             setError('Aucun microphone détecté. Vérifiez votre matériel.');
             break;
           case 'network':
-            setError('Erreur réseau. Vérifiez votre connexion.');
+            // Vérifier si c'est un problème HTTPS
+            const isLocalhost = window.location.hostname === 'localhost' ||
+                               window.location.hostname === '127.0.0.1' ||
+                               window.location.hostname === '[::1]';
+            const isHttps = window.location.protocol === 'https:';
+
+            if (!isLocalhost && !isHttps) {
+              setError('HTTPS requis pour la dictée vocale. Utilisez https:// ou localhost');
+            } else {
+              setError('Erreur réseau. Vérifiez votre connexion internet.');
+            }
             break;
           case 'aborted':
             // Annulation normale, pas d'erreur à afficher
@@ -146,21 +172,34 @@ export const useSpeechRecognition = (options = {}) => {
       return;
     }
 
+    // Ne pas démarrer si déjà en cours
+    if (isRecording) {
+      console.log('Already recording, ignoring start request');
+      return;
+    }
+
     try {
+      console.log('Starting speech recognition...');
       setError(null);
       recognitionRef.current.start();
     } catch (e) {
+      console.error('Error starting recognition:', e);
       if (e.name === 'InvalidStateError') {
         // Déjà en cours, arrêter d'abord
         recognitionRef.current.stop();
         setTimeout(() => {
-          recognitionRef.current.start();
-        }, 100);
+          try {
+            recognitionRef.current.start();
+          } catch (retryError) {
+            console.error('Retry failed:', retryError);
+            setError('Impossible de démarrer l\'enregistrement');
+          }
+        }, 300);
       } else {
         setError('Impossible de démarrer l\'enregistrement');
       }
     }
-  }, [isSupported]);
+  }, [isSupported, isRecording]);
 
   // Arrêter l'enregistrement
   const stopRecording = useCallback(() => {
