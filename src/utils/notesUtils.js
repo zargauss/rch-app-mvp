@@ -1,4 +1,6 @@
 import storage from './storage';
+import { analyzeNoteWithAI } from '../services/geminiService';
+import { createSymptom } from './symptomsUtils';
 
 // ========================================
 // Catégories prédéfinies
@@ -47,6 +49,10 @@ export const createNote = (content, category = null, sharedWithDoctor = false, d
     timestamp: date.getTime(),
     sharedWithDoctor,
     createdAt: Date.now(),
+    // Nouveaux champs pour l'analyse IA
+    tags: [],
+    aiProcessed: false,
+    aiConfidence: null,
   };
 
   notes.push(newNote);
@@ -84,6 +90,19 @@ export const updateNote = (id, updates) => {
   if (updates.date !== undefined) {
     note.date = formatDate(updates.date);
     note.timestamp = updates.date.getTime();
+  }
+
+  // Mise à jour des champs IA
+  if (updates.tags !== undefined) {
+    note.tags = updates.tags;
+  }
+
+  if (updates.aiProcessed !== undefined) {
+    note.aiProcessed = updates.aiProcessed;
+  }
+
+  if (updates.aiConfidence !== undefined) {
+    note.aiConfidence = updates.aiConfidence;
   }
 
   note.updatedAt = Date.now();
@@ -152,6 +171,108 @@ export const getSharedNotes = () => {
 export const getCategoryLabel = (category) => {
   const cat = NOTE_CATEGORIES.find(c => c.value === category);
   return cat ? cat.label : 'Sans catégorie';
+};
+
+// ========================================
+// Analyse IA
+// ========================================
+
+/**
+ * Analyse une note avec l'IA pour extraire les tags et créer les symptômes
+ * Cette fonction est asynchrone et met à jour la note après l'analyse
+ * @param {string} noteId - ID de la note à analyser
+ * @returns {Promise<{tags: string[], createdSymptoms: Array, confiance: string}>}
+ */
+export const processNoteWithAI = async (noteId) => {
+  try {
+    const note = getNoteById(noteId);
+
+    if (!note) {
+      console.warn('⚠️ Note non trouvée:', noteId);
+      return { tags: [], createdSymptoms: [], confiance: 'faible' };
+    }
+
+    console.log('🤖 Début de l\'analyse IA pour la note:', noteId);
+
+    // Appel au service Gemini (retourne tags ET symptoms)
+    const { tags, symptoms, confiance } = await analyzeNoteWithAI(note.content);
+
+    // Mise à jour de la note avec les tags
+    updateNote(noteId, {
+      tags,
+      aiProcessed: true,
+      aiConfidence: confiance,
+    });
+
+    // Création automatique des symptômes détectés
+    const createdSymptoms = [];
+    if (symptoms && symptoms.length > 0) {
+      const noteDate = new Date(note.timestamp);
+
+      // Formater la date au format DD/MM/YYYY
+      const day = String(noteDate.getDate()).padStart(2, '0');
+      const month = String(noteDate.getMonth() + 1).padStart(2, '0');
+      const year = noteDate.getFullYear();
+      const dateFormatted = `${day}/${month}/${year}`;
+
+      const autoNoteText = `Création IA à partir de la note du ${dateFormatted}`;
+
+      for (const symptom of symptoms) {
+        try {
+          const symptomId = createSymptom(
+            symptom.nom,           // type (correspond à PREDEFINED_SYMPTOMS)
+            symptom.intensité,     // intensity 1-5
+            autoNoteText,          // note formatée avec date
+            noteDate               // même date que la note
+          );
+
+          createdSymptoms.push({
+            id: symptomId,
+            nom: symptom.nom,
+            intensité: symptom.intensité,
+          });
+
+          console.log(`  ➕ Symptôme créé: ${symptom.nom} (intensité: ${symptom.intensité}/5)`);
+        } catch (symptomError) {
+          console.error(`  ❌ Erreur création symptôme "${symptom.nom}":`, symptomError);
+        }
+      }
+    }
+
+    console.log(`✅ Note ${noteId} analysée: ${tags.length} tag(s), ${createdSymptoms.length} symptôme(s) créé(s) (confiance: ${confiance})`);
+
+    return { tags, createdSymptoms, confiance };
+  } catch (error) {
+    console.error('❌ Erreur lors du traitement IA de la note:', error);
+
+    // En cas d'erreur, marquer la note comme traitée mais sans tags ni symptômes
+    updateNote(noteId, {
+      tags: [],
+      aiProcessed: true,
+      aiConfidence: 'faible',
+    });
+
+    return { tags: [], createdSymptoms: [], confiance: 'faible' };
+  }
+};
+
+/**
+ * Récupère toutes les notes avec leurs tags (filtre les notes non traitées)
+ * @returns {Array} - Notes avec tags
+ */
+export const getNotesWithTags = () => {
+  const notes = getNotes();
+  return notes.filter(n => n.aiProcessed && n.tags && n.tags.length > 0);
+};
+
+/**
+ * Récupère tous les tags uniques de toutes les notes
+ * @returns {Array} - Liste des tags uniques
+ */
+export const getAllUniqueTags = () => {
+  const notes = getNotesWithTags();
+  const allTags = notes.flatMap(n => n.tags);
+  return [...new Set(allTags)].sort();
 };
 
 // ========================================

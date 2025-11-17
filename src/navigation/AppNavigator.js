@@ -13,6 +13,7 @@ import ExportScreen from '../screens/ExportScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import DailySurveyScreen from '../screens/DailySurveyScreen';
 import IBDiskQuestionnaireScreen from '../screens/IBDiskQuestionnaireScreen';
+import InsightsScreen from '../screens/InsightsScreen';
 import CustomTabBar from '../components/navigation/CustomTabBar';
 import designSystem from '../theme/designSystem';
 
@@ -66,6 +67,21 @@ function MainTabs() {
         },
         headerRight: ({ tintColor }) => (
           <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 16 }}>
+            {/* Icône Insights (visible sur tous les écrans sauf Insights) */}
+            {route.name !== 'Insights' && (
+              <TouchableOpacity
+                onPress={() => navigation.navigate('Insights')}
+                style={{ marginRight: 16 }}
+                accessibilityRole="button"
+                accessibilityLabel="Insights IA"
+              >
+                <MaterialCommunityIcons
+                  name="brain"
+                  size={24}
+                  color={tintColor || designSystem.colors.text.primary}
+                />
+              </TouchableOpacity>
+            )}
             {/* Icône Export (visible sur tous les écrans sauf Export) */}
             {route.name !== 'Export' && (
               <TouchableOpacity
@@ -110,6 +126,15 @@ function MainTabs() {
         options={{
           tabBarButton: () => null, // Hide from tab bar
           tabBarVisible: false,
+        }}
+      />
+      <Tab.Screen
+        name="Insights"
+        component={InsightsScreen}
+        options={{
+          tabBarButton: () => null, // Hide from tab bar
+          tabBarVisible: false,
+          title: 'Insights IA',
         }}
       />
     </Tab.Navigator>
