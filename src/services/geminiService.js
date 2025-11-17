@@ -24,11 +24,13 @@ const generateMedicalPrompt = (noteContent) => {
 
 MISSION : Extraire les facteurs de risque ET les symptômes à partir de notes de patients atteints de RCH.
 
-RÈGLE FONDAMENTALE :
+RÈGLES FONDAMENTALES :
 1. Distingue FACTEURS DE RISQUE (alimentation, comportement) et SYMPTÔMES (manifestations physiques)
 2. Ne tagge JAMAIS les noms de plats, seulement les COMPOSANTS à risque
 3. Pour chaque symptôme, estime son intensité de 1 à 5
 4. Utilise UNIQUEMENT les tags de la liste ci-dessous (aucun autre tag n'est autorisé)
+5. ⚠️ CRITIQUE : Tous les tags doivent utiliser des ESPACES, jamais de tirets (ex: "poisson gras" et NON "poisson-gras")
+6. ⚠️ CRITIQUE : Dans une même note, tu DOIS extraire à la fois les facteurs aggravants ET protecteurs présents. Ne te focalise pas uniquement sur ce qui va mal.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 PARTIE 1 : FACTEURS DE RISQUE (max 8 tags)
@@ -40,15 +42,21 @@ ${tagsList}
 
 RÈGLES D'EXTRACTION :
 - Utilise UNIQUEMENT les tags de cette liste (aucun autre tag accepté)
-- Maximum 8 tags par note
+- Tu peux extraire jusqu'à 8 tags. Si une note contient 5-6 facteurs pertinents, extrais-les tous. Ne te limite pas artificiellement à 2-3 tags.
 - Maximum 3 tags alimentaires par repas mentionné
-- Décompose les plats en composants (ex: "burger" → "fast-food", "viande-rouge", "graisses-saturees")
+- Décompose les plats en composants (ex: "burger" → "fast food", "viande rouge", "graisses saturées")
+- TOUS les tags utilisent des ESPACES (jamais de tirets)
 - Ne pas inventer de tags, même si un facteur semble pertinent
+- ÉQUILIBRE : Si la note mentionne des facteurs protecteurs (sport, légumes, sommeil réparateur), EXTRAIS-LES aussi
+
+PRÉCISIONS IMPORTANTES :
+- "aliments fermentés" : yaourt (grec, bulgare, nature), kéfir, kombucha, choucroute, kimchi, miso
+- "repas sauté" : "pas eu le temps de manger", "sauté le repas", "pas mangé", "juste grignoté" (sans vrai repas), "rien avalé ce midi"
 
 EXCLUSIONS pour les tags :
 - Noms de plats (bourguignon, tajine, carbonara)
 - Noms de restaurants
-- Aliments neutres non listés (riz blanc, pâtes, pain blanc, poulet)
+- Aliments neutres non listés (riz blanc, pâtes, pain blanc, poulet nature)
 - Émotions positives sans stress
 - Activités routinières
 - LES SYMPTÔMES (voir partie 2)
@@ -91,6 +99,7 @@ Pour les TAGS :
 1. Si un plat est mentionné, décompose-le mentalement en ingrédients
 2. Ne garde que les ingrédients/modes de préparation à risque
 3. Maximum 3 tags alimentaires par repas mentionné
+4. N'oublie PAS les facteurs protecteurs s'ils sont présents !
 
 Pour les SYMPTÔMES :
 1. Cherche les manifestations physiques/sensations désagréables
@@ -118,36 +127,37 @@ EXEMPLES COMPLETS
 
 Note : "Bœuf bourguignon ce soir avec du pain"
 Réponse : {
-  "tags": ["viande-rouge"],
+  "tags": ["viande rouge"],
   "symptoms": [],
   "confiance": "haute"
 }
 
 Note : "McDo Big Mac frites, après j'avais mal au ventre"
 Réponse : {
-  "tags": ["fast-food", "fritures", "graisses-saturées"],
+  "tags": ["fast food", "fritures", "graisses saturées"],
   "symptoms": [{"nom": "Douleurs abdominales", "intensité": 2}],
   "confiance": "haute"
 }
 
 Note : "Grosse journée de boulot, dead. Pas eu le temps de manger à midi, sandwich jambon beurre vite fait"
 Réponse : {
-  "tags": ["stress-travail", "charcuterie", "graisses-saturées"],
+  "tags": ["stress travail", "repas sauté", "charcuterie", "graisses saturées"],
   "symptoms": [{"nom": "Fatigue", "intensité": 4}],
   "confiance": "haute"
 }
-Explication : "dead" indique une fatigue intense (4). Stress-travail = tag. Charcuterie/graisses = tags.
+Explication : "dead" = fatigue intense (4). "Pas eu le temps de manger" = repas sauté. "Grosse journée de boulot" = stress travail.
 
-Note : "Poisson grillé et riz, eau plate. Bien dormi, forme olympique."
+Note : "Poisson grillé et légumes vapeur, marche 30min, bien dormi, forme olympique"
 Réponse : {
-  "tags": [],
+  "tags": ["poisson gras", "légumes cuits", "marche", "sommeil réparateur"],
   "symptoms": [],
   "confiance": "haute"
 }
+Explication : Note avec UNIQUEMENT des facteurs protecteurs → on les extrait tous !
 
 Note : "Pizza 4 fromages avec les collègues, 2 bières. Mal de crâne après"
 Réponse : {
-  "tags": ["produits-laitiers", "graisses-saturées", "alcool-modéré"],
+  "tags": ["produits laitiers", "graisses saturées", "alcool"],
   "symptoms": [{"nom": "Maux de tête", "intensité": 2}],
   "confiance": "haute"
 }
@@ -162,6 +172,14 @@ Réponse : {
   "confiance": "haute"
 }
 Explication : "Très mal" → intensité 4. "Rien pu avaler" → perte d'appétit modérée à importante.
+
+Note : "Saumon grillé, salade de chou fermenté. Séance yoga le soir, stressé par le meeting de demain"
+Réponse : {
+  "tags": ["poisson gras", "aliments fermentés", "légumes cuits", "yoga", "stress travail"],
+  "symptoms": [],
+  "confiance": "haute"
+}
+Explication : ÉQUILIBRE protecteurs (4) + aggravants (1) = tous extraits !
 
 Analyse maintenant cette note :
 

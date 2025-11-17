@@ -9,109 +9,56 @@
 export const TAG_DEFINITIONS = {
   aggravants: {
     alimentation: [
-      'viande-rouge',
+      'viande rouge',
       'charcuterie',
-      'fast-food',
-      'plats-industriels',
-      'fibres-crues',
+      'fast food',
+      'plats industriels',
+      'fibres crues',
       'alcool',
-      'alcool-important',
-      'graisses-saturees',
+      'alcool important',
+      'graisses saturées',
       'fritures',
-      'cafe',
-      'epices-fortes',
-      'produits-laitiers',
-      'repas-copieux',
-      'repas-tardif',
-      'aliments-froids',
-      'repas-saute',
+      'café',
+      'épices fortes',
+      'produits laitiers',
+      'repas copieux',
+      'repas tardif',
+      'aliments froids',
+      'repas sauté',
     ],
     comportement: [
-      'stress-travail',
-      'stress-relationnel',
-      'anxiete',
-      'sommeil-insuffisant',
-      'sommeil-perturbe',
-      'sedentarite',
-      'deshydratation',
-      'manque-repos',
+      'stress travail',
+      'stress relationnel',
+      'anxiété',
+      'sommeil insuffisant',
+      'sommeil perturbé',
+      'sédentarité',
+      'déshydratation',
+      'manque repos',
     ],
   },
   protecteurs: {
     alimentation: [
-      'poisson-gras',
-      'legumes-cuits',
-      'fruits-cuits',
-      'huile-olive',
-      'aliments-fermentes',
-      'hydratation-importante',
+      'poisson gras',
+      'légumes cuits',
+      'fruits cuits',
+      'huile olive',
+      'aliments fermentés',
+      'hydratation importante',
       'tisane',
-      'repos-digestif',
+      'repos digestif',
     ],
     comportement: [
-      'sport-modere',
-      'sport-intense',
-      'sommeil-reparateur',
+      'sport modéré',
+      'sport intense',
+      'sommeil réparateur',
       'relaxation',
-      'meditation',
+      'méditation',
       'yoga',
       'marche',
-      'bonne-humeur',
+      'bonne humeur',
     ],
   },
-};
-
-/**
- * Labels d'affichage pour chaque tag
- */
-export const TAG_LABELS = {
-  // Aggravants - Alimentation
-  'viande-rouge': 'Viande rouge',
-  'charcuterie': 'Charcuterie',
-  'fast-food': 'Fast food',
-  'plats-industriels': 'Plats industriels',
-  'fibres-crues': 'Fibres crues',
-  'alcool': 'Alcool',
-  'alcool-important': 'Alcool important',
-  'graisses-saturees': 'Graisses saturées',
-  'fritures': 'Fritures',
-  'cafe': 'Café',
-  'epices-fortes': 'Épices fortes',
-  'produits-laitiers': 'Produits laitiers',
-  'repas-copieux': 'Repas copieux',
-  'repas-tardif': 'Repas tardif',
-  'aliments-froids': 'Aliments froids',
-  'repas-saute': 'Repas sauté',
-
-  // Aggravants - Comportement
-  'stress-travail': 'Stress travail',
-  'stress-relationnel': 'Stress relationnel',
-  'anxiete': 'Anxiété',
-  'sommeil-insuffisant': 'Sommeil insuffisant',
-  'sommeil-perturbe': 'Sommeil perturbé',
-  'sedentarite': 'Sédentarité',
-  'deshydratation': 'Déshydratation',
-  'manque-repos': 'Manque repos',
-
-  // Protecteurs - Alimentation
-  'poisson-gras': 'Poisson gras',
-  'legumes-cuits': 'Légumes cuits',
-  'fruits-cuits': 'Fruits cuits',
-  'huile-olive': 'Huile olive',
-  'aliments-fermentes': 'Aliments fermentés',
-  'hydratation-importante': 'Hydratation importante',
-  'tisane': 'Tisane',
-  'repos-digestif': 'Repos digestif',
-
-  // Protecteurs - Comportement
-  'sport-modere': 'Sport modéré',
-  'sport-intense': 'Sport intense',
-  'sommeil-reparateur': 'Sommeil réparateur',
-  'relaxation': 'Relaxation',
-  'meditation': 'Méditation',
-  'yoga': 'Yoga',
-  'marche': 'Marche',
-  'bonne-humeur': 'Bonne humeur',
 };
 
 /**
@@ -153,12 +100,13 @@ export const getAllTags = () => {
 };
 
 /**
- * Récupère le label d'affichage d'un tag
+ * Récupère le label d'affichage d'un tag (capitalisation pour l'affichage)
  * @param {string} tag - Le tag
- * @returns {string} Label d'affichage
+ * @returns {string} Label d'affichage avec première lettre en majuscule
  */
 export const getTagLabel = (tag) => {
-  return TAG_LABELS[tag] || tag;
+  // Les tags utilisent maintenant des espaces, on capitalise juste la première lettre
+  return tag.charAt(0).toUpperCase() + tag.slice(1);
 };
 
 /**
