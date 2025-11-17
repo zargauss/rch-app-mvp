@@ -52,9 +52,29 @@ Une Progressive Web App simple et efficace qui permet un suivi quotidien structu
 - Synthèse claire des données sur période donnée
 - Prêt à partager avec l'équipe soignante
 
-**📝 Notes libres**
+**📝 Notes libres avec dictée vocale** 🎤
 - Espace pour contexte (stress, voyages, changements alimentaires)
-- Facilite la compréhension des variations
+- Dictée vocale intégrée (Web Speech API) pour saisie rapide
+- Transcription en temps réel en français
+- ⚠️ Note : Nécessite un domaine custom (ne fonctionne pas sur .vercel.app)
+
+---
+
+## ⚠️ Limitations Techniques Importantes
+
+### Dictée Vocale et Domaines Vercel
+
+**Problème identifié** : La fonctionnalité de dictée vocale utilise l'API Web Speech de Google, qui **ne fonctionne pas sur les domaines `.vercel.app`** (limitation Google).
+
+**Impact** :
+- ❌ Dictée vocale non fonctionnelle sur : `https://rch-app-mvp-ii6n.vercel.app`
+- ✅ Dictée vocale fonctionnelle sur : `http://localhost:19006` (développement)
+- ✅ Dictée vocale fonctionnelle avec domaine custom (ex: `app.votre-domaine.com`)
+
+**Solutions** :
+- **Pour tester la fonctionnalité** : Lancez l'app en local (`npm run web`)
+- **Pour la production** : Configurez un domaine custom dans Vercel → Settings → Domains
+- **Documentation complète** : Voir `VOICE_DICTATION_GUIDE.md`
 
 ---
 

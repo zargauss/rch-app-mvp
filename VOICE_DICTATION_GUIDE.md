@@ -58,15 +58,15 @@ La fonctionnalité de dictée vocale permet aux utilisateurs de saisir leurs not
 2. Vous pouvez modifier manuellement si nécessaire
 3. Vous pouvez recommencer la dictée en re-cliquant sur le bouton
 
-## Problème avec Vercel Preview
+## ⚠️ Problème avec Vercel
 
-### ⚠️ Erreur "network" sur Vercel
+### Erreur "network" sur tous les domaines .vercel.app
 
-Si vous voyez l'erreur **"Erreur réseau"** sur un domaine Vercel (ex: `*.vercel.app`), c'est normal. Les domaines preview de Vercel changent à chaque déploiement et peuvent être bloqués par l'API Web Speech de Google.
+**IMPORTANT** : La dictée vocale **ne fonctionne PAS** sur les domaines `.vercel.app` (ni preview, ni production). C'est une **limitation de l'API Web Speech de Google** qui bloque ces domaines.
 
 ### Solutions
 
-**Pour le développement** :
+#### Pour le développement (recommandé) ✅
 ```bash
 # Clonez et lancez en local
 git clone <votre-repo>
@@ -75,17 +75,44 @@ npm install
 npm run web
 
 # Ouvrez http://localhost:19006
-# La dictée fonctionnera parfaitement
+# ✨ La dictée fonctionnera parfaitement
 ```
 
-**Pour la production** :
-1. Configurez un domaine custom dans Vercel (Settings → Domains)
-2. Exemple: `app.votre-domaine.com`
-3. L'API fonctionnera mieux sur un domaine stable
+#### Pour la production (OBLIGATOIRE) ⚠️
 
-**Workaround temporaire** (non recommandé pour production) :
-- Utilisez Chrome avec le flag `--unsafely-treat-insecure-origin-as-secure`
-- ⚠️ Uniquement pour tests, pas pour production
+La dictée vocale nécessite un **domaine custom** pour fonctionner en production.
+
+**Étapes pour configurer un domaine custom sur Vercel** :
+
+1. Achetez un domaine (ex: chez Namecheap, OVH, etc.)
+2. Dans Vercel :
+   - Allez dans votre projet → Settings → Domains
+   - Cliquez sur "Add Domain"
+   - Entrez votre domaine : `app.votre-domaine.com`
+   - Suivez les instructions pour configurer les DNS
+3. Déployez et testez sur : `https://app.votre-domaine.com`
+4. ✅ La dictée vocale fonctionnera !
+
+**Exemples de domaines qui fonctionnent** :
+- ✅ `https://app.mon-domaine.com`
+- ✅ `https://sante.exemple.fr`
+- ✅ `http://localhost:19006`
+- ❌ `https://mon-app.vercel.app` (ne fonctionne PAS)
+- ❌ `https://mon-app-preview.vercel.app` (ne fonctionne PAS)
+
+#### Alternative : Désactiver la fonctionnalité sur Vercel
+
+Si vous ne pouvez pas configurer de domaine custom, vous pouvez cacher le bouton micro sur les domaines Vercel :
+
+```javascript
+// Dans NoteModal.js, ligne 262-273
+// Option: Cacher complètement le bouton au lieu d'afficher un avertissement
+{isSpeechSupported && typeof window !== 'undefined' && !window.location.hostname.includes('.vercel.app') && (
+  <TouchableOpacity onPress={toggleRecording}>
+    {/* Bouton micro */}
+  </TouchableOpacity>
+)}
+```
 
 ## Tests à effectuer
 
@@ -157,10 +184,10 @@ npm run web
 
 ## Limitations connues
 
-1. **Domaines Vercel preview** ⚠️: L'API Web Speech peut ne pas fonctionner sur les domaines `.vercel.app` temporaires générés par Vercel. **Solution**: Utilisez localhost pour développement ou configurez un domaine custom pour production.
+1. **Domaines .vercel.app** 🚫: L'API Web Speech **ne fonctionne PAS** sur les domaines `.vercel.app` (limitation de Google). **Solution OBLIGATOIRE pour production**: Configurez un domaine custom. Pour développement : utilisez localhost.
 2. **Bruit ambiant**: La transcription peut être imprécise dans un environnement bruyant
 3. **Accent/prononciation**: La qualité dépend de la clarté de la voix
-4. **Firefox**: Support limité, nécessite configuration manuelle
+4. **Firefox**: Support limité, nécessite configuration manuelle dans `about:config`
 5. **Longueur**: Arrêt automatique après ~60 secondes d'enregistrement continu
 6. **Hors ligne**: Nécessite une connexion internet (l'API utilise les serveurs Google)
 
