@@ -134,10 +134,15 @@ export const useSpeechRecognition = (options = {}) => {
                                window.location.hostname === '[::1]';
             const isHttps = window.location.protocol === 'https:';
 
+            // Détecter les domaines Vercel preview
+            const isVercelPreview = window.location.hostname.includes('.vercel.app');
+
             if (!isLocalhost && !isHttps) {
               setError('HTTPS requis pour la dictée vocale. Utilisez https:// ou localhost');
+            } else if (isVercelPreview) {
+              setError('La dictée vocale ne fonctionne pas sur les domaines Vercel preview. Testez en localhost ou utilisez un domaine custom.');
             } else {
-              setError('Erreur réseau. Vérifiez votre connexion internet.');
+              setError('Erreur réseau. Vérifiez votre connexion internet ou désactivez les extensions qui bloquent les requêtes.');
             }
             break;
           case 'aborted':

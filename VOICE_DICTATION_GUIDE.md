@@ -58,6 +58,35 @@ La fonctionnalité de dictée vocale permet aux utilisateurs de saisir leurs not
 2. Vous pouvez modifier manuellement si nécessaire
 3. Vous pouvez recommencer la dictée en re-cliquant sur le bouton
 
+## Problème avec Vercel Preview
+
+### ⚠️ Erreur "network" sur Vercel
+
+Si vous voyez l'erreur **"Erreur réseau"** sur un domaine Vercel (ex: `*.vercel.app`), c'est normal. Les domaines preview de Vercel changent à chaque déploiement et peuvent être bloqués par l'API Web Speech de Google.
+
+### Solutions
+
+**Pour le développement** :
+```bash
+# Clonez et lancez en local
+git clone <votre-repo>
+cd rch-app-mvp
+npm install
+npm run web
+
+# Ouvrez http://localhost:19006
+# La dictée fonctionnera parfaitement
+```
+
+**Pour la production** :
+1. Configurez un domaine custom dans Vercel (Settings → Domains)
+2. Exemple: `app.votre-domaine.com`
+3. L'API fonctionnera mieux sur un domaine stable
+
+**Workaround temporaire** (non recommandé pour production) :
+- Utilisez Chrome avec le flag `--unsafely-treat-insecure-origin-as-secure`
+- ⚠️ Uniquement pour tests, pas pour production
+
 ## Tests à effectuer
 
 ### Test fonctionnel basique
@@ -128,11 +157,12 @@ La fonctionnalité de dictée vocale permet aux utilisateurs de saisir leurs not
 
 ## Limitations connues
 
-1. **Bruit ambiant**: La transcription peut être imprécise dans un environnement bruyant
-2. **Accent/prononciation**: La qualité dépend de la clarté de la voix
-3. **Firefox**: Support limité, nécessite configuration manuelle
-4. **Longueur**: Arrêt automatique après ~60 secondes d'enregistrement continu
-5. **Hors ligne**: Nécessite une connexion internet (l'API utilise les serveurs Google)
+1. **Domaines Vercel preview** ⚠️: L'API Web Speech peut ne pas fonctionner sur les domaines `.vercel.app` temporaires générés par Vercel. **Solution**: Utilisez localhost pour développement ou configurez un domaine custom pour production.
+2. **Bruit ambiant**: La transcription peut être imprécise dans un environnement bruyant
+3. **Accent/prononciation**: La qualité dépend de la clarté de la voix
+4. **Firefox**: Support limité, nécessite configuration manuelle
+5. **Longueur**: Arrêt automatique après ~60 secondes d'enregistrement continu
+6. **Hors ligne**: Nécessite une connexion internet (l'API utilise les serveurs Google)
 
 ## Améliorations futures possibles
 

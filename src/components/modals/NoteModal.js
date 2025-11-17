@@ -258,6 +258,20 @@ const NoteModal = ({ visible, onDismiss, onSave, initialData = null }) => {
                 )}
               </View>
 
+              {/* Avertissement Vercel */}
+              {isSpeechSupported && typeof window !== 'undefined' && window.location.hostname.includes('.vercel.app') && (
+                <View style={styles.vercelWarning}>
+                  <MaterialCommunityIcons
+                    name="information-outline"
+                    size={16}
+                    color="#0369A1"
+                  />
+                  <AppText variant="labelSmall" style={styles.vercelWarningText}>
+                    La dictée vocale peut ne pas fonctionner sur Vercel preview. Utilisez localhost pour la tester.
+                  </AppText>
+                </View>
+              )}
+
               <TextInput
                 mode="outlined"
                 placeholder="Écrivez votre note ou utilisez la dictée vocale..."
@@ -777,6 +791,23 @@ const styles = StyleSheet.create({
     color: '#78350F',
     fontStyle: 'italic',
     flex: 1,
+  },
+  vercelWarning: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: designSystem.spacing[2],
+    paddingHorizontal: designSystem.spacing[3],
+    paddingVertical: designSystem.spacing[2],
+    backgroundColor: '#E0F2FE',
+    borderRadius: designSystem.borderRadius.md,
+    marginBottom: designSystem.spacing[2],
+    borderWidth: 1,
+    borderColor: '#7DD3FC',
+  },
+  vercelWarningText: {
+    color: '#0369A1',
+    flex: 1,
+    lineHeight: 16,
   },
 });
 
